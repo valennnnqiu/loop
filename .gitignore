@@ -1,0 +1,13 @@
+# 你自己的真实交易数据 — 永远不要提交
+my-data.json
+*.local.json
+*-backup-*.json
+loop-backup-*.json
+
+# 设计草稿 / 测试用的对账单，含真实账号和成交记录
+mockups/
+*.csv
+U*_*.pdf
+
+# OS
+.DS_Store
