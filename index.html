@@ -326,6 +326,8 @@
   .pl-row:hover .cell-num{ border-color:var(--line); background:var(--panel); }
   .cell-num:hover{ border-color:var(--line-strong); }
   .cell-num:focus{ outline:none; border-color:var(--gold); background:var(--panel); box-shadow:0 0 0 3px var(--gold-dim); }
+  .cell-num.overridden{ color:var(--gold); font-weight:600; }
+  .pl-row.is-hidden{ opacity:0.5; }
   .pl-del{
     width:18px; height:18px; border-radius:5px; border:none; background:transparent;
     color:var(--text-dim); font-size:11px; cursor:pointer; visibility:hidden;
@@ -618,7 +620,10 @@
     <div class="sec-head">
       <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M21.2 15.9A10 10 0 1 1 8.1 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></span>
       <h2 data-i18n="posSortTitle">持仓</h2>
-      <div class="grow"><span class="count" data-i18n="posHint">由交易记录自动计算，只需填现价</span></div>
+      <div class="grow">
+        <span class="count" data-i18n="posHint">由交易记录自动计算，只需填现价</span>
+        <button class="btn-ghost btn-small" onclick="openAddPosition()" data-i18n="btnAdd2">+ 添加</button>
+      </div>
     </div>
 
     <div class="pos-layout">
@@ -818,8 +823,10 @@ async function mergeTradeUpdates(){
 let trades = [];
 let expandedRows = new Set();
 
-let positions = [];   // legacy — kept only to migrate old backups into `prices`
-let prices = {};      // { SYM: currentPrice } — the only thing you maintain by hand
+let positions = [];   // legacy — kept only to migrate old backups
+// per-symbol manual layer over the auto-derived holdings:
+//   { SYM: { price?, qty?, avg?, hidden? } }   any field omitted = use the ledger value
+let posMeta = {};
 let cash = {usd:0, cad:0};
 let fx = 1.38;
 let notes = [];
@@ -924,11 +931,13 @@ async function loadAll(){
   }
   await mergeTradeUpdates();
   try{ positions = JSON.parse((await window.storage.get(POSITIONS_KEY)).value); }catch(e){ positions = []; }
-  try{ prices = JSON.parse((await window.storage.get(PRICES_KEY)).value) || {}; }catch(e){ prices = {}; }
-  // migrate: an old backup stores current prices inside `positions`; lift them into `prices`
-  if(Object.keys(prices).length === 0 && positions.length){
-    for(const p of positions){ if(p.sym && p.currentPrice) prices[p.sym] = p.currentPrice; }
-    if(Object.keys(prices).length) await savePrices();
+  try{ posMeta = JSON.parse((await window.storage.get(PRICES_KEY)).value) || {}; }catch(e){ posMeta = {}; }
+  // migrate old { SYM: number } price map -> { SYM: {price} }
+  for(const k of Object.keys(posMeta)){ if(typeof posMeta[k] === 'number') posMeta[k] = { price: posMeta[k] }; }
+  // migrate: an old backup keeps current prices inside `positions`
+  if(Object.keys(posMeta).length === 0 && positions.length){
+    for(const p of positions){ if(p.sym && p.currentPrice) posMeta[p.sym] = { price: p.currentPrice }; }
+    if(Object.keys(posMeta).length) await savePosMeta();
   }
   try{
     const res = await window.storage.get(CASH_KEY);
@@ -975,7 +984,7 @@ async function loadAll(){
 }
 
 async function saveTrades(){ try{ await window.storage.set(STORAGE_KEY, JSON.stringify(trades)); }catch(e){} }
-async function savePrices(){ try{ await window.storage.set(PRICES_KEY, JSON.stringify(prices)); }catch(e){} }
+async function savePosMeta(){ try{ await window.storage.set(PRICES_KEY, JSON.stringify(posMeta)); }catch(e){} }
 async function saveCash(){ try{ await window.storage.set(CASH_KEY, JSON.stringify(cash)); }catch(e){} }
 async function saveFx(){ try{ await window.storage.set(FX_KEY, String(fx)); }catch(e){} }
 async function saveNotes(){ try{ await window.storage.set(NOTES_KEY, JSON.stringify(notes)); }catch(e){} }
@@ -1040,10 +1049,33 @@ function derivedHoldings(){
   return out;
 }
 
-function updatePrice(sym, value){
+// write one field of the manual layer; empty / matching-the-ledger value clears it
+function setPosMeta(sym, field, value){
+  const m = posMeta[sym] || (posMeta[sym] = {});
   const v = parseFloat(value);
-  if(isFinite(v)) prices[sym] = v; else delete prices[sym];
-  savePrices();
+  if(value === '' || !isFinite(v)) delete m[field];
+  else m[field] = v;
+  if(Object.keys(m).length === 0) delete posMeta[sym];
+  savePosMeta();
+  renderPositions();
+}
+function hidePos(sym){ (posMeta[sym] || (posMeta[sym]={})).hidden = true; savePosMeta(); renderPositions(); }
+function showPos(sym){ if(posMeta[sym]){ delete posMeta[sym].hidden; if(!Object.keys(posMeta[sym]).length) delete posMeta[sym]; savePosMeta(); renderPositions(); } }
+function resetPosAuto(sym){
+  if(posMeta[sym]){ const price = posMeta[sym].price; posMeta[sym] = price!=null ? {price} : undefined;
+    if(!posMeta[sym]) delete posMeta[sym]; savePosMeta(); renderPositions(); }
+}
+let showHiddenPos = false;
+function toggleHiddenPos(){ showHiddenPos = !showHiddenPos; renderPositions(); }
+
+function openAddPosition(){
+  const s = (prompt(L('手动加一个持仓 — 输入代码','Add a manual holding — enter the symbol'))||'').trim().toUpperCase();
+  if(!s) return;
+  const q = parseFloat(prompt(L('持股数（可负=空头）','Shares (negative = short)'))||'');
+  if(!isFinite(q) || q===0) return;
+  const a = parseFloat(prompt(L('均价','Average cost'))||'');
+  posMeta[s] = { ...(posMeta[s]||{}), qty:q, avg: isFinite(a)?a:0 };
+  savePosMeta();
   renderPositions();
 }
 
@@ -1084,16 +1116,33 @@ function donutSvg(slices, total){
 
 function renderPositions(){
   const cashUSDEq = cash.usd + (cash.cad||0)/fx;
-  const holdings = derivedHoldings().map(h=>{
-    const last = (prices[h.sym] != null) ? prices[h.sym] : h.avgCost;
-    return { ...h, last, mv: h.qty*last, pnl: h.qty*last - h.costBasis, priced: prices[h.sym] != null };
-  }).sort((a,b)=> b.mv - a.mv);
-  const totalPositionsUSD = holdings.reduce((s,h)=> s + h.mv, 0);
+  // merge auto-derived holdings with the manual layer
+  const bySym = {};
+  for(const h of derivedHoldings()) bySym[h.sym] = h;
+  for(const sym of Object.keys(posMeta)){
+    if(posMeta[sym].qty != null && !bySym[sym]) bySym[sym] = { sym, qty:0, costBasis:0, avgCost:0, lots:[] };
+  }
+  const hiddenSyms = Object.keys(posMeta).filter(s=> posMeta[s].hidden && bySym[s]);
+  let holdings = Object.values(bySym).map(h=>{
+    const m = posMeta[h.sym] || {};
+    const qty = (m.qty != null) ? m.qty : h.qty;
+    const avg = (m.avg != null) ? m.avg : h.avgCost;
+    const costBasis = qty * avg;
+    const priced = m.price != null;
+    const last = priced ? m.price : avg;
+    return {
+      ...h, qty, avgCost: avg, costBasis, last, priced,
+      mv: qty*last, pnl: qty*last - costBasis,
+      hidden: !!m.hidden, ovQty: m.qty!=null, ovAvg: m.avg!=null, manual: !h.lots.length && m.qty!=null,
+    };
+  });
+  holdings = holdings.filter(h=> !h.hidden || showHiddenPos).sort((a,b)=> b.mv - a.mv);
+  const totalPositionsUSD = holdings.filter(h=>!h.hidden).reduce((s,h)=> s + h.mv, 0);
   const totalPortfolioUSD = totalPositionsUSD + cashUSDEq;
 
   const list = document.getElementById('positionsList');
   const ce = 'onclick="event.stopPropagation()"';
-  const priceIn = (sym, last) => `<input type="number" step="any" class="cell-num" value="${pxv2(last)}" ${ce} onchange="updatePrice('${sym}',this.value)">`;
+  const num = (val, oc, ov) => `<input type="number" step="any" class="cell-num ${ov?'overridden':''}" value="${val}" ${ce} onchange="${oc}">`;
 
   let listHtml = `<div class="pl-row head">
     <span></span>
@@ -1108,23 +1157,31 @@ function renderPositions(){
     const pct = totalPortfolioUSD>0 ? (h.mv/totalPortfolioUSD*100) : 0;
     const open = expandedPos.has(h.sym);
     const short = h.qty < 0;
+    const overridden = h.ovQty || h.ovAvg;
     listHtml += `
-      <div class="pl-row ${open?'open':''}" onclick="togglePos('${h.sym}')" title="${L('点这一行看均价、占比和批次','click the row for avg cost, weight and lots')}">
+      <div class="pl-row ${open?'open':''} ${h.hidden?'is-hidden':''}" onclick="togglePos('${h.sym}')">
         <span class="swatch" style="background:${tkColor(h.sym)}"></span>
-        <div class="pl-tk"><b>${h.sym}</b>${short?`<span class="tg-badge sell" style="font-size:9px;">${L('空','short')}</span>`:''}</div>
-        <div class="pl-num">${short?L('空 ','-'):''}${fmt(Math.abs(h.qty),0)}</div>
-        <div class="pl-num">${priceIn(h.sym, h.last)}</div>
+        <div class="pl-tk"><b>${h.sym}</b>${short?`<span class="tg-badge sell" style="font-size:9px;">${L('空','short')}</span>`:''}${h.manual?`<span class="tg-badge watch" style="font-size:9px;">${L('手动','manual')}</span>`:''}</div>
+        <div class="pl-num">${num(pxv(h.qty), `setPosMeta('${h.sym}','qty',this.value)`, h.ovQty)}</div>
+        <div class="pl-num">${num(pxv2(h.last), `setPosMeta('${h.sym}','price',this.value)`, false)}</div>
         <div class="pl-val">$${fmt(h.mv,0)}</div>
         <div class="pl-pnl ${h.priced ? (h.pnl>=0?'gain':'loss') : ''}">${h.priced ? fmtSigned(h.pnl,0) : '—'}</div>
-        <span></span>
+        <button class="pl-del" title="${L('隐藏这个持仓','hide this holding')}" ${ce} onclick="hidePos('${h.sym}')">✕</button>
       </div>
       <div class="pl-detail ${open?'show':''}" onclick="event.stopPropagation()">
-        <div class="lot-row"><span class="k">${L('均价','Avg cost')}</span><span>$${fmt(h.avgCost,2)}</span></div>
+        <div class="lot-row"><span class="k">${L('均价','Avg cost')}</span><span>$ ${num(pxv2(h.avgCost), `setPosMeta('${h.sym}','avg',this.value)`, h.ovAvg)}</span></div>
         <div class="lot-row"><span class="k">${L('成本','Cost basis')}</span><span>$${fmt(h.costBasis,2)} · C$${fmt(h.costBasis*fx,2)}</span></div>
         <div class="lot-row"><span class="k">${L('占比','Weight')}</span><span>${fmt(pct,1)}%</span></div>
-        <div class="pos-lots-label" style="margin-top:10px;">${L('未平仓批次','Open lots')} · ${h.lots.length}</div>
-        ${h.lots.map(l=>`<div class="lot-row ${l.qty<0?'short':''} ${l.estimated?'est':''}"><span class="lot-qty">${l.qty<0?L('空 ','short '):''}${fmt(Math.abs(l.qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${fmt(l.unitCost)}</span><span class="lot-date">${String(l.date).slice(0,10)}</span></div>`).join('')}
+        ${overridden ? `<div class="lot-row"><span class="expand-toggle" onclick="resetPosAuto('${h.sym}')">${L('恢复自动（用交易记录算）','reset to auto (from trades)')}</span></div>` : ''}
+        ${h.hidden ? `<div class="lot-row"><span class="expand-toggle" onclick="showPos('${h.sym}')">${L('取消隐藏','unhide')}</span></div>` : ''}
+        ${h.lots.length ? `<div class="pos-lots-label" style="margin-top:10px;">${L('未平仓批次','Open lots')} · ${h.lots.length}</div>` +
+          h.lots.map(l=>`<div class="lot-row ${l.qty<0?'short':''} ${l.estimated?'est':''}"><span class="lot-qty">${l.qty<0?L('空 ','short '):''}${fmt(Math.abs(l.qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${fmt(l.unitCost)}</span><span class="lot-date">${String(l.date).slice(0,10)}</span></div>`).join('') : ''}
       </div>`;
+  }
+  if(hiddenSyms.length && !showHiddenPos){
+    listHtml += `<div class="pl-row" style="cursor:pointer;color:var(--text-dim);font-size:12px;" onclick="toggleHiddenPos()"><span></span><div style="grid-column:2/-1;">${L(`＋ ${hiddenSyms.length} 个已隐藏`,`＋ ${hiddenSyms.length} hidden`)}</div></div>`;
+  } else if(showHiddenPos){
+    listHtml += `<div class="pl-row" style="cursor:pointer;color:var(--text-dim);font-size:12px;" onclick="toggleHiddenPos()"><span></span><div style="grid-column:2/-1;">${L('收起已隐藏','collapse hidden')}</div></div>`;
   }
   const cashPct = totalPortfolioUSD>0 ? (cashUSDEq/totalPortfolioUSD*100) : 0;
   const cashOpen = expandedPos.has('__cash');
@@ -1146,7 +1203,7 @@ function renderPositions(){
   list.innerHTML = listHtml;
 
   // donut + legend
-  const slices = holdings.filter(h=>h.mv>0).map(h=>({label:h.sym, color:tkColor(h.sym), value:h.mv}))
+  const slices = holdings.filter(h=>!h.hidden && h.mv>0).map(h=>({label:h.sym, color:tkColor(h.sym), value:h.mv}))
     .concat([{label:'Cash', color:CASH_COLOR, value:cashUSDEq}]);
   const legend = slices.filter(s=>s.value>0)
     .sort((a,b)=>b.value-a.value)
