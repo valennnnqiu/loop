@@ -410,6 +410,11 @@
   .cal-event.hold{ background:#DCE6EC; color:#204A63; }
   .cal-event.rotate{ background:#F0E6D2; color:#6B4A1E; }
   .cal-event.watch{ background:var(--indigo-dim); color:var(--indigo); }
+  .cal-event.earnings{ background:#F3E3C7; color:#7A5410; font-weight:600; }
+  .cal-event.macro{ background:#1F1E1B; color:#EDEAE0; }
+  .dot.earnings{ background:#B5852A; }
+  .dot.macro{ background:#1F1E1B; }
+  .cal-sync{ display:flex; align-items:center; gap:10px; margin-bottom:12px; font-family:var(--mono); font-size:11px; color:var(--text-dim); }
   .cal-add{
     position:absolute; bottom:6px; right:6px; width:18px; height:18px; border-radius:6px;
     background:var(--panel-2); border:1px solid var(--line); color:var(--text-dim); cursor:pointer;
@@ -647,7 +652,13 @@
           <button class="btn-ghost btn-small btn-arrow" onclick="calNext()">›</button>
         </div>
       </div>
+      <div class="cal-sync">
+        <button class="btn-ghost btn-small" id="calSyncBtn" onclick="syncCalendar()" data-i18n="btnCalSync">同步日历</button>
+        <span id="calSyncNote"></span>
+      </div>
       <div class="cal-legend">
+        <span><i class="dot earnings"></i><span data-i18n="legendEarnings">财报</span></span>
+        <span><i class="dot macro"></i><span data-i18n="legendMacro">宏观</span></span>
         <span><i class="dot buy"></i>Buy / Add</span>
         <span><i class="dot sell"></i>Sell / Reduce</span>
         <span><i class="dot hold"></i>Hold</span>
@@ -789,6 +800,15 @@ const FX_KEY = 'ledger_fx_v1';
 const NOTES_KEY = 'ledger_notes_v1';
 const WATCH_KEY = 'ledger_watch_v1';
 const CALENDAR_KEY = 'ledger_calendar_v1';
+const CALSYNC_KEY = 'ledger_calsync_v1';
+let calSyncAt = 0;
+
+// FOMC rate-decision dates (day 2 of each meeting). Curated — verify against
+// federalreserve.gov each year. Update this list when the Fed publishes ahead.
+const MACRO_FOMC = [
+  '2026-01-28','2026-03-18','2026-04-29','2026-06-17','2026-07-29','2026-09-16','2026-10-28','2026-12-16',
+  '2027-01-27','2027-03-17','2027-04-28','2027-06-16','2027-07-28','2027-09-22','2027-11-03','2027-12-15',
+];
 const MERGED_BATCHES_KEY = 'ledger_merged_batches_v1';
 const LANG_KEY = 'ledger_lang_v1';
 const REVIEW_KEY = 'ledger_review_v1';
@@ -869,7 +889,7 @@ const I18N = {
     footerHint: '数据只存在这台电脑的浏览器里，不上传任何服务器。带 "(估)" 标记的批次是追踪起点前已持有、成本未知，按卖价估算。',
     evTitleAdd: '添加事件', evTextLabel: '内容', evCatLabel: '类别', evDelete: '删除', evSave: '保存',
     legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
-    targetsTitle: '价格目标', btnAddTarget: '+ 添加', tgSymbol: '代码', tgAction: '方向', tgLevel: '价位', tgNote: '备注 (可选)',
+    targetsTitle: '价格目标', btnAddTarget: '+ 添加', btnCalSync: '同步日历', legendEarnings: '财报', legendMacro: '宏观', tgSymbol: '代码', tgAction: '方向', tgLevel: '价位', tgNote: '备注 (可选)',
     tgBuy: '买入', tgSell: '卖出', tgWatch: '关注', tgLevelPh: '150-160 / 175 / 190', tgNotePh: '看图 · ER 前',
   },
   en: {
@@ -893,7 +913,7 @@ const I18N = {
     footerHint: 'Data lives only in this browser on this computer, never uploaded. Lots marked "(估)" were held before the tracking window; cost unknown, estimated at the sell price.',
     evTitleAdd: 'Add event', evTextLabel: 'Text', evCatLabel: 'Category', evDelete: 'Delete', evSave: 'Save',
     legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
-    targetsTitle: 'Price Targets', btnAddTarget: '+ Add', tgSymbol: 'Symbol', tgAction: 'Side', tgLevel: 'Level', tgNote: 'Note (optional)',
+    targetsTitle: 'Price Targets', btnAddTarget: '+ Add', btnCalSync: 'Sync calendar', legendEarnings: 'Earnings', legendMacro: 'Macro', tgSymbol: 'Symbol', tgAction: 'Side', tgLevel: 'Level', tgNote: 'Note (optional)',
     tgBuy: 'Buy', tgSell: 'Sell', tgWatch: 'Watch', tgLevelPh: '150-160 / 175 / 190', tgNotePh: 'chart · pre-ER',
   }
 };
@@ -924,6 +944,7 @@ async function toggleLang(){
   renderCalendar();
   renderReport();
   updateReviewButton();
+  refreshCalSyncNote();
 }
 
 function switchTab(name){
@@ -982,6 +1003,7 @@ async function loadAll(){
     Object.values(calendarEvents).forEach(list=>list.forEach((ev,i)=>ev.id='seedev'+Math.random().toString(36).slice(2)));
     await saveCalendar();
   }
+  try{ calSyncAt = parseInt((await window.storage.get(CALSYNC_KEY)).value) || 0; }catch(e){ calSyncAt = 0; }
   try{
     const res = await window.storage.get(LANG_KEY);
     lang = res.value === 'en' ? 'en' : 'zh';
@@ -994,6 +1016,17 @@ async function loadAll(){
   renderReport();
   loadSavedReview();
   loadAiSettings();
+  refreshCalSyncNote();
+  // weekly auto-sync of the calendar if a Finnhub key is set
+  if(finnhubKey && Date.now() - calSyncAt > 7*24*3600*1000){ syncCalendar(); }
+}
+
+function refreshCalSyncNote(){
+  const el = document.getElementById('calSyncNote');
+  if(!el) return;
+  el.textContent = calSyncAt
+    ? L(`上次同步 ${new Date(calSyncAt).toLocaleDateString('zh-CN')}`, `last synced ${new Date(calSyncAt).toLocaleDateString('en-US')}`)
+    : L('未同步 — 点「同步日历」拉财报日和宏观事件', 'not synced yet');
 }
 
 async function saveTrades(){ try{ await window.storage.set(STORAGE_KEY, JSON.stringify(trades)); }catch(e){} }
@@ -1005,6 +1038,92 @@ async function saveNotes(){ try{ await window.storage.set(NOTES_KEY, JSON.string
 async function saveWatch(){ try{ await window.storage.set(WATCH_KEY, JSON.stringify(watchlist)); }catch(e){} }
 async function saveCalendar(){ try{ await window.storage.set(CALENDAR_KEY, JSON.stringify(calendarEvents)); }catch(e){} }
 
+// ---------- Calendar sync: earnings dates + core macro prints (layer A) ----------
+function firstFriday(y, m){ // m: 0-11
+  const d = new Date(y, m, 1);
+  d.setDate(1 + ((5 - d.getDay() + 7) % 7));
+  return d;
+}
+function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+// macro events for the next `months` months, all tagged auto-macro
+function macroEventsForRange(months=6){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const horizon = new Date(today); horizon.setMonth(horizon.getMonth()+months);
+  const out = [];
+  const push = (dateStr, text) => { const d = new Date(dateStr); if(d>=today && d<=horizon) out.push({date:dateStr, text}); };
+  for(const f of MACRO_FOMC) push(f, 'FOMC 利率决议');
+  for(let i=0;i<=months;i++){
+    const dt = new Date(today.getFullYear(), today.getMonth()+i, 1);
+    const y = dt.getFullYear(), m = dt.getMonth();
+    push(iso(firstFriday(y, m)), '非农就业 (NFP)');
+    push(`${y}-${String(m+1).padStart(2,'0')}-12`, '≈ CPI');
+    push(`${y}-${String(m+1).padStart(2,'0')}-13`, '≈ PPI');
+  }
+  return out;
+}
+
+async function syncCalendar(){
+  const btn = document.getElementById('calSyncBtn');
+  if(!/\S/.test(finnhubKey)){
+    const k = (prompt(L('输入你的 Finnhub API key（用于抓财报日）：','Enter your Finnhub API key (for earnings dates):'),'')||'').trim();
+    if(!k) return;
+    finnhubKey = k;
+    try{ await window.storage.set(FINNHUB_KEY, k); }catch(e){}
+  }
+  btn.disabled = true; btn.textContent = L('同步中…','Syncing…');
+
+  // which tickers: held + watchlist + traded in the last 120 days
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-120);
+  const syms = [...new Set([
+    ...derivedHoldings().map(h=>h.sym),
+    ...watchlist.map(w=>w.sym).filter(Boolean),
+    ...trades.filter(t=> new Date(t.date) >= cutoff).map(t=> aliases[t.sym]||t.sym),
+  ])].filter(Boolean);
+
+  const from = iso(new Date());
+  const toD = new Date(); toD.setDate(toD.getDate()+180);
+  const to = iso(toD);
+  const fresh = {};  // date -> [{text, category, source, id}]
+  const add = (date, text, category, source) => {
+    if(!date) return;
+    (fresh[date] || (fresh[date]=[])).push({ id:`${source}-${text}-${date}`.replace(/[^\w-]/g,''), text, category, source });
+  };
+
+  const failed = [];
+  for(const sym of syms){
+    try{
+      const r = await fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${from}&to=${to}&symbol=${encodeURIComponent(sym)}&token=${encodeURIComponent(finnhubKey)}`);
+      if(!r.ok){ failed.push(sym); continue; }
+      const d = await r.json();
+      for(const e of (d.earningsCalendar||[])){
+        const hr = e.hour === 'bmo' ? ' 盘前' : e.hour === 'amc' ? ' 盘后' : '';
+        add(e.date, `${sym} 财报${hr}`, 'earnings', 'auto-er');
+      }
+    }catch(e){ failed.push(sym); }
+  }
+  for(const m of macroEventsForRange(6)) add(m.date, m.text, 'macro', 'auto-macro');
+
+  // replace only auto-* events; keep everything the user added
+  for(const key of Object.keys(calendarEvents)){
+    calendarEvents[key] = (calendarEvents[key]||[]).filter(ev => !(ev.source||'').startsWith('auto'));
+    if(!calendarEvents[key].length) delete calendarEvents[key];
+  }
+  for(const key of Object.keys(fresh)){
+    calendarEvents[key] = (calendarEvents[key]||[]).concat(fresh[key]);
+  }
+  await saveCalendar();
+  calSyncAt = Date.now();
+  try{ await window.storage.set(CALSYNC_KEY, String(calSyncAt)); }catch(e){}
+
+  btn.disabled = false; btn.textContent = t('btnCalSync');
+  const n = Object.values(fresh).reduce((s,l)=>s+l.length,0);
+  document.getElementById('calSyncNote').textContent =
+    L(`已同步 ${n} 项 · ${new Date().toTimeString().slice(0,5)}`, `${n} events · ${new Date().toTimeString().slice(0,5)}`)
+    + (failed.length ? L(`（${failed.join(' ')} 无数据）`, ` (no data: ${failed.join(' ')})`) : '');
+  renderCalendar();
+}
+
 function resetToSeed(){
   if(!confirm(L('清空全部交易记录？此操作不可撤销，建议先「导出备份」。','Clear all trades? This cannot be undone — export a backup first.'))) return;
   trades = [];
@@ -1013,7 +1132,7 @@ function resetToSeed(){
 }
 
 // ---------- Backup: export / import all local data as one JSON file ----------
-const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, PRICES_KEY, ALIASES_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY];
+const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, PRICES_KEY, ALIASES_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, CALSYNC_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY];
 
 async function exportBackup(){
   const data = {};
@@ -1569,10 +1688,13 @@ function renderCalendar(){
     const key = dateKey(d);
     const isDim = d.getMonth() !== month;
     const isToday = key === todayKey;
-    const events = calendarEvents[key] || [];
+    const events = (calendarEvents[key] || []).slice().sort((a,b)=> (a.source||'').startsWith('auto') === (b.source||'').startsWith('auto') ? 0 : (a.source||'').startsWith('auto') ? -1 : 1);
     html += `<div class="cal-cell ${isDim?'dim':''}">
       <div class="cal-date ${isToday?'today':''}">${d.getDate()}</div>
-      ${events.map(ev=>`<div class="cal-event ${ev.category}" onclick="openEventModal('${key}','${ev.id}')" title="${ev.text}">${ev.text}</div>`).join('')}
+      ${events.map(ev=>{
+        const auto = (ev.source||'').startsWith('auto');
+        return `<div class="cal-event ${ev.category}" ${auto?'':`onclick="openEventModal('${key}','${ev.id}')"`} title="${ev.text}${auto?L(' · 自动同步',' · auto'):''}">${ev.text}</div>`;
+      }).join('')}
       <div class="cal-add" onclick="openEventModal('${key}')">+</div>
     </div>`;
     if(i===41) break;
