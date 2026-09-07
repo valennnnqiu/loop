@@ -64,6 +64,7 @@ For distribution the two `.js` files can be inlined back into a single HTML file
 
 ## Privacy / 隐私
 
-No backend, no analytics, no network calls — except: Google Fonts (styling) and,
-*only if you turn on AI review*, the Anthropic API. Your trades never leave your
-machine otherwise.
+No backend, no analytics. Network calls are limited to: Google Fonts (styling);
+*only if you turn on AI review*, the Anthropic API; and *only if you click Refresh
+prices*, Finnhub (`finnhub.io`, your own free API key, sends ticker symbols only).
+Your trades never leave your machine.

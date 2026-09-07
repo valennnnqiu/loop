@@ -294,8 +294,8 @@
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
   }
   .pl-row{
-    display:grid; grid-template-columns:10px minmax(92px,1fr) 64px 82px 96px 82px 18px;
-    gap:11px; align-items:center; padding:11px 16px; cursor:pointer;
+    display:grid; grid-template-columns:10px minmax(72px,1fr) 52px 72px 72px 88px 74px 18px;
+    gap:10px; align-items:center; padding:11px 16px; cursor:pointer;
     border-bottom:1px solid var(--line); font-size:12.5px;
   }
   .pl-row:last-of-type{ border-bottom:none; }
@@ -327,6 +327,8 @@
   .cell-num:hover{ border-color:var(--line-strong); }
   .cell-num:focus{ outline:none; border-color:var(--gold); background:var(--panel); box-shadow:0 0 0 3px var(--gold-dim); }
   .cell-num.overridden{ color:var(--gold); font-weight:600; }
+  /* detail-panel inputs (cash, avg) always look editable */
+  .pl-detail .cell-num{ width:120px; text-align:left; border-color:var(--line); background:var(--panel); }
   .pl-del{
     width:18px; height:18px; border-radius:5px; border:none; background:transparent;
     color:var(--text-dim); font-size:11px; cursor:pointer; visibility:hidden;
@@ -780,6 +782,7 @@ const STORAGE_KEY = 'ledger_trades_v2';
 const POSITIONS_KEY = 'ledger_positions_v1';
 const PRICES_KEY = 'ledger_prices_v1';
 const ALIASES_KEY = 'ledger_aliases_v1';
+const FINNHUB_KEY = 'ledger_finnhub_key_v1';
 const CASH_KEY = 'ledger_cash_v1';
 const FX_KEY = 'ledger_fx_v1';
 const NOTES_KEY = 'ledger_notes_v1';
@@ -940,6 +943,7 @@ async function loadAll(){
   try{ positions = JSON.parse((await window.storage.get(POSITIONS_KEY)).value); }catch(e){ positions = []; }
   try{ posMeta = JSON.parse((await window.storage.get(PRICES_KEY)).value) || {}; }catch(e){ posMeta = {}; }
   try{ aliases = JSON.parse((await window.storage.get(ALIASES_KEY)).value) || {}; }catch(e){ aliases = {}; }
+  try{ finnhubKey = (await window.storage.get(FINNHUB_KEY)).value || ''; }catch(e){ finnhubKey = ''; }
   // migrate old { SYM: number } price map -> { SYM: {price} }
   for(const k of Object.keys(posMeta)){ if(typeof posMeta[k] === 'number') posMeta[k] = { price: posMeta[k] }; }
   // migrate: an old backup keeps current prices inside `positions`
@@ -1170,6 +1174,7 @@ function renderPositions(){
     <span></span>
     <div>${L('代码','Symbol')}</div>
     <div class="pl-num">${L('持股','Qty')}</div>
+    <div class="pl-num">${L('均价','Avg')}</div>
     <div class="pl-num">${L('现价','Last')}</div>
     <div class="pl-num">${L('市值','Value')}</div>
     <div class="pl-num">${L('浮盈亏','Unrl.')}</div>
@@ -1186,13 +1191,13 @@ function renderPositions(){
         <span class="swatch" style="background:${tkColor(h.sym)}"></span>
         <div class="pl-tk"><b>${h.sym}</b>${short?`<span class="tg-badge sell" style="font-size:9px;">${L('空','short')}</span>`:''}${h.manual?`<span class="tg-badge watch" style="font-size:9px;">${L('手动','manual')}</span>`:''}</div>
         <div class="pl-num">${num(pxv(h.qty), `setPosMeta('${h.sym}','qty',this.value)`, h.ovQty)}</div>
+        <div class="pl-num">${num(pxv2(h.avgCost), `setPosMeta('${h.sym}','avg',this.value)`, h.ovAvg)}</div>
         <div class="pl-num">${num(pxv2(h.last), `setPosMeta('${h.sym}','price',this.value)`, false)}</div>
         <div class="pl-val">$${fmt(h.mv,0)}</div>
         <div class="pl-pnl ${h.priced ? (h.pnl>=0?'gain':'loss') : ''}">${h.priced ? fmtSigned(h.pnl,0) : '—'}</div>
         <button class="pl-del" title="${L('删除这个持仓','delete this holding')}" onclick="event.stopPropagation(); deletePos('${h.sym}')">✕</button>
       </div>
       <div class="pl-detail ${open?'show':''}" onclick="event.stopPropagation()">
-        <div class="lot-row"><span class="k">${L('均价','Avg cost')}</span><span>$ ${num(pxv2(h.avgCost), `setPosMeta('${h.sym}','avg',this.value)`, h.ovAvg)}</span></div>
         <div class="lot-row"><span class="k">${L('成本','Cost basis')}</span><span>$${fmt(h.costBasis,2)} · C$${fmt(h.costBasis*fx,2)}</span></div>
         <div class="lot-row"><span class="k">${L('占比','Weight')}</span><span>${fmt(pct,1)}%</span></div>
         ${overridden ? `<div class="lot-row"><span class="expand-toggle" onclick="resetPosAuto('${h.sym}')">${L('恢复自动（用交易记录算）','reset to auto (from trades)')}</span></div>` : ''}
@@ -1210,13 +1215,14 @@ function renderPositions(){
       <div class="pl-tk"><b>Cash</b></div>
       <div class="pl-num"></div>
       <div class="pl-num"></div>
+      <div class="pl-num"></div>
       <div class="pl-val">$${fmt(cashUSDEq,0)}</div>
       <div class="pl-pnl" style="color:var(--text-dim);">${fmt(cashPct,1)}%</div>
       <span></span>
     </div>
     <div class="pl-detail ${cashOpen?'show':''}" onclick="event.stopPropagation()">
-      <div class="lot-row"><span class="k">USD</span><span><input type="number" step="any" class="cell-num" ${ce} value="${pxv2(cash.usd)}" onchange="updateCash('usd',this.value)"></span></div>
-      <div class="lot-row"><span class="k">CAD</span><span><input type="number" step="any" class="cell-num" ${ce} value="${pxv2(cash.cad)}" onchange="updateCash('cad',this.value)"></span></div>
+      <div class="lot-row"><span class="k">USD</span><input type="number" step="any" class="cell-num" ${ce} value="${pxv2(cash.usd)}" onchange="updateCash('usd',this.value)"></div>
+      <div class="lot-row"><span class="k">CAD</span><input type="number" step="any" class="cell-num" ${ce} value="${pxv2(cash.cad)}" onchange="updateCash('cad',this.value)"></div>
     </div>`;
   if(!holdings.length) listHtml = `<div class="empty">${L('还没有持仓 — 先在「交易盈亏」里加交易或导入对账单','No holdings yet — add trades or import a statement in the Trades tab')}</div>` + listHtml;
   list.innerHTML = listHtml;
@@ -1241,7 +1247,42 @@ function renderPositions(){
       <input type="number" step="any" value="${fx}" onchange="updateFx(this.value)">
     </div>
     <div class="pos-total">≈ C$${fmt(totalPortfolioUSD*fx,0)}</div>
+    <button class="btn-ghost btn-small" style="width:100%;margin-top:12px;" id="fetchPricesBtn" onclick="fetchPrices()">${L('刷新股价','Refresh prices')}</button>
+    <div class="pos-total" id="fetchPricesNote">${priceFetchNote}</div>
   `;
+}
+
+// ---------- Live prices (Finnhub, opt-in, your own free key) ----------
+let finnhubKey = '';
+let priceFetchNote = '';
+async function fetchPrices(){
+  const btn = document.getElementById('fetchPricesBtn');
+  if(!/\S/.test(finnhubKey)){
+    const k = (prompt(L('输入你的 Finnhub API key（finnhub.io 免费注册，60 次/分钟）：','Enter your Finnhub API key (free at finnhub.io, 60 req/min):'), '')||'').trim();
+    if(!k) return;
+    finnhubKey = k;
+    try{ await window.storage.set(FINNHUB_KEY, k); }catch(e){}
+  }
+  const syms = [...new Set(derivedHoldings().map(h=>h.sym).concat(Object.keys(posMeta).filter(s=>posMeta[s].qty!=null && !posMeta[s].deleted)))];
+  if(!syms.length) return;
+  btn.disabled = true; btn.textContent = L('刷新中…','Fetching…');
+  let ok = 0; const failed = [];
+  for(const sym of syms){
+    try{
+      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${encodeURIComponent(finnhubKey)}`);
+      if(!r.ok){ failed.push(sym); continue; }
+      const d = await r.json();
+      if(d && typeof d.c === 'number' && d.c > 0){
+        (posMeta[sym] || (posMeta[sym]={})).price = d.c;
+        ok++;
+      } else failed.push(sym);
+    }catch(e){ failed.push(sym); }
+  }
+  await savePosMeta();
+  const now = new Date().toTimeString().slice(0,5);
+  priceFetchNote = L(`更新于 ${now} · ${ok} 只成功`, `updated ${now} · ${ok} ok`) + (failed.length ? L(`，失败：${failed.join(' ')}`, `, failed: ${failed.join(' ')}`) : '');
+  btn.disabled = false;
+  renderPositions();
 }
 
 // ---------- Price targets (watchlist) ----------
