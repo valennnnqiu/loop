@@ -1166,7 +1166,7 @@ function renderPositions(){
         <div class="pl-num">${num(pxv2(h.last), `setPosMeta('${h.sym}','price',this.value)`, false)}</div>
         <div class="pl-val">$${fmt(h.mv,0)}</div>
         <div class="pl-pnl ${h.priced ? (h.pnl>=0?'gain':'loss') : ''}">${h.priced ? fmtSigned(h.pnl,0) : '—'}</div>
-        <button class="pl-del" title="${L('隐藏这个持仓','hide this holding')}" ${ce} onclick="hidePos('${h.sym}')">✕</button>
+        <button class="pl-del" title="${L('隐藏这个持仓','hide this holding')}" onclick="event.stopPropagation(); hidePos('${h.sym}')">✕</button>
       </div>
       <div class="pl-detail ${open?'show':''}" onclick="event.stopPropagation()">
         <div class="lot-row"><span class="k">${L('均价','Avg cost')}</span><span>$ ${num(pxv2(h.avgCost), `setPosMeta('${h.sym}','avg',this.value)`, h.ovAvg)}</span></div>
