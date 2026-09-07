@@ -1048,11 +1048,11 @@ function macroEventsForRange(months=6){
   const horizon = new Date(today); horizon.setMonth(horizon.getMonth()+months);
   const out = [];
   const push = (dateStr, text) => { const d = new Date(dateStr); if(d>=today && d<=horizon) out.push({date:dateStr, text}); };
-  for(const f of MACRO_FOMC) push(f, 'FOMC 利率决议');
+  for(const f of MACRO_FOMC) push(f, 'FOMC decision');
   for(let i=0;i<=months;i++){
     const dt = new Date(today.getFullYear(), today.getMonth()+i, 1);
     const y = dt.getFullYear(), m = dt.getMonth();
-    push(iso(firstFriday(y, m)), '非农就业 (NFP)');
+    push(iso(firstFriday(y, m)), 'Nonfarm payrolls');
     push(`${y}-${String(m+1).padStart(2,'0')}-12`, '≈ CPI');
     push(`${y}-${String(m+1).padStart(2,'0')}-13`, '≈ PPI');
   }
@@ -1093,8 +1093,8 @@ async function syncCalendar(){
       if(!r.ok){ failed.push(sym); continue; }
       const d = await r.json();
       for(const e of (d.earningsCalendar||[])){
-        const hr = e.hour === 'bmo' ? ' 盘前' : e.hour === 'amc' ? ' 盘后' : '';
-        add(e.date, `${sym} 财报${hr}`, 'earnings', 'auto-er');
+        const hr = e.hour === 'bmo' ? ' · pre' : e.hour === 'amc' ? ' · post' : '';
+        add(e.date, `${sym} earnings${hr}`, 'earnings', 'auto-er');
       }
     }catch(e){ failed.push(sym); }
   }
@@ -1689,7 +1689,7 @@ function renderCalendar(){
       <div class="cal-date ${isToday?'today':''}">${d.getDate()}</div>
       ${events.map(ev=>{
         const auto = (ev.source||'').startsWith('auto');
-        return `<div class="cal-event ${ev.category}" ${auto?'':`onclick="openEventModal('${key}','${ev.id}')"`} title="${ev.text}${auto?L(' · 自动同步',' · auto'):''}">${ev.text}</div>`;
+        return `<div class="cal-event ${ev.category}" ${auto?'':`onclick="openEventModal('${key}','${ev.id}')"`} title="${ev.text}${auto?' · auto':''}">${ev.text}</div>`;
       }).join('')}
       <div class="cal-add" onclick="openEventModal('${key}')">+</div>
     </div>`;
