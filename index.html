@@ -622,7 +622,8 @@
       <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M21.2 15.9A10 10 0 1 1 8.1 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></span>
       <h2 data-i18n="posSortTitle">持仓</h2>
       <div class="grow">
-        <span class="count" data-i18n="posHint">由交易记录自动计算，只需填现价</span>
+        <span class="count" id="fetchPricesNote"></span>
+        <button class="btn-ghost btn-small" id="fetchPricesBtn" onclick="fetchPrices()" data-i18n="btnRefreshPrices">刷新股价</button>
         <button class="btn-ghost btn-small" onclick="openAddPosition()" data-i18n="btnAdd2">+ 添加</button>
       </div>
     </div>
@@ -854,7 +855,7 @@ const I18N = {
     weeklyChartTitle: '每周已实现盈亏', monthlyChartTitle: '每月已实现盈亏', reviewTitle: '操作评价', btnGenReview: '生成评价',
     reviewEmpty: '点"生成评价"，我会看你最近的交易，给点反馈（比如卖早了、加仓时机怎么样之类的）',
     addTradeTitle: '添加交易', realizedTitle: '已实现盈亏（按批次真实结算 · LIFO）', openLotsTitle: '未平仓批次',
-    posSortTitle: '持仓', posHint: '由交易记录自动计算，只需填现价', resetSeed: '清空数据',
+    posSortTitle: '持仓', btnRefreshPrices: '刷新股价', resetSeed: '清空数据',
     btnImport: '导入对账单', btnAdd2: '+ 添加', btnExportBackup: '导出备份', btnImportBackup: '导入备份',
     btnSettings: '设置', btnParsePaste: '解析粘贴内容', btnCancel: '取消',
     fDate: '日期', fSymbol: '代码', fSide: '方向', fQty: '数量', fPrice: '价格', fComm: '佣金 (可选)', fAdd: '添加',
@@ -878,7 +879,7 @@ const I18N = {
     weeklyChartTitle: 'Weekly Realized P&L', monthlyChartTitle: 'Monthly Realized P&L', reviewTitle: 'Trading Review', btnGenReview: 'Generate Review',
     reviewEmpty: 'Click "Generate Review" — I\'ll look at your recent trades and give feedback (e.g. sold too early, timing on adds, etc.)',
     addTradeTitle: 'Add Trade', realizedTitle: 'Realized P&L (lot-matched · LIFO)', openLotsTitle: 'Open Lots',
-    posSortTitle: 'Positions', posHint: 'computed from your trades — you only enter the last price', resetSeed: 'Clear all data',
+    posSortTitle: 'Positions', btnRefreshPrices: 'Refresh prices', resetSeed: 'Clear all data',
     btnImport: 'Import statement', btnAdd2: '+ Add', btnExportBackup: 'Export backup', btnImportBackup: 'Import backup',
     btnSettings: 'Settings', btnParsePaste: 'Parse pasted text', btnCancel: 'Cancel',
     fDate: 'Date', fSymbol: 'Symbol', fSide: 'Side', fQty: 'Qty', fPrice: 'Price', fComm: 'Commission (opt.)', fAdd: 'Add',
@@ -1247,8 +1248,6 @@ function renderPositions(){
       <input type="number" step="any" value="${fx}" onchange="updateFx(this.value)">
     </div>
     <div class="pos-total">≈ C$${fmt(totalPortfolioUSD*fx,0)}</div>
-    <button class="btn-ghost btn-small" style="width:100%;margin-top:12px;" id="fetchPricesBtn" onclick="fetchPrices()">${L('刷新股价','Refresh prices')}</button>
-    <div class="pos-total" id="fetchPricesNote">${priceFetchNote}</div>
   `;
 }
 
@@ -1282,6 +1281,9 @@ async function fetchPrices(){
   const now = new Date().toTimeString().slice(0,5);
   priceFetchNote = L(`更新于 ${now} · ${ok} 只成功`, `updated ${now} · ${ok} ok`) + (failed.length ? L(`，失败：${failed.join(' ')}`, `, failed: ${failed.join(' ')}`) : '');
   btn.disabled = false;
+  btn.textContent = t('btnRefreshPrices');
+  const note = document.getElementById('fetchPricesNote');
+  if(note) note.textContent = priceFetchNote;
   renderPositions();
 }
 
