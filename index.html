@@ -617,18 +617,8 @@
 
     <div class="sec-head">
       <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M21.2 15.9A10 10 0 1 1 8.1 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></span>
-      <h2 data-i18n="posSortTitle">持仓排序</h2>
-      <div class="grow"><button class="btn-primary btn-small" onclick="openAddPosition()" data-i18n="btnAdd2">+ 添加</button></div>
-    </div>
-
-    <div id="addPosForm" class="form-card" style="display:none; margin-bottom:14px;">
-      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr 1fr auto;">
-        <div class="field"><label data-i18n="pSymbol">代码</label><input type="text" id="p-symbol" placeholder="AAPL" style="text-transform:uppercase;"></div>
-        <div class="field"><label data-i18n="pQty">持股数</label><input type="number" id="p-qty" placeholder="100" step="any"></div>
-        <div class="field"><label data-i18n="pAvg">均价</label><input type="number" id="p-avg" placeholder="150.00" step="any"></div>
-        <div class="field"><label data-i18n="pCur">现价</label><input type="number" id="p-cur" placeholder="155.00" step="any"></div>
-        <button class="btn-primary" onclick="addPosition()" data-i18n="fAdd">添加</button>
-      </div>
+      <h2 data-i18n="posSortTitle">持仓</h2>
+      <div class="grow"><span class="count" data-i18n="posHint">由交易记录自动计算，只需填现价</span></div>
     </div>
 
     <div class="pos-layout">
@@ -784,6 +774,7 @@ if (!window.storage) {
 
 const STORAGE_KEY = 'ledger_trades_v2';
 const POSITIONS_KEY = 'ledger_positions_v1';
+const PRICES_KEY = 'ledger_prices_v1';
 const CASH_KEY = 'ledger_cash_v1';
 const FX_KEY = 'ledger_fx_v1';
 const NOTES_KEY = 'ledger_notes_v1';
@@ -827,7 +818,8 @@ async function mergeTradeUpdates(){
 let trades = [];
 let expandedRows = new Set();
 
-let positions = [];
+let positions = [];   // legacy — kept only to migrate old backups into `prices`
+let prices = {};      // { SYM: currentPrice } — the only thing you maintain by hand
 let cash = {usd:0, cad:0};
 let fx = 1.38;
 let notes = [];
@@ -845,7 +837,7 @@ const I18N = {
     weeklyChartTitle: '每周已实现盈亏', monthlyChartTitle: '每月已实现盈亏', reviewTitle: '操作评价', btnGenReview: '生成评价',
     reviewEmpty: '点"生成评价"，我会看你最近的交易，给点反馈（比如卖早了、加仓时机怎么样之类的）',
     addTradeTitle: '添加交易', realizedTitle: '已实现盈亏（按批次真实结算 · LIFO）', openLotsTitle: '未平仓批次',
-    posSortTitle: '持仓排序', resetSeed: '清空数据',
+    posSortTitle: '持仓', posHint: '由交易记录自动计算，只需填现价', resetSeed: '清空数据',
     btnImport: '导入对账单', btnAdd2: '+ 添加', btnExportBackup: '导出备份', btnImportBackup: '导入备份',
     btnSettings: '设置', btnParsePaste: '解析粘贴内容', btnCancel: '取消',
     fDate: '日期', fSymbol: '代码', fSide: '方向', fQty: '数量', fPrice: '价格', fComm: '佣金 (可选)', fAdd: '添加',
@@ -869,7 +861,7 @@ const I18N = {
     weeklyChartTitle: 'Weekly Realized P&L', monthlyChartTitle: 'Monthly Realized P&L', reviewTitle: 'Trading Review', btnGenReview: 'Generate Review',
     reviewEmpty: 'Click "Generate Review" — I\'ll look at your recent trades and give feedback (e.g. sold too early, timing on adds, etc.)',
     addTradeTitle: 'Add Trade', realizedTitle: 'Realized P&L (lot-matched · LIFO)', openLotsTitle: 'Open Lots',
-    posSortTitle: 'Positions', resetSeed: 'Clear all data',
+    posSortTitle: 'Positions', posHint: 'computed from your trades — you only enter the last price', resetSeed: 'Clear all data',
     btnImport: 'Import statement', btnAdd2: '+ Add', btnExportBackup: 'Export backup', btnImportBackup: 'Import backup',
     btnSettings: 'Settings', btnParsePaste: 'Parse pasted text', btnCancel: 'Cancel',
     fDate: 'Date', fSymbol: 'Symbol', fSide: 'Side', fQty: 'Qty', fPrice: 'Price', fComm: 'Commission (opt.)', fAdd: 'Add',
@@ -931,12 +923,12 @@ async function loadAll(){
     await saveTrades();
   }
   await mergeTradeUpdates();
-  try{
-    const res = await window.storage.get(POSITIONS_KEY);
-    positions = JSON.parse(res.value);
-  }catch(e){
-    positions = SEED_POSITIONS.map((p,i)=>({id:'pos-'+i, ...p}));
-    await savePositions();
+  try{ positions = JSON.parse((await window.storage.get(POSITIONS_KEY)).value); }catch(e){ positions = []; }
+  try{ prices = JSON.parse((await window.storage.get(PRICES_KEY)).value) || {}; }catch(e){ prices = {}; }
+  // migrate: an old backup stores current prices inside `positions`; lift them into `prices`
+  if(Object.keys(prices).length === 0 && positions.length){
+    for(const p of positions){ if(p.sym && p.currentPrice) prices[p.sym] = p.currentPrice; }
+    if(Object.keys(prices).length) await savePrices();
   }
   try{
     const res = await window.storage.get(CASH_KEY);
@@ -983,7 +975,7 @@ async function loadAll(){
 }
 
 async function saveTrades(){ try{ await window.storage.set(STORAGE_KEY, JSON.stringify(trades)); }catch(e){} }
-async function savePositions(){ try{ await window.storage.set(POSITIONS_KEY, JSON.stringify(positions)); }catch(e){} }
+async function savePrices(){ try{ await window.storage.set(PRICES_KEY, JSON.stringify(prices)); }catch(e){} }
 async function saveCash(){ try{ await window.storage.set(CASH_KEY, JSON.stringify(cash)); }catch(e){} }
 async function saveFx(){ try{ await window.storage.set(FX_KEY, String(fx)); }catch(e){} }
 async function saveNotes(){ try{ await window.storage.set(NOTES_KEY, JSON.stringify(notes)); }catch(e){} }
@@ -998,7 +990,7 @@ function resetToSeed(){
 }
 
 // ---------- Backup: export / import all local data as one JSON file ----------
-const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY];
+const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, PRICES_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY];
 
 async function exportBackup(){
   const data = {};
@@ -1031,41 +1023,27 @@ async function importBackup(file){
   location.reload();
 }
 
-// ---------- Positions ----------
+// ---------- Positions (derived from the trade ledger) ----------
 const SEED_POSITIONS = [];
 
-function openAddPosition(){
-  const f = document.getElementById('addPosForm');
-  f.style.display = f.style.display==='none' ? 'block' : 'none';
+// current holdings straight from the LIFO open-lot queue
+function derivedHoldings(){
+  const {openLots} = runFIFO(trades, 'LIFO');
+  const out = [];
+  for(const sym of Object.keys(openLots)){
+    const lots = openLots[sym].filter(l => Math.abs(l.qty) > 0.0000001);
+    const qty = lots.reduce((s,l)=> s + l.qty, 0);
+    if(Math.abs(qty) < 0.0000001) continue;
+    const costBasis = lots.reduce((s,l)=> s + l.qty*l.unitCost, 0);
+    out.push({ sym, qty, costBasis, avgCost: costBasis/qty, lots });
+  }
+  return out;
 }
 
-function addPosition(){
-  const symbol = document.getElementById('p-symbol').value.trim().toUpperCase();
-  const qty = parseFloat(document.getElementById('p-qty').value);
-  const avgPrice = parseFloat(document.getElementById('p-avg').value);
-  const currentPrice = parseFloat(document.getElementById('p-cur').value) || avgPrice;
-  if(!symbol || !qty || !avgPrice){ alert(L('代码、持股数、均价都要填','Symbol, shares and average cost are all required')); return; }
-  positions.push({id:'pos'+Date.now(), sym:symbol, name:'', qty, avgPrice, currentPrice});
-  savePositions();
-  document.getElementById('p-symbol').value='';
-  document.getElementById('p-qty').value='';
-  document.getElementById('p-avg').value='';
-  document.getElementById('p-cur').value='';
-  document.getElementById('addPosForm').style.display='none';
-  renderPositions();
-}
-
-function deletePosition(id){
-  positions = positions.filter(p=>p.id!==id);
-  savePositions();
-  renderPositions();
-}
-
-function updatePosition(id, field, value){
-  const p = positions.find(p=>p.id===id);
-  if(!p) return;
-  p[field] = parseFloat(value) || 0;
-  savePositions();
+function updatePrice(sym, value){
+  const v = parseFloat(value);
+  if(isFinite(v)) prices[sym] = v; else delete prices[sym];
+  savePrices();
   renderPositions();
 }
 
@@ -1106,17 +1084,16 @@ function donutSvg(slices, total){
 
 function renderPositions(){
   const cashUSDEq = cash.usd + (cash.cad||0)/fx;
-  const totalPositionsUSD = positions.reduce((s,p)=> s + p.qty*p.currentPrice, 0);
+  const holdings = derivedHoldings().map(h=>{
+    const last = (prices[h.sym] != null) ? prices[h.sym] : h.avgCost;
+    return { ...h, last, mv: h.qty*last, pnl: h.qty*last - h.costBasis, priced: prices[h.sym] != null };
+  }).sort((a,b)=> b.mv - a.mv);
+  const totalPositionsUSD = holdings.reduce((s,h)=> s + h.mv, 0);
   const totalPortfolioUSD = totalPositionsUSD + cashUSDEq;
-  const {openLots: allOpenLots} = runFIFO(trades, 'LIFO');
 
   const list = document.getElementById('positionsList');
-  const rows = positions
-    .map(p=>({p, mv:p.qty*p.currentPrice}))
-    .sort((a,b)=> b.mv - a.mv);
-
   const ce = 'onclick="event.stopPropagation()"';
-  const numIn = (val, oc) => `<input type="number" step="any" class="cell-num" value="${val}" ${ce} onchange="${oc}">`;
+  const priceIn = (sym, last) => `<input type="number" step="any" class="cell-num" value="${pxv2(last)}" ${ce} onchange="updatePrice('${sym}',this.value)">`;
 
   let listHtml = `<div class="pl-row head">
     <span></span>
@@ -1127,27 +1104,26 @@ function renderPositions(){
     <div class="pl-num">${L('浮盈亏','Unrl.')}</div>
     <span></span>
   </div>`;
-  for(const {p, mv} of rows){
-    const costBasis = p.qty*p.avgPrice;
-    const pnl = mv - costBasis;
-    const pct = totalPortfolioUSD>0 ? (mv/totalPortfolioUSD*100) : 0;
-    const open = expandedPos.has(p.id);
-    const lots = (allOpenLots[p.sym] || []).filter(l => Math.abs(l.qty) > 0.0000001);
+  for(const h of holdings){
+    const pct = totalPortfolioUSD>0 ? (h.mv/totalPortfolioUSD*100) : 0;
+    const open = expandedPos.has(h.sym);
+    const short = h.qty < 0;
     listHtml += `
-      <div class="pl-row ${open?'open':''}" onclick="togglePos('${p.id}')" title="${L('点这一行看均价、占比和批次','click the row for avg cost, weight and lots')}">
-        <span class="swatch" style="background:${tkColor(p.sym)}"></span>
-        <div class="pl-tk"><b>${p.sym}</b><span>${p.name||''}</span></div>
-        <div class="pl-num">${numIn(pxv(p.qty), `updatePosition('${p.id}','qty',this.value)`)}</div>
-        <div class="pl-num">${numIn(pxv2(p.currentPrice), `updatePosition('${p.id}','currentPrice',this.value)`)}</div>
-        <div class="pl-val">$${fmt(mv,0)}</div>
-        <div class="pl-pnl ${pnl>=0?'gain':'loss'}">${fmtSigned(pnl,0)}</div>
-        <button class="pl-del" title="${L('删除','delete')}" ${ce} onclick="deletePosition('${p.id}')">✕</button>
+      <div class="pl-row ${open?'open':''}" onclick="togglePos('${h.sym}')" title="${L('点这一行看均价、占比和批次','click the row for avg cost, weight and lots')}">
+        <span class="swatch" style="background:${tkColor(h.sym)}"></span>
+        <div class="pl-tk"><b>${h.sym}</b>${short?`<span class="tg-badge sell" style="font-size:9px;">${L('空','short')}</span>`:''}</div>
+        <div class="pl-num">${short?L('空 ','-'):''}${fmt(Math.abs(h.qty),0)}</div>
+        <div class="pl-num">${priceIn(h.sym, h.last)}</div>
+        <div class="pl-val">$${fmt(h.mv,0)}</div>
+        <div class="pl-pnl ${h.priced ? (h.pnl>=0?'gain':'loss') : ''}">${h.priced ? fmtSigned(h.pnl,0) : '—'}</div>
+        <span></span>
       </div>
       <div class="pl-detail ${open?'show':''}" onclick="event.stopPropagation()">
-        <div class="lot-row"><span class="k">${L('均价','Avg cost')}</span><span>${numIn(pxv2(p.avgPrice), `updatePosition('${p.id}','avgPrice',this.value)`)}</span></div>
+        <div class="lot-row"><span class="k">${L('均价','Avg cost')}</span><span>$${fmt(h.avgCost,2)}</span></div>
+        <div class="lot-row"><span class="k">${L('成本','Cost basis')}</span><span>$${fmt(h.costBasis,2)} · C$${fmt(h.costBasis*fx,2)}</span></div>
         <div class="lot-row"><span class="k">${L('占比','Weight')}</span><span>${fmt(pct,1)}%</span></div>
-        ${lots.length ? `<div class="pos-lots-label" style="margin-top:10px;">${L('未平仓批次','Open lots')} · ${lots.length}</div>` +
-          lots.map(l=>`<div class="lot-row ${l.qty<0?'short':''} ${l.estimated?'est':''}"><span class="lot-qty">${l.qty<0?L('空 ','short '):''}${fmt(Math.abs(l.qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${fmt(l.unitCost)}</span><span class="lot-date">${String(l.date).slice(0,10)}</span></div>`).join('') : ''}
+        <div class="pos-lots-label" style="margin-top:10px;">${L('未平仓批次','Open lots')} · ${h.lots.length}</div>
+        ${h.lots.map(l=>`<div class="lot-row ${l.qty<0?'short':''} ${l.estimated?'est':''}"><span class="lot-qty">${l.qty<0?L('空 ','short '):''}${fmt(Math.abs(l.qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${fmt(l.unitCost)}</span><span class="lot-date">${String(l.date).slice(0,10)}</span></div>`).join('')}
       </div>`;
   }
   const cashPct = totalPortfolioUSD>0 ? (cashUSDEq/totalPortfolioUSD*100) : 0;
@@ -1155,21 +1131,22 @@ function renderPositions(){
   listHtml += `
     <div class="pl-row ${cashOpen?'open':''}" onclick="togglePos('__cash')">
       <span class="swatch" style="background:${CASH_COLOR}"></span>
-      <div class="pl-tk"><b>Cash</b><span>${fmt(cashPct,1)}%</span></div>
+      <div class="pl-tk"><b>Cash</b></div>
       <div class="pl-num"></div>
       <div class="pl-num"></div>
       <div class="pl-val">$${fmt(cashUSDEq,0)}</div>
-      <div class="pl-pnl">—</div>
+      <div class="pl-pnl" style="color:var(--text-dim);">${fmt(cashPct,1)}%</div>
       <span></span>
     </div>
     <div class="pl-detail ${cashOpen?'show':''}" onclick="event.stopPropagation()">
-      <div class="lot-row"><span class="k">USD</span><span>${numIn(pxv2(cash.usd), `updateCash('usd',this.value)`)}</span></div>
-      <div class="lot-row"><span class="k">CAD</span><span>${numIn(pxv2(cash.cad), `updateCash('cad',this.value)`)}</span></div>
+      <div class="lot-row"><span class="k">USD</span><span><input type="number" step="any" class="cell-num" ${ce} value="${pxv2(cash.usd)}" onchange="updateCash('usd',this.value)"></span></div>
+      <div class="lot-row"><span class="k">CAD</span><span><input type="number" step="any" class="cell-num" ${ce} value="${pxv2(cash.cad)}" onchange="updateCash('cad',this.value)"></span></div>
     </div>`;
-  list.innerHTML = listHtml || `<div class="empty">${L('还没有持仓，点右上角"+ 添加"','No positions yet — click "+ Add" above')}</div>`;
+  if(!holdings.length) listHtml = `<div class="empty">${L('还没有持仓 — 先在「交易盈亏」里加交易或导入对账单','No holdings yet — add trades or import a statement in the Trades tab')}</div>` + listHtml;
+  list.innerHTML = listHtml;
 
   // donut + legend
-  const slices = rows.map(({p,mv})=>({label:p.sym, color:tkColor(p.sym), value:mv}))
+  const slices = holdings.filter(h=>h.mv>0).map(h=>({label:h.sym, color:tkColor(h.sym), value:h.mv}))
     .concat([{label:'Cash', color:CASH_COLOR, value:cashUSDEq}]);
   const legend = slices.filter(s=>s.value>0)
     .sort((a,b)=>b.value-a.value)
