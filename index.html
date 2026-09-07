@@ -327,7 +327,6 @@
   .cell-num:hover{ border-color:var(--line-strong); }
   .cell-num:focus{ outline:none; border-color:var(--gold); background:var(--panel); box-shadow:0 0 0 3px var(--gold-dim); }
   .cell-num.overridden{ color:var(--gold); font-weight:600; }
-  .pl-row.is-hidden{ opacity:0.5; }
   .pl-del{
     width:18px; height:18px; border-radius:5px; border:none; background:transparent;
     color:var(--text-dim); font-size:11px; cursor:pointer; visibility:hidden;
@@ -780,6 +779,7 @@ if (!window.storage) {
 const STORAGE_KEY = 'ledger_trades_v2';
 const POSITIONS_KEY = 'ledger_positions_v1';
 const PRICES_KEY = 'ledger_prices_v1';
+const ALIASES_KEY = 'ledger_aliases_v1';
 const CASH_KEY = 'ledger_cash_v1';
 const FX_KEY = 'ledger_fx_v1';
 const NOTES_KEY = 'ledger_notes_v1';
@@ -825,8 +825,15 @@ let expandedRows = new Set();
 
 let positions = [];   // legacy — kept only to migrate old backups
 // per-symbol manual layer over the auto-derived holdings:
-//   { SYM: { price?, qty?, avg?, hidden? } }   any field omitted = use the ledger value
+//   { SYM: { price?, qty?, avg?, deleted? } }   any field omitted = use the ledger value
 let posMeta = {};
+// ticker merges: { OLD_SYM: NEW_SYM } — OLD_SYM's trades are counted as NEW_SYM
+let aliases = {};
+// trade list with ticker merges applied, for every engine call
+function AT(){
+  if(!Object.keys(aliases).length) return trades;
+  return trades.map(t => aliases[t.sym] ? { ...t, sym: aliases[t.sym] } : t);
+}
 let cash = {usd:0, cad:0};
 let fx = 1.38;
 let notes = [];
@@ -932,6 +939,7 @@ async function loadAll(){
   await mergeTradeUpdates();
   try{ positions = JSON.parse((await window.storage.get(POSITIONS_KEY)).value); }catch(e){ positions = []; }
   try{ posMeta = JSON.parse((await window.storage.get(PRICES_KEY)).value) || {}; }catch(e){ posMeta = {}; }
+  try{ aliases = JSON.parse((await window.storage.get(ALIASES_KEY)).value) || {}; }catch(e){ aliases = {}; }
   // migrate old { SYM: number } price map -> { SYM: {price} }
   for(const k of Object.keys(posMeta)){ if(typeof posMeta[k] === 'number') posMeta[k] = { price: posMeta[k] }; }
   // migrate: an old backup keeps current prices inside `positions`
@@ -985,6 +993,7 @@ async function loadAll(){
 
 async function saveTrades(){ try{ await window.storage.set(STORAGE_KEY, JSON.stringify(trades)); }catch(e){} }
 async function savePosMeta(){ try{ await window.storage.set(PRICES_KEY, JSON.stringify(posMeta)); }catch(e){} }
+async function saveAliases(){ try{ await window.storage.set(ALIASES_KEY, JSON.stringify(aliases)); }catch(e){} }
 async function saveCash(){ try{ await window.storage.set(CASH_KEY, JSON.stringify(cash)); }catch(e){} }
 async function saveFx(){ try{ await window.storage.set(FX_KEY, String(fx)); }catch(e){} }
 async function saveNotes(){ try{ await window.storage.set(NOTES_KEY, JSON.stringify(notes)); }catch(e){} }
@@ -999,7 +1008,7 @@ function resetToSeed(){
 }
 
 // ---------- Backup: export / import all local data as one JSON file ----------
-const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, PRICES_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY];
+const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, PRICES_KEY, ALIASES_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY];
 
 async function exportBackup(){
   const data = {};
@@ -1037,7 +1046,7 @@ const SEED_POSITIONS = [];
 
 // current holdings straight from the LIFO open-lot queue
 function derivedHoldings(){
-  const {openLots} = runFIFO(trades, 'LIFO');
+  const {openLots} = runFIFO(AT(), 'LIFO');
   const out = [];
   for(const sym of Object.keys(openLots)){
     const lots = openLots[sym].filter(l => Math.abs(l.qty) > 0.0000001);
@@ -1059,14 +1068,28 @@ function setPosMeta(sym, field, value){
   savePosMeta();
   renderPositions();
 }
-function hidePos(sym){ (posMeta[sym] || (posMeta[sym]={})).hidden = true; savePosMeta(); renderPositions(); }
-function showPos(sym){ if(posMeta[sym]){ delete posMeta[sym].hidden; if(!Object.keys(posMeta[sym]).length) delete posMeta[sym]; savePosMeta(); renderPositions(); } }
+function deletePos(sym){
+  if(!confirm(L(`删除持仓 ${sym}？此仓将不再显示（可用「+ 添加」手动加回）。`,
+               `Delete holding ${sym}? It will no longer appear (re-add it manually with "+ Add").`))) return;
+  posMeta[sym] = { deleted: true };
+  savePosMeta();
+  renderPositions();
+}
 function resetPosAuto(sym){
   if(posMeta[sym]){ const price = posMeta[sym].price; posMeta[sym] = price!=null ? {price} : undefined;
     if(!posMeta[sym]) delete posMeta[sym]; savePosMeta(); renderPositions(); }
 }
-let showHiddenPos = false;
-function toggleHiddenPos(){ showHiddenPos = !showHiddenPos; renderPositions(); }
+function mergeTicker(sym){
+  const to = (prompt(L(`把 ${sym} 合并到哪个代码？（例如 SKHY 的成交实际属于 SKHYV）`,
+                       `Merge ${sym} into which symbol?`), '')||'').trim().toUpperCase();
+  if(!to || to === sym) return;
+  aliases[sym] = to;
+  delete posMeta[sym];          // any overrides on the old symbol no longer apply
+  saveAliases(); savePosMeta();
+  expandedPos.delete(sym);
+  render();                      // ledger + positions + report all recompute
+}
+function unmergeTicker(sym){ delete aliases[sym]; saveAliases(); render(); }
 
 function openAddPosition(){
   const s = (prompt(L('手动加一个持仓 — 输入代码','Add a manual holding — enter the symbol'))||'').trim().toUpperCase();
@@ -1120,9 +1143,8 @@ function renderPositions(){
   const bySym = {};
   for(const h of derivedHoldings()) bySym[h.sym] = h;
   for(const sym of Object.keys(posMeta)){
-    if(posMeta[sym].qty != null && !bySym[sym]) bySym[sym] = { sym, qty:0, costBasis:0, avgCost:0, lots:[] };
+    if(posMeta[sym].qty != null && !posMeta[sym].deleted && !bySym[sym]) bySym[sym] = { sym, qty:0, costBasis:0, avgCost:0, lots:[] };
   }
-  const hiddenSyms = Object.keys(posMeta).filter(s=> posMeta[s].hidden && bySym[s]);
   let holdings = Object.values(bySym).map(h=>{
     const m = posMeta[h.sym] || {};
     const qty = (m.qty != null) ? m.qty : h.qty;
@@ -1131,13 +1153,13 @@ function renderPositions(){
     const priced = m.price != null;
     const last = priced ? m.price : avg;
     return {
-      ...h, qty, avgCost: avg, costBasis, last, priced,
+      ...h, qty, avgCost: avg, costBasis, last, priced, deleted: !!m.deleted,
       mv: qty*last, pnl: qty*last - costBasis,
-      hidden: !!m.hidden, ovQty: m.qty!=null, ovAvg: m.avg!=null, manual: !h.lots.length && m.qty!=null,
+      ovQty: m.qty!=null, ovAvg: m.avg!=null, manual: !h.lots.length && m.qty!=null,
     };
-  });
-  holdings = holdings.filter(h=> !h.hidden || showHiddenPos).sort((a,b)=> b.mv - a.mv);
-  const totalPositionsUSD = holdings.filter(h=>!h.hidden).reduce((s,h)=> s + h.mv, 0);
+  }).filter(h=> !h.deleted);
+  holdings.sort((a,b)=> b.mv - a.mv);
+  const totalPositionsUSD = holdings.reduce((s,h)=> s + h.mv, 0);
   const totalPortfolioUSD = totalPositionsUSD + cashUSDEq;
 
   const list = document.getElementById('positionsList');
@@ -1158,30 +1180,27 @@ function renderPositions(){
     const open = expandedPos.has(h.sym);
     const short = h.qty < 0;
     const overridden = h.ovQty || h.ovAvg;
+    const merged = Object.keys(aliases).filter(k=> aliases[k]===h.sym);
     listHtml += `
-      <div class="pl-row ${open?'open':''} ${h.hidden?'is-hidden':''}" onclick="togglePos('${h.sym}')">
+      <div class="pl-row ${open?'open':''}" onclick="togglePos('${h.sym}')">
         <span class="swatch" style="background:${tkColor(h.sym)}"></span>
         <div class="pl-tk"><b>${h.sym}</b>${short?`<span class="tg-badge sell" style="font-size:9px;">${L('空','short')}</span>`:''}${h.manual?`<span class="tg-badge watch" style="font-size:9px;">${L('手动','manual')}</span>`:''}</div>
         <div class="pl-num">${num(pxv(h.qty), `setPosMeta('${h.sym}','qty',this.value)`, h.ovQty)}</div>
         <div class="pl-num">${num(pxv2(h.last), `setPosMeta('${h.sym}','price',this.value)`, false)}</div>
         <div class="pl-val">$${fmt(h.mv,0)}</div>
         <div class="pl-pnl ${h.priced ? (h.pnl>=0?'gain':'loss') : ''}">${h.priced ? fmtSigned(h.pnl,0) : '—'}</div>
-        <button class="pl-del" title="${L('隐藏这个持仓','hide this holding')}" onclick="event.stopPropagation(); hidePos('${h.sym}')">✕</button>
+        <button class="pl-del" title="${L('删除这个持仓','delete this holding')}" onclick="event.stopPropagation(); deletePos('${h.sym}')">✕</button>
       </div>
       <div class="pl-detail ${open?'show':''}" onclick="event.stopPropagation()">
         <div class="lot-row"><span class="k">${L('均价','Avg cost')}</span><span>$ ${num(pxv2(h.avgCost), `setPosMeta('${h.sym}','avg',this.value)`, h.ovAvg)}</span></div>
         <div class="lot-row"><span class="k">${L('成本','Cost basis')}</span><span>$${fmt(h.costBasis,2)} · C$${fmt(h.costBasis*fx,2)}</span></div>
         <div class="lot-row"><span class="k">${L('占比','Weight')}</span><span>${fmt(pct,1)}%</span></div>
         ${overridden ? `<div class="lot-row"><span class="expand-toggle" onclick="resetPosAuto('${h.sym}')">${L('恢复自动（用交易记录算）','reset to auto (from trades)')}</span></div>` : ''}
-        ${h.hidden ? `<div class="lot-row"><span class="expand-toggle" onclick="showPos('${h.sym}')">${L('取消隐藏','unhide')}</span></div>` : ''}
+        ${merged.length ? `<div class="lot-row"><span class="k">${L('已合并','merged in')}</span><span>${merged.map(m=>`${m} <span class="expand-toggle" onclick="unmergeTicker('${m}')">${L('拆分','unmerge')}</span>`).join(' · ')}</span></div>`
+          : `<div class="lot-row"><span class="expand-toggle" onclick="mergeTicker('${h.sym}')">${L('合并另一个代码到这里（同一只股票改过代码）','merge another symbol into this one')}</span></div>`}
         ${h.lots.length ? `<div class="pos-lots-label" style="margin-top:10px;">${L('未平仓批次','Open lots')} · ${h.lots.length}</div>` +
           h.lots.map(l=>`<div class="lot-row ${l.qty<0?'short':''} ${l.estimated?'est':''}"><span class="lot-qty">${l.qty<0?L('空 ','short '):''}${fmt(Math.abs(l.qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${fmt(l.unitCost)}</span><span class="lot-date">${String(l.date).slice(0,10)}</span></div>`).join('') : ''}
       </div>`;
-  }
-  if(hiddenSyms.length && !showHiddenPos){
-    listHtml += `<div class="pl-row" style="cursor:pointer;color:var(--text-dim);font-size:12px;" onclick="toggleHiddenPos()"><span></span><div style="grid-column:2/-1;">${L(`＋ ${hiddenSyms.length} 个已隐藏`,`＋ ${hiddenSyms.length} hidden`)}</div></div>`;
-  } else if(showHiddenPos){
-    listHtml += `<div class="pl-row" style="cursor:pointer;color:var(--text-dim);font-size:12px;" onclick="toggleHiddenPos()"><span></span><div style="grid-column:2/-1;">${L('收起已隐藏','collapse hidden')}</div></div>`;
   }
   const cashPct = totalPortfolioUSD>0 ? (cashUSDEq/totalPortfolioUSD*100) : 0;
   const cashOpen = expandedPos.has('__cash');
@@ -1203,7 +1222,7 @@ function renderPositions(){
   list.innerHTML = listHtml;
 
   // donut + legend
-  const slices = holdings.filter(h=>!h.hidden && h.mv>0).map(h=>({label:h.sym, color:tkColor(h.sym), value:h.mv}))
+  const slices = holdings.filter(h=>h.mv>0).map(h=>({label:h.sym, color:tkColor(h.sym), value:h.mv}))
     .concat([{label:'Cash', color:CASH_COLOR, value:cashUSDEq}]);
   const legend = slices.filter(s=>s.value>0)
     .sort((a,b)=>b.value-a.value)
@@ -1303,7 +1322,7 @@ function reportMonthNext(){ reportMonth.setMonth(reportMonth.getMonth()+1); rend
 function reportMonthToday(){ reportMonth = new Date(); reportMonth.setDate(1); renderReport(); }
 
 function computeReportData(){
-  const {closed} = runFIFO(trades, 'LIFO');
+  const {closed} = runFIFO(AT(), 'LIFO');
 
   // monthly: all history, descending (most recent first)
   const byMonth = {};
@@ -1434,7 +1453,7 @@ async function generateReview(){
   btn.disabled = true;
   box.innerHTML = `<div class="empty">${lang==='zh'?'分析中…':'Analyzing…'}</div>`;
   try{
-    const {closed} = runFIFO(trades, 'LIFO');
+    const {closed} = runFIFO(AT(), 'LIFO');
     const recent = closed.slice(0, 25).map(c=>({
       date:c.date, sym:c.sym, side:c.side, qty:c.qty, price:c.price, pnl:Math.round(c.pnl*100)/100
     }));
@@ -1700,7 +1719,7 @@ function openAddTrade(){
 
 function getOpenLotsForSymbol(sym){
   if(!sym) return [];
-  const {openLots} = runFIFO(trades, 'LIFO');
+  const {openLots} = runFIFO(AT(), 'LIFO');
   return (openLots[sym] || []).filter(l => l.qty > 0.0000001);
 }
 
@@ -1799,7 +1818,7 @@ function tkMono(sym){
 }
 
 function render(){
-  const {closed, openLots, warnings} = runFIFO(trades, 'LIFO');
+  const {closed, openLots, warnings} = runFIFO(AT(), 'LIFO');
 
   // summary
   const totalReal = closed.reduce((s,c)=>{
@@ -1811,7 +1830,7 @@ function render(){
     }
     return s + c.pnl;
   },0);
-  const avgCostPnl = runAverageCost(trades);
+  const avgCostPnl = runAverageCost(AT());
   const totalReported = closed.reduce((s,c)=> s + (avgCostPnl[c.id] ?? 0), 0);
   const diff = totalReal - totalReported;
   const summaryEl = document.getElementById('summaryCards');
