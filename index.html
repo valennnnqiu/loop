@@ -94,7 +94,9 @@
     padding:11px 14px; font-size:12.5px; color:var(--text); margin-bottom:18px;
     line-height:1.65; display:none;
   }
-  .warn.show{ display:block; }
+  .warn.show{ display:block; position:relative; padding-right:34px; }
+  .warn-x{ position:absolute; top:8px; right:8px; width:20px; height:20px; border:none; background:transparent; color:var(--text-dim); font-size:12px; cursor:pointer; border-radius:5px; }
+  .warn-x:hover{ color:var(--text); background:rgba(0,0,0,0.06); }
   .warn b{ color:var(--gold); font-weight:700; }
   .warn.err{ background:var(--loss-dim); border-left-color:var(--loss); }
   .warn.err b{ color:var(--loss); }
@@ -755,6 +757,8 @@
           <option value="buy">Buy / Add</option>
           <option value="sell">Sell / Reduce</option>
           <option value="hold">Hold</option>
+          <option value="earnings">Earnings</option>
+          <option value="macro">Macro</option>
         </select>
       </div>
       <div style="display:flex; justify-content:space-between; gap:8px;">
@@ -797,6 +801,7 @@ const NOTES_KEY = 'ledger_notes_v1';
 const WATCH_KEY = 'ledger_watch_v1';
 const CALENDAR_KEY = 'ledger_calendar_v1';
 const CALSYNC_KEY = 'ledger_calsync_v1';
+const RECON_DISMISS_KEY = 'ledger_recon_dismissed_v1';
 let calSyncAt = 0;
 
 // FOMC rate-decision dates (day 2 of each meeting). Curated — verify against
@@ -1000,6 +1005,7 @@ async function loadAll(){
     await saveCalendar();
   }
   try{ calSyncAt = parseInt((await window.storage.get(CALSYNC_KEY)).value) || 0; }catch(e){ calSyncAt = 0; }
+  try{ reconDismissed = JSON.parse((await window.storage.get(RECON_DISMISS_KEY)).value) || []; }catch(e){ reconDismissed = []; }
   try{
     const res = await window.storage.get(LANG_KEY);
     lang = res.value === 'en' ? 'en' : 'zh';
@@ -1128,7 +1134,7 @@ function resetToSeed(){
 }
 
 // ---------- Backup: export / import all local data as one JSON file ----------
-const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, PRICES_KEY, ALIASES_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, CALSYNC_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY];
+const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, PRICES_KEY, ALIASES_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, CALSYNC_KEY, RECON_DISMISS_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY];
 
 async function exportBackup(){
   const data = {};
@@ -1689,7 +1695,7 @@ function renderCalendar(){
       <div class="cal-date ${isToday?'today':''}">${d.getDate()}</div>
       ${events.map(ev=>{
         const auto = (ev.source||'').startsWith('auto');
-        return `<div class="cal-event ${ev.category}" ${auto?'':`onclick="openEventModal('${key}','${ev.id}')"`} title="${ev.text}${auto?' · auto':''}">${ev.text}</div>`;
+        return `<div class="cal-event ${ev.category}" onclick="openEventModal('${key}','${ev.id}')" title="${ev.text}${auto?' · auto':''}">${ev.text}</div>`;
       }).join('')}
       <div class="cal-add" onclick="openEventModal('${key}')">+</div>
     </div>`;
@@ -1710,12 +1716,12 @@ function openEventModal(key, id=null){
     const ev = (calendarEvents[key]||[]).find(e=>e.id===id);
     title.textContent = key + ' · ' + L('编辑事件','Edit event');
     textInput.value = ev ? ev.text : '';
-    catSelect.value = ev ? ev.category : 'watch';
+    catSelect.value = ev ? ev.category : 'buy';
     delBtn.style.display = 'inline-block';
   } else {
     title.textContent = key + ' · ' + t('evTitleAdd');
     textInput.value = '';
-    catSelect.value = 'watch';
+    catSelect.value = 'buy';
     delBtn.style.display = 'none';
   }
   modal.classList.add('show');
@@ -1735,7 +1741,7 @@ function saveEvent(){
   if(!calendarEvents[calEditingDate]) calendarEvents[calEditingDate] = [];
   if(calEditingId){
     const ev = calendarEvents[calEditingDate].find(e=>e.id===calEditingId);
-    if(ev){ ev.text = text; ev.category = category; }
+    if(ev){ ev.text = text; ev.category = category; delete ev.source; } // edited -> yours, sync won't touch it
   } else {
     calendarEvents[calEditingDate].push({id:'ev'+Date.now(), text, category});
   }
@@ -1796,15 +1802,25 @@ function reconcile(list){
   return issues;
 }
 
+let reconDismissed = [];
+const reconKey = i => `${i.level}:${i.sym}`;
+function dismissRecon(){
+  const box = document.getElementById('reconBox');
+  const issues = reconcile(AT()).filter(i=> !reconDismissed.includes(reconKey(i)));
+  for(const i of issues){ if(!reconDismissed.includes(reconKey(i))) reconDismissed.push(reconKey(i)); }
+  try{ window.storage.set(RECON_DISMISS_KEY, JSON.stringify(reconDismissed)); }catch(e){}
+  renderReconciliation();
+}
 function renderReconciliation(){
   const box = document.getElementById('reconBox');
   if(!box) return;
-  const issues = reconcile(trades);
+  const issues = reconcile(AT()).filter(i=> !reconDismissed.includes(reconKey(i)));
   if(issues.length===0){ box.className = 'warn'; box.innerHTML = ''; return; }
   const hasErr = issues.some(i=>i.level==='err');
   box.className = 'warn show' + (hasErr ? ' err' : '');
-  box.innerHTML = `<b>${hasErr ? L('账目对不上：','Books do not balance: ') : L('注意：','Note: ')}</b>` +
-    issues.map(i=>`<div class="recline">· ${i.msg}</div>`).join('');
+  box.innerHTML = `<button class="warn-x" onclick="dismissRecon()" title="${L('知道了，别再提示','dismiss')}">✕</button>`
+    + `<b>${hasErr ? L('账目对不上：','Books do not balance: ') : L('注意：','Note: ')}</b>`
+    + issues.map(i=>`<div class="recline">· ${i.msg}</div>`).join('');
 }
 
 // ---------- Import IBKR statement CSV ----------
