@@ -431,10 +431,16 @@
   }
   .modal-overlay.show{ display:flex; }
   .modal-card{
+    position:relative;
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:22px;
     width:100%; max-width:340px;
   }
-  .modal-title{ font-weight:700; font-size:15px; margin-bottom:14px; }
+  .modal-x{
+    position:absolute; top:12px; left:12px; width:24px; height:24px; border:none; border-radius:6px;
+    background:transparent; color:var(--text-dim); font-size:13px; cursor:pointer;
+  }
+  .modal-x:hover{ color:var(--text); background:var(--panel-2); }
+  .modal-title{ font-weight:700; font-size:15px; margin:10px 0 14px 30px; }
   .modal-card input, .modal-card select{
     width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); color:var(--text);
     padding:8px 10px; font-family:var(--mono); font-size:13px;
@@ -745,6 +751,7 @@
 
   <div class="modal-overlay" id="eventModal">
     <div class="modal-card">
+      <button class="modal-x" onclick="closeEventModal()">✕</button>
       <div class="modal-title" id="eventModalTitle">添加事件</div>
       <div class="field" style="margin-bottom:10px;">
         <label data-i18n="evTextLabel">内容</label>
