@@ -414,6 +414,8 @@
   .cal-event.watch{ background:var(--indigo-dim); color:var(--indigo); }
   .cal-event.earnings{ background:#F3E3C7; color:#7A5410; font-weight:600; }
   .cal-event.macro{ background:#1F1E1B; color:#EDEAE0; }
+  .cal-event.has-plan{ position:relative; }
+  .cal-event.has-plan::after{ content:''; position:absolute; top:3px; right:3px; width:5px; height:5px; border-radius:999px; background:currentColor; opacity:0.65; }
   .dot.earnings{ background:#B5852A; }
   .dot.macro{ background:#1F1E1B; }
   .cal-sync{ display:flex; align-items:center; gap:10px; margin-bottom:12px; font-family:var(--mono); font-size:11px; color:var(--text-dim); }
@@ -441,10 +443,11 @@
   }
   .modal-x:hover{ color:var(--text); background:var(--panel-2); }
   .modal-title{ font-weight:700; font-size:15px; margin:10px 0 14px 30px; }
-  .modal-card input, .modal-card select{
+  .modal-card input, .modal-card select, .modal-card textarea{
     width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); color:var(--text);
     padding:8px 10px; font-family:var(--mono); font-size:13px;
   }
+  .modal-card textarea{ resize:vertical; line-height:1.5; }
 
   .lang-toggle{
     font-family:var(--mono); font-size:11px; font-weight:600; color:var(--text-dim);
@@ -757,7 +760,7 @@
         <label data-i18n="evTextLabel">内容</label>
         <input type="text" id="ev-text" placeholder="AAPL 250">
       </div>
-      <div class="field" style="margin-bottom:14px;">
+      <div class="field" style="margin-bottom:12px;">
         <label data-i18n="evCatLabel">类别</label>
         <select id="ev-category">
           <option value="buy">Buy / Add</option>
@@ -766,6 +769,10 @@
           <option value="earnings">Earnings</option>
           <option value="macro">Macro</option>
         </select>
+      </div>
+      <div class="field" style="margin-bottom:14px;">
+        <label data-i18n="evPlanLabel">计划 / 操作 (可选)</label>
+        <textarea id="ev-plan" rows="3" data-i18n-ph="evPlanPh" placeholder="加息风险 → 提前 1-2 天到 X 价先卖，回落再进"></textarea>
       </div>
       <div style="display:flex; justify-content:space-between; gap:8px;">
         <button class="btn-ghost btn-small" id="ev-delete-btn" onclick="deleteEvent()" style="display:none;" data-i18n="evDelete">删除</button>
@@ -896,7 +903,7 @@ const I18N = {
     footerHint: '数据只存在这台电脑的浏览器里，不上传任何服务器。带 "(估)" 标记的批次是追踪起点前已持有、成本未知，按卖价估算。',
     evTitleAdd: '添加事件', evTextLabel: '内容', evCatLabel: '类别', evDelete: '删除', evSave: '保存',
     legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
-    targetsTitle: '价格目标', btnAddTarget: '+ 添加', btnCalSync: '同步日历', legendEarnings: '财报', legendMacro: '宏观', tgSymbol: '代码', tgAction: '方向', tgLevel: '价位', tgNote: '备注 (可选)',
+    targetsTitle: '价格目标', btnAddTarget: '+ 添加', btnCalSync: '同步日历', legendEarnings: '财报', legendMacro: '宏观', evPlanLabel: '计划 / 操作 (可选)', evPlanPh: '加息风险 → 提前 1-2 天到 X 价先卖，回落再进', tgSymbol: '代码', tgAction: '方向', tgLevel: '价位', tgNote: '备注 (可选)',
     tgBuy: '买入', tgSell: '卖出', tgWatch: '关注', tgLevelPh: '150-160 / 175 / 190', tgNotePh: '看图 · ER 前',
   },
   en: {
@@ -920,7 +927,7 @@ const I18N = {
     footerHint: 'Data lives only in this browser on this computer, never uploaded. Lots marked "(估)" were held before the tracking window; cost unknown, estimated at the sell price.',
     evTitleAdd: 'Add event', evTextLabel: 'Text', evCatLabel: 'Category', evDelete: 'Delete', evSave: 'Save',
     legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
-    targetsTitle: 'Price Targets', btnAddTarget: '+ Add', btnCalSync: 'Sync calendar', legendEarnings: 'Earnings', legendMacro: 'Macro', tgSymbol: 'Symbol', tgAction: 'Side', tgLevel: 'Level', tgNote: 'Note (optional)',
+    targetsTitle: 'Price Targets', btnAddTarget: '+ Add', btnCalSync: 'Sync calendar', legendEarnings: 'Earnings', legendMacro: 'Macro', evPlanLabel: 'Plan / action (optional)', evPlanPh: 'rate-hike risk → sell ~1-2d out at X, buy back lower', tgSymbol: 'Symbol', tgAction: 'Side', tgLevel: 'Level', tgNote: 'Note (optional)',
     tgBuy: 'Buy', tgSell: 'Sell', tgWatch: 'Watch', tgLevelPh: '150-160 / 175 / 190', tgNotePh: 'chart · pre-ER',
   }
 };
@@ -1118,7 +1125,9 @@ async function syncCalendar(){
     if(!calendarEvents[key].length) delete calendarEvents[key];
   }
   for(const key of Object.keys(fresh)){
-    calendarEvents[key] = (calendarEvents[key]||[]).concat(fresh[key]);
+    const existing = new Set((calendarEvents[key]||[]).map(e=>e.text));
+    const toAdd = fresh[key].filter(e=> !existing.has(e.text)); // don't duplicate an event you already took ownership of
+    if(toAdd.length) calendarEvents[key] = (calendarEvents[key]||[]).concat(toAdd);
   }
   await saveCalendar();
   calSyncAt = Date.now();
@@ -1698,7 +1707,8 @@ function renderCalendar(){
       <div class="cal-date ${isToday?'today':''}">${d.getDate()}</div>
       ${events.map(ev=>{
         const auto = (ev.source||'').startsWith('auto');
-        return `<div class="cal-event ${ev.category}" onclick="openEventModal('${key}','${ev.id}')" title="${ev.text}${auto?' · auto':''}">${ev.text}</div>`;
+        const tip = (ev.text + (auto?' · auto':'') + (ev.plan?` — ${ev.plan}`:'')).replace(/"/g,'&quot;');
+        return `<div class="cal-event ${ev.category} ${ev.plan?'has-plan':''}" onclick="openEventModal('${key}','${ev.id}')" title="${tip}">${ev.text}</div>`;
       }).join('')}
       <div class="cal-add" onclick="openEventModal('${key}')">+</div>
     </div>`;
@@ -1714,17 +1724,19 @@ function openEventModal(key, id=null){
   const title = document.getElementById('eventModalTitle');
   const textInput = document.getElementById('ev-text');
   const catSelect = document.getElementById('ev-category');
+  const planInput = document.getElementById('ev-plan');
   const delBtn = document.getElementById('ev-delete-btn');
+  title.textContent = key;
   if(id){
     const ev = (calendarEvents[key]||[]).find(e=>e.id===id);
-    title.textContent = key + ' · ' + L('编辑事件','Edit event');
     textInput.value = ev ? ev.text : '';
     catSelect.value = ev ? ev.category : 'buy';
+    planInput.value = ev ? (ev.plan||'') : '';
     delBtn.style.display = 'inline-block';
   } else {
-    title.textContent = key + ' · ' + t('evTitleAdd');
     textInput.value = '';
     catSelect.value = 'buy';
+    planInput.value = '';
     delBtn.style.display = 'none';
   }
   modal.classList.add('show');
@@ -1740,13 +1752,14 @@ function closeEventModal(){
 function saveEvent(){
   const text = document.getElementById('ev-text').value.trim();
   const category = document.getElementById('ev-category').value;
+  const plan = document.getElementById('ev-plan').value.trim();
   if(!text){ alert(L('填一下内容','Enter some text')); return; }
   if(!calendarEvents[calEditingDate]) calendarEvents[calEditingDate] = [];
   if(calEditingId){
     const ev = calendarEvents[calEditingDate].find(e=>e.id===calEditingId);
-    if(ev){ ev.text = text; ev.category = category; delete ev.source; } // edited -> yours, sync won't touch it
+    if(ev){ ev.text = text; ev.category = category; ev.plan = plan || undefined; delete ev.source; } // saved -> yours, sync leaves it alone
   } else {
-    calendarEvents[calEditingDate].push({id:'ev'+Date.now(), text, category});
+    calendarEvents[calEditingDate].push({id:'ev'+Date.now(), text, category, plan: plan||undefined});
   }
   saveCalendar();
   closeEventModal();
