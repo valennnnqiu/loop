@@ -629,7 +629,6 @@
       <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M21.2 15.9A10 10 0 1 1 8.1 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></span>
       <h2 data-i18n="posSortTitle">持仓</h2>
       <div class="grow">
-        <span class="count" id="fetchPricesNote"></span>
         <button class="btn-ghost btn-small" id="fetchPricesBtn" onclick="fetchPrices()" data-i18n="btnRefreshPrices">刷新股价</button>
         <button class="btn-ghost btn-small" onclick="openAddPosition()" data-i18n="btnAdd2">+ 添加</button>
       </div>
@@ -1374,7 +1373,6 @@ function renderPositions(){
 
 // ---------- Live prices (Finnhub, opt-in, your own free key) ----------
 let finnhubKey = '';
-let priceFetchNote = '';
 async function fetchPrices(){
   const btn = document.getElementById('fetchPricesBtn');
   if(!/\S/.test(finnhubKey)){
@@ -1399,12 +1397,10 @@ async function fetchPrices(){
     }catch(e){ failed.push(sym); }
   }
   await savePosMeta();
-  const now = new Date().toTimeString().slice(0,5);
-  priceFetchNote = L(`更新于 ${now} · ${ok} 只成功`, `updated ${now} · ${ok} ok`) + (failed.length ? L(`，失败：${failed.join(' ')}`, `, failed: ${failed.join(' ')}`) : '');
   btn.disabled = false;
   btn.textContent = t('btnRefreshPrices');
-  const note = document.getElementById('fetchPricesNote');
-  if(note) note.textContent = priceFetchNote;
+  if(failed.length && ok === 0) alert(L('股价刷新失败 — 检查 Finnhub key','Price refresh failed — check your Finnhub key'));
+  else if(failed.length) alert(L(`这几个代码 Finnhub 没有报价：${failed.join(' ')}`, `Finnhub has no quote for: ${failed.join(' ')}`));
   renderPositions();
 }
 
