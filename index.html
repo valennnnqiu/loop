@@ -438,11 +438,12 @@
     width:100%; max-width:340px;
   }
   .modal-x{
-    position:absolute; top:12px; left:12px; width:24px; height:24px; border:none; border-radius:6px;
+    position:absolute; top:14px; right:14px; width:26px; height:26px; border:none; border-radius:7px;
     background:transparent; color:var(--text-dim); font-size:13px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
   }
   .modal-x:hover{ color:var(--text); background:var(--panel-2); }
-  .modal-title{ font-weight:700; font-size:15px; margin:10px 0 14px 30px; }
+  .modal-title{ font-weight:700; font-size:15px; margin:0 0 14px; }
   .modal-card input, .modal-card select, .modal-card textarea{
     width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); color:var(--text);
     padding:8px 10px; font-family:var(--mono); font-size:13px;
@@ -771,7 +772,7 @@
         </select>
       </div>
       <div class="field" style="margin-bottom:14px;">
-        <label data-i18n="evPlanLabel">计划 / 操作 (可选)</label>
+        <label data-i18n="evPlanLabel">计划</label>
         <textarea id="ev-plan" rows="3" data-i18n-ph="evPlanPh" placeholder="加息风险 → 提前 1-2 天到 X 价先卖，回落再进"></textarea>
       </div>
       <div style="display:flex; justify-content:space-between; gap:8px;">
@@ -903,7 +904,7 @@ const I18N = {
     footerHint: '数据只存在这台电脑的浏览器里，不上传任何服务器。带 "(估)" 标记的批次是追踪起点前已持有、成本未知，按卖价估算。',
     evTitleAdd: '添加事件', evTextLabel: '内容', evCatLabel: '类别', evDelete: '删除', evSave: '保存',
     legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
-    targetsTitle: '价格目标', btnAddTarget: '+ 添加', btnCalSync: '同步日历', legendEarnings: '财报', legendMacro: '宏观', evPlanLabel: '计划 / 操作 (可选)', evPlanPh: '加息风险 → 提前 1-2 天到 X 价先卖，回落再进', tgSymbol: '代码', tgAction: '方向', tgLevel: '价位', tgNote: '备注 (可选)',
+    targetsTitle: '价格目标', btnAddTarget: '+ 添加', btnCalSync: '同步日历', legendEarnings: '财报', legendMacro: '宏观', evPlanLabel: '计划', evPlanPh: '加息风险 → 提前 1-2 天到 X 价先卖，回落再进', tgSymbol: '代码', tgAction: '方向', tgLevel: '价位', tgNote: '备注 (可选)',
     tgBuy: '买入', tgSell: '卖出', tgWatch: '关注', tgLevelPh: '150-160 / 175 / 190', tgNotePh: '看图 · ER 前',
   },
   en: {
@@ -927,7 +928,7 @@ const I18N = {
     footerHint: 'Data lives only in this browser on this computer, never uploaded. Lots marked "(估)" were held before the tracking window; cost unknown, estimated at the sell price.',
     evTitleAdd: 'Add event', evTextLabel: 'Text', evCatLabel: 'Category', evDelete: 'Delete', evSave: 'Save',
     legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
-    targetsTitle: 'Price Targets', btnAddTarget: '+ Add', btnCalSync: 'Sync calendar', legendEarnings: 'Earnings', legendMacro: 'Macro', evPlanLabel: 'Plan / action (optional)', evPlanPh: 'rate-hike risk → sell ~1-2d out at X, buy back lower', tgSymbol: 'Symbol', tgAction: 'Side', tgLevel: 'Level', tgNote: 'Note (optional)',
+    targetsTitle: 'Price Targets', btnAddTarget: '+ Add', btnCalSync: 'Sync calendar', legendEarnings: 'Earnings', legendMacro: 'Macro', evPlanLabel: 'Plan', evPlanPh: 'rate-hike risk → sell ~1-2d out at X, buy back lower', tgSymbol: 'Symbol', tgAction: 'Side', tgLevel: 'Level', tgNote: 'Note (optional)',
     tgBuy: 'Buy', tgSell: 'Sell', tgWatch: 'Watch', tgLevelPh: '150-160 / 175 / 190', tgNotePh: 'chart · pre-ER',
   }
 };
