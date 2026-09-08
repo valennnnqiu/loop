@@ -392,10 +392,10 @@
     letter-spacing:0.05em; padding:0 2px 8px;
   }
   .cal-grid{
-    display:grid; grid-template-columns:repeat(7,1fr); gap:1px;
+    display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:1px;
     background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
   }
-  .cal-cell{ background:var(--panel); min-height:96px; padding:8px; position:relative; display:flex; flex-direction:column; gap:4px; }
+  .cal-cell{ background:var(--panel); min-width:0; min-height:96px; padding:8px; position:relative; display:flex; flex-direction:column; gap:4px; overflow:hidden; }
   .cal-cell.dim{ background:var(--ink); }
   .cal-cell.dim .cal-date{ color:var(--text-dim); opacity:0.5; }
   .cal-date{ font-family:var(--mono); font-size:12px; color:var(--text-dim); }
@@ -405,8 +405,9 @@
   }
   .cal-event{
     font-size:10.5px; padding:2px 6px; cursor:pointer; border-radius:6px;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
   }
+  .cal-event.has-plan{ padding-right:12px; }
   .cal-event.buy{ background:var(--gain-dim); color:var(--gain); }
   .cal-event.sell{ background:var(--loss-dim); color:var(--loss); }
   .cal-event.hold{ background:#DCE6EC; color:#204A63; }
