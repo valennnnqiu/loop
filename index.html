@@ -90,12 +90,16 @@
   .welcome-card .wc-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
   .welcome-card .wc-sub{ font-size:12px; color:var(--text-dim); }
   .welcome-card .wc-sub a, .warn a{ color:var(--gold); cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
-  .welcome-modal{ max-width:460px; max-height:82vh; overflow-y:auto; }
-  #welcomeBody .modal-title{ margin-bottom:6px; }
-  #welcomeBody p{ font-size:12.5px; color:var(--text-dim); line-height:1.65; margin:0 0 10px; }
-  #welcomeBody .w-h{ font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text); margin:16px 0 5px; }
+  .welcome-modal{ max-width:640px; max-height:84vh; overflow-y:auto; }
+  #welcomeBody .modal-title{ margin-bottom:4px; }
+  #welcomeBody .w-intro{ font-size:12.5px; color:var(--text-dim); line-height:1.6; margin:0 0 16px; }
+  #welcomeBody .w-intro b{ color:var(--text); font-weight:600; }
+  #welcomeBody .w-grid{ display:grid; grid-template-columns:1fr 1fr; gap:15px 22px; }
+  #welcomeBody .w-item .w-h{ font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text); margin:0 0 4px; }
+  #welcomeBody .w-item p{ font-size:11.5px; color:var(--text-dim); line-height:1.5; margin:0; }
   #welcomeBody b{ color:var(--text); font-weight:600; }
-  #welcomeBody .w-actions{ margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+  #welcomeBody .w-actions{ margin-top:16px; padding-top:13px; border-top:1px solid var(--line); font-size:11px; color:var(--text-dim); }
+  @media (max-width:560px){ #welcomeBody .w-grid{ grid-template-columns:1fr; } }
 
   /* warnings / reconciliation */
   .warn{
@@ -444,7 +448,7 @@
   .cal-event.has-plan::after{ content:''; position:absolute; top:3px; right:3px; width:5px; height:5px; border-radius:999px; background:currentColor; opacity:0.65; }
   .dot.earnings{ background:#B5852A; }
   .dot.macro{ background:#1F1E1B; }
-  .cal-sync{ display:flex; align-items:center; gap:10px; margin-bottom:12px; font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+  .cal-sync{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin-bottom:12px; font-family:var(--mono); font-size:11px; line-height:1.6; color:var(--text-dim); }
   .cal-add{
     position:absolute; bottom:6px; right:6px; width:18px; height:18px; border-radius:6px;
     background:var(--panel); border:1px solid var(--line); font-size:12px; line-height:1;
@@ -1092,7 +1096,8 @@ function refreshCalSyncNote(){
   if(!el) return;
   el.textContent = calSyncAt
     ? L(`上次同步 ${new Date(calSyncAt).toLocaleDateString('zh-CN')}`, `last synced ${new Date(calSyncAt).toLocaleDateString('en-US')}`)
-    : L('未同步 — 点「同步日历」拉财报日和宏观事件', 'not synced yet');
+    : L('未同步 · 需要免费 Finnhub key（「持仓」页「刷新股价」旁），点后自动拉财报日和宏观事件。也可以点某天的 + 手动加。',
+        'Not synced · needs a free Finnhub key (Positions tab, by "Refresh prices"), then it pulls earnings dates and macro events. Or click a day\'s + to add your own.');
 }
 
 async function saveTrades(){ try{ await window.storage.set(STORAGE_KEY, JSON.stringify(trades)); }catch(e){} }
@@ -1208,42 +1213,35 @@ function renderWelcome(){
   if(!el) return;
   const demoBtn = trades.length
     ? ''
-    : `<div class="w-actions"><button class="btn-ghost btn-small" onclick="loadDemoData()">${L('加载示例数据','Load demo data')}</button>
-       <span style="font-size:11px;color:var(--text-dim);margin-left:8px;">${L('填入一份假交易，看看填满的样子，随时一键清空。','A set of fake trades so you can see it populated — clear it any time.')}</span></div>`;
+    : `<div class="w-actions"><button class="btn-ghost btn-small" onclick="loadDemoData()" style="margin-right:8px;">${L('加载示例数据','Load demo data')}</button>${L('填一份假交易看看填满的样子，随时一键清空。','Fake trades so you can see it populated — clear any time.')}</div>`;
+  const item = (h, zh, en) => `<div class="w-item"><div class="w-h">${h}</div><p>${L(zh, en)}</p></div>`;
   el.innerHTML = `
     <div class="modal-title">${L('LOOP 怎么用','How LOOP works')}</div>
-
-    <div class="w-h">${L('为什么是 LIFO','Why LIFO')}</div>
-    <p>${L('券商（和加拿大税务）用<b>均价法</b>：把同一只股票所有买入摊成一个平均成本。LOOP 另外按<b>后进先出</b>逐批结算——每次卖出，配对的是最近买入的那批。顶部两个数字就是这两种算法跑同一份成交记录的结果，<b>差额</b>就是均价法藏起来的盈亏。',
-                'Your broker (and the CRA) use <b>average cost</b> — every buy of a stock blended into one number. LOOP also settles each sale <b>last-in-first-out</b>, matching it to your most recent buys. The two figures up top are both methods on the same trades; the <b>difference</b> is the P&L average cost hides.')}</p>
-
-    <div class="w-h">${L('把交易录进来','Getting trades in')}</div>
-    <p>${L('「交易盈亏」页右上角<b>导入对账单</b>——上传 IBKR 的 Activity Statement（Performance &amp; Reports → Statements → Activity，格式选 CSV）。按代码+成交时间+数量+价格去重，同一段时间重复导入不会重复计算。也可以<b>+ 添加</b>手动录。',
-                'On the Trades tab, <b>Import statement</b> — upload an IBKR Activity Statement (Performance &amp; Reports → Statements → Activity, CSV format). Deduped by symbol + time + qty + price, so overlapping statements are safe to re-import. Or <b>+ Add</b> a trade by hand.')}</p>
-
-    <div class="w-h">${L('持仓','Positions')}</div>
-    <p>${L('持仓是从交易记录<b>推算</b>的，不用单独维护。如果你导入的历史不完整，会看到提示和「(估)」标记（成本按卖价估算）——补一笔缺失的买入，或在持仓页直接手动改数量/成本。',
-                'Positions are <b>derived</b> from your trades — nothing to maintain separately. If your imported history is incomplete you\'ll see a warning and "(est)" marks (cost guessed from the sell price) — add the missing buy, or edit the quantity/cost right on the Positions tab.')}</p>
-
-    <div class="w-h">${L('每周 / 每月盈亏','Weekly / monthly P&L')}</div>
-    <p>${L('「周报」页把已实现盈亏按周和按月摊开，看的是<b>节奏</b>：哪几周真的在赚、是不是在频繁进出磨损、某个月的结果靠的是一两笔还是稳定贡献。可以给自己设一个<b>每周目标</b>，对照着看。',
-                'The Report tab breaks realized P&L out by week and by month so you can see the <b>rhythm</b>: which weeks actually made money, whether you\'re churning, whether a good month came from one trade or many. Set a <b>weekly target</b> and track against it.')}</p>
-
-    <div class="w-h">${L('价格目标','Price targets')}</div>
-    <p>${L('「自选」页记下每只票的买入 / 卖出 / 关注价位，加一句备注（比如「看图 · 财报前」）。不联网，就是个清单。',
-                'On the Watchlist tab, note a buy / sell / watch level per ticker with a short reason ("chart · pre-ER"). No network — it\'s just a list.')}</p>
-
-    <div class="w-h">${L('日历 + 同步','Calendar + sync')}</div>
-    <p>${L('「自选」页的日历可以标事件，每个事件能写一段<b>计划 / 操作</b>提示。如果在「刷新股价」旁填了免费的 Finnhub key，点<b>同步日历</b>会自动拉：你持仓和自选里这些票的<b>财报日期</b>，加上核心<b>宏观事件</b>（FOMC / CPI / 非农 / PPI）。之后每周自动同步一次。自动加进来的事件带标记、可编辑。',
-                'The calendar on the Watchlist tab holds dated events, each with a <b>plan / action</b> note. If you add a free Finnhub key (next to "Refresh prices"), <b>Sync calendar</b> pulls <b>earnings dates</b> for the tickers you hold or watch, plus core <b>macro events</b> (FOMC / CPI / NFP / PPI). It re-syncs weekly. Auto-added events are tagged and editable.')}</p>
-
-    <div class="w-h">${L('AI 复盘（选填，默认关闭）','AI review (optional, off by default)')}</div>
-    <p>${L('「周报」页底部。在「设置」里打开开关、填入你自己的 <b>Anthropic API key</b> 后，点「生成评价」会把最近交易的摘要发给 Anthropic，换一段反馈（卖太早了、加仓时机之类）。Key 明文存在本机——<b>不要在公用电脑上开</b>。开关关着就不会发任何请求。',
-                'At the bottom of the Report tab. Turn it on in Settings and add your own <b>Anthropic API key</b>; then "Generate Review" sends a summary of recent trades to Anthropic for feedback (sold too early, timing on adds, etc.). The key is stored in plain text on this machine — <b>don\'t enable it on a shared computer</b>. Nothing is sent while the switch is off.')}</p>
-
-    <div class="w-h">${L('你的数据','Your data')}</div>
-    <p>${L('全部只存在这个浏览器里，不上传。用<b>导出备份</b>存一份 JSON——清缓存 / 换浏览器 / 无痕窗口都会丢，这是唯一的备份。',
-                'Everything stays in this browser, nothing uploaded. Use <b>Export backup</b> for a JSON copy — clearing site data, switching browsers, or a private window wipes it, and that file is the only backup.')}</p>
+    <div class="w-intro">${L('券商用<b>均价法</b>：一只股票所有买入摊成一个成本。LOOP 另外按<b>后进先出（LIFO）</b>把每笔卖出配对到最近买入的批次。「交易盈亏」页顶部两个数字是同一份成交记录的两种算法，<b>差额</b>就是均价法藏起来的盈亏。',
+                       'Your broker uses <b>average cost</b> — every buy of a stock blended into one number. LOOP also matches each sale to your most recent buys, <b>last-in-first-out</b>. The two figures atop the Trades tab are both methods on the same trades; the <b>difference</b> is the P&L average cost hides.')}</div>
+    <div class="w-grid">
+      ${item(L('录入交易','Getting trades in'),
+             '「交易盈亏」页<b>导入对账单</b>吃 IBKR Activity Statement 的 CSV（Performance &amp; Reports → Statements → Activity）。重复导入会自动去重。或<b>+ 添加</b>手动录。',
+             'On the Trades tab, <b>Import statement</b> takes an IBKR Activity Statement CSV (Performance &amp; Reports → Statements → Activity). Re-imports are deduped. Or <b>+ Add</b> by hand.')}
+      ${item(L('持仓','Positions'),
+             '从交易记录<b>自动算出</b>，不用单独维护。历史不全时会有提示和「(估)」标记——补一笔买入，或直接在行内改。',
+             'Worked out <b>from your trades</b>, not entered separately. Incomplete history shows a warning and "(est)" marks — add the missing buy, or edit the row.')}
+      ${item(L('每周 / 每月盈亏','Weekly / monthly P&L'),
+             '「周报」页把已实现盈亏按周、按月摊开，看哪段时间真的在赚、哪笔在磨损。',
+             'The Report tab lays realized P&L out by week and by month — see which stretches actually made money.')}
+      ${item(L('价格目标','Price targets'),
+             '「自选」页记下每只票在等的买入 / 卖出 / 关注价位，加一句原因。',
+             'On the Watchlist tab, note buy / sell / watch levels you\'re waiting for, each with a one-line reason.')}
+      ${item(L('日历 + 同步','Calendar + sync'),
+             '日历里标事件、写<b>计划</b>。填个免费 Finnhub key，点<b>同步</b>会自动拉你这些票的<b>财报日</b> + 核心宏观（FOMC / CPI / 非农 / PPI），之后每周自动更新。',
+             'Tag dated events with a <b>plan</b> note. Add a free Finnhub key and <b>Sync</b> pulls <b>earnings dates</b> for your tickers plus core macro (FOMC / CPI / NFP / PPI), refreshed weekly.')}
+      ${item(L('AI 复盘（默认关闭）','AI review (off by default)'),
+             '「周报」页底部。在「设置」填你自己的 <b>Anthropic key</b> 后，可把近期交易摘要发去换一段反馈。Key 明文存本机——<b>别在公用电脑开</b>。',
+             'Bottom of the Report tab. Add your own <b>Anthropic key</b> in Settings to send a recent-trades summary for feedback. Key stored in plaintext — <b>not on shared computers</b>.')}
+      ${item(L('你的数据','Your data'),
+             '只存在这个浏览器，不上传。<b>导出备份</b>存的那份 JSON 是唯一的备份——清缓存 / 换浏览器就没了。',
+             'Stays in this browser, never uploaded. The JSON from <b>Export backup</b> is your only copy — clearing site data or switching browsers wipes it.')}
+    </div>
     ${demoBtn}
   `;
 }
@@ -1520,7 +1518,7 @@ function renderPositions(){
       <div class="lot-row"><span class="k">USD</span><input type="number" step="any" class="cell-num" ${ce} value="${pxv2(cash.usd)}" onchange="updateCash('usd',this.value)"></div>
       <div class="lot-row"><span class="k">CAD</span><input type="number" step="any" class="cell-num" ${ce} value="${pxv2(cash.cad)}" onchange="updateCash('cad',this.value)"></div>
     </div>`;
-  if(!holdings.length) listHtml = `<div class="empty">${L('还没有持仓 — 先在「交易盈亏」里加交易或导入对账单','No holdings yet — add trades or import a statement in the Trades tab')}</div>` + listHtml;
+  if(!holdings.length) listHtml = `<div class="empty">${L('持仓由你的交易记录自动算出，不用单独维护。先在「交易盈亏」页加交易或导入对账单。','Positions are worked out from your trade ledger — nothing to maintain here. Add trades or import a statement on the Trades tab.')}</div>` + listHtml;
   list.innerHTML = listHtml;
 
   // donut + legend
@@ -1617,7 +1615,7 @@ function updateTarget(id, field, value){
 function renderTargets(){
   const el = document.getElementById('targetsView');
   if(!watchlist.length){
-    el.innerHTML = `<div class="empty">${L('还没有价格目标，点右上角"+ 添加"','No targets yet — click "+ Add" above')}</div>`;
+    el.innerHTML = `<div class="empty">${L('在等的买入 / 卖出 / 关注价位，附一句原因（比如「看图 · 财报前」）。点右上角「+ 添加」。','Buy / sell / watch levels you\'re waiting for, each with a one-line reason ("chart · pre-ER"). Click "+ Add" above.')}</div>`;
     return;
   }
   const actLabel = a => a==='BUY' ? L('买入','Buy') : a==='SELL' ? L('卖出','Sell') : L('关注','Watch');
@@ -1692,10 +1690,10 @@ function toggleBar(barId){
   renderReport();
 }
 
-function renderBarChart(containerId, data, prefix){
+function renderBarChart(containerId, data, prefix, emptyMsg){
   const el = document.getElementById(containerId);
   if(data.length===0){
-    el.innerHTML = `<div class="empty">${lang==='zh'?'这段时间还没有已实现的交易':'No realized trades in this period'}</div>`;
+    el.innerHTML = `<div class="empty">${emptyMsg || L('这段时间还没有已实现的交易','No realized trades in this period')}</div>`;
     return;
   }
   const maxAbs = Math.max(...data.map(d=>Math.abs(d.value)), 1);
@@ -1721,7 +1719,7 @@ function renderBarChart(containerId, data, prefix){
 
 function renderReport(){
   const {weekly, monthly} = computeReportData();
-  renderBarChart('weeklyChart', weekly, 'wk');
+  renderBarChart('weeklyChart', weekly, 'wk', L('有平仓交易后，这里按周 / 按月拆你的已实现盈亏，看赚钱的节奏。','Once you have closed trades, this breaks your realized P&L out by week and by month.'));
   renderBarChart('monthlyChart', monthly, 'mo');
   const rangeEl = document.getElementById('weeklyRange');
   if(rangeEl){
