@@ -9,5 +9,11 @@ mockups/
 *.csv
 U*_*.pdf
 
+# 本地测试数据
+_testdata.json
+
+# 本地开发服务器配置（各人环境不同）
+.claude/launch.json
+
 # OS
 .DS_Store
