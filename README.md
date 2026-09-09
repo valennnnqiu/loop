@@ -31,7 +31,10 @@ probably isn't what you need.
 
 1. Download **`index.html`**.
 2. Open it in any modern browser (double-click, or drag into a tab).
-3. Add trades manually, or **导入对账单** with an IBKR CSV.
+3. First time? The welcome screen has a **load demo data** link (fills it with
+   fake trades so you can look around, one click to clear), and the **?** in the
+   top corner opens a short walkthrough of every tab. Then add trades manually,
+   or **导入对账单** with an IBKR CSV.
 4. **导出备份 / 导入备份** — one JSON file with everything. This is the only backup;
    `localStorage` can be wiped by clearing site data, a different browser, or a
    private window.
