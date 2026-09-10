@@ -1277,17 +1277,17 @@ function renderWelcome(){
 const DEMO_TRADES = [
   {sym:'NVDA', side:'BUY',  qty:20, price:170.00, comm:0, date:'2026-06-12'},
   {sym:'NVDA', side:'BUY',  qty:10, price:180.00, comm:0, date:'2026-06-20'},
-  {sym:'NVDA', side:'SELL', qty:15, price:195.00, comm:0, date:'2026-07-15'},
+  {sym:'NVDA', side:'SELL', qty:15, price:195.00, comm:0, date:'2026-07-15', reported:325.00},
   {sym:'NVDA', side:'BUY',  qty:15, price:178.00, comm:0, date:'2026-08-22'},
   {sym:'AAPL', side:'BUY',  qty:30, price:210.00, comm:0, date:'2026-06-25'},
-  {sym:'AAPL', side:'SELL', qty:30, price:198.00, comm:0, date:'2026-08-04'},
+  {sym:'AAPL', side:'SELL', qty:30, price:198.00, comm:0, date:'2026-08-04', reported:-360.00},
   {sym:'MSFT', side:'BUY',  qty:15, price:430.00, comm:0, date:'2026-07-01'},
-  {sym:'MSFT', side:'SELL', qty:10, price:465.00, comm:0, date:'2026-08-19'},
+  {sym:'MSFT', side:'SELL', qty:10, price:465.00, comm:0, date:'2026-08-19', reported:350.00},
   {sym:'AMD',  side:'SELL', qty:25, price:165.00, comm:0, date:'2026-07-10'},
-  {sym:'AMD',  side:'BUY',  qty:25, price:152.00, comm:0, date:'2026-08-12'},
+  {sym:'AMD',  side:'BUY',  qty:25, price:152.00, comm:0, date:'2026-08-12', reported:325.00},
   {sym:'META', side:'BUY',  qty:12, price:690.00, comm:0, date:'2026-07-28'},
   {sym:'SMCI', side:'BUY',  qty:40, price:45.00,  comm:0, date:'2026-08-01'},
-  {sym:'SMCI', side:'SELL', qty:40, price:51.20,  comm:0, date:'2026-09-02'},
+  {sym:'SMCI', side:'SELL', qty:40, price:51.20,  comm:0, date:'2026-09-02', reported:248.00},
 ];
 const DEMO_PRICES  = { NVDA:{price:188.50}, MSFT:{price:452.00}, META:{price:721.00} };
 const DEMO_WATCH   = [
@@ -2257,8 +2257,12 @@ function render(){
     }
     return s + c.pnl;
   },0);
+  // "As reported" side of the comparison: prefer the broker's own realized P&L
+  // from the imported statement (that's the number that matters for tax); fall
+  // back to LOOP's average-cost calc only for manually-entered trades.
   const avgCostPnl = runAverageCost(AT());
-  const totalReported = closed.reduce((s,c)=> s + (avgCostPnl[c.id] ?? 0), 0);
+  const totalReported = closed.reduce((s,c)=> s + (c.reported != null ? c.reported : (avgCostPnl[c.id] ?? 0)), 0);
+  const fromStatement = closed.some(c => c.reported != null);
   const diff = totalReal - totalReported;
   const summaryEl = document.getElementById('summaryCards');
   if(trades.length === 0){
@@ -2281,14 +2285,18 @@ function render(){
       <div class="note">${L('最近买入的批次先卖出','last lots in, first out')}</div>
     </div>
     <div class="stat">
-      <div class="label">${L('均价法盈亏 (自算)','Average cost')}</div>
+      <div class="label">${fromStatement ? L('对账单已实现盈亏','As reported by broker') : L('均价法盈亏 (自算)','Average cost (computed)')}</div>
       <div class="value ${totalReported>=0?'gain':'loss'}">$${fmtSigned(totalReported)}<span class="cad-sub">C$${fmtSigned(totalReported*fx)}</span></div>
-      <div class="note">${L('从第一笔交易起，跟 LIFO 同一份记录','same trade history as LIFO')}</div>
+      <div class="note">${fromStatement
+        ? L('直接取自导入的对账单（券商成本口径，加拿大账户通常是均价法）','straight from your imported statement (broker cost method — usually average cost for CAD accounts)')
+        : L('LOOP 按均价法自算，跟 LIFO 同一份记录','LOOP\'s average-cost calc, same trades as LIFO')}</div>
     </div>
     <div class="stat">
       <div class="label">${L('两者差额','Difference')}</div>
       <div class="value ${diff>=0?'gain':'loss'}">$${fmtSigned(diff)}<span class="cad-sub">C$${fmtSigned(diff*fx)}</span></div>
-      <div class="note">${L('正数=均价法低估了你的真实收益','positive = average cost understates your gain')}</div>
+      <div class="note">${fromStatement
+        ? L('正数 = LIFO 逐批结算比对账单口径更高','positive = lot-matched LIFO comes out higher than the statement')
+        : L('正数 = 均价法低估了 LIFO 口径的收益','positive = average cost understates the lot-matched gain')}</div>
     </div>
   `;
   }
