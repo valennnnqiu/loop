@@ -614,7 +614,7 @@
       <div class="sec-head">
         <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>
         <h2 data-i18n="realizedTitle">已实现盈亏（按批次真实结算 · LIFO）</h2>
-        <div class="grow">
+        <div class="grow" id="ledgerActions">
           <span class="count" id="closedCount"></span>
           <button class="btn-ghost btn-small" onclick="openImport()" data-i18n="btnImport">导入对账单</button>
           <button class="btn-ghost btn-small" onclick="openAddTrade()" data-i18n="btnAdd2">+ 添加</button>
@@ -664,10 +664,10 @@
         <span data-i18n="footerHint">数据只存在这台电脑的浏览器里，不上传任何服务器。带 "(估)" 标记的批次是追踪起点前已持有、成本未知，按卖价估算。</span>
       </div>
       <div style="display:flex; gap:8px;">
-        <button class="btn-ghost btn-small" onclick="exportBackup()" data-i18n="btnExportBackup">导出备份</button>
+        <button class="btn-ghost btn-small" id="btnExportBackup" onclick="exportBackup()" data-i18n="btnExportBackup">导出备份</button>
         <button class="btn-ghost btn-small" onclick="document.getElementById('backupFile').click()" data-i18n="btnImportBackup">导入备份</button>
         <input type="file" id="backupFile" accept=".json,application/json" style="display:none;">
-        <button class="btn-ghost btn-small" onclick="resetToSeed()" data-i18n="resetSeed">重置为初始数据</button>
+        <button class="btn-ghost btn-small" id="btnClearData" onclick="resetToSeed()" data-i18n="resetSeed">重置为初始数据</button>
       </div>
     </footer>
 
@@ -2302,6 +2302,12 @@ function render(){
       demoBox.classList.remove('show');
     }
   }
+
+  // on the empty welcome screen, hide chrome the welcome card already covers
+  const blank = trades.length === 0;
+  const la = document.getElementById('ledgerActions'); if(la) la.style.display = blank ? 'none' : '';
+  const eb = document.getElementById('btnExportBackup'); if(eb) eb.hidden = blank;
+  const cb = document.getElementById('btnClearData'); if(cb) cb.hidden = blank;
 
   // warnings
   const warnBox = document.getElementById('warnBox');
