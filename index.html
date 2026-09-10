@@ -519,17 +519,17 @@
   .report-pager{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; color:var(--text-dim); }
   .goal-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 10px; margin-bottom:12px; font-size:12px; color:var(--text-dim); }
   .goal-bar label{ font-weight:600; }
-  .goal-bar input{ width:110px; background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); color:var(--text); padding:6px 9px; font-family:var(--mono); font-size:12px; transition:border-color .12s; }
-  .goal-bar input:focus{ outline:none; border-color:var(--gold); background:var(--panel); }
-  .goal-bar #goalSummary{ font-family:var(--mono); font-size:11px; }
+  .goal-input{ display:inline-flex; align-items:center; background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding-left:9px; transition:border-color .12s, background .12s; }
+  .goal-input:focus-within{ border-color:var(--gold); background:var(--panel); }
+  .goal-input .goal-cur{ font-family:var(--mono); font-size:12px; color:var(--text-dim); }
+  .goal-input input{ width:96px; background:transparent; border:none; outline:none; color:var(--text); padding:6px 9px 6px 2px; font-family:var(--mono); font-size:12px; }
+  .goal-prog{ flex:1 1 160px; max-width:240px; height:8px; background:var(--panel-2); border-radius:999px; overflow:hidden; }
+  .goal-prog > i{ display:block; height:100%; background:var(--gain); border-radius:999px; transition:width .25s ease; }
+  .goal-stat{ font-family:var(--mono); font-size:11.5px; color:var(--text-dim); }
   .report-chart{
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px 18px 8px;
   }
   .rbar-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer; }
-  .rbar-goal-band{ position:absolute; top:0; bottom:0; background:rgba(25,24,20,0.14); border-left:1px dashed var(--text-dim); border-right:1px dashed var(--text-dim); }
-  .rbar-goal-tag{ width:52px; flex:0 0 auto; text-align:right; font-family:var(--mono); font-size:11px; font-weight:700; color:var(--text-dim); }
-  .rbar-goal-tag.hit{ color:var(--gain); }
-  .rbar-goal-tag.miss{ color:var(--loss); }
   .rbar-row:hover .rbar-label{ color:var(--text); }
   .rbar-detail{
     display:none; margin:-4px 0 14px 100px; padding:8px 10px; background:var(--ink);
@@ -761,9 +761,10 @@
         <div class="grow report-pager" id="weeklyRange"></div>
       </div>
       <div class="goal-bar">
-        <label for="weeklyGoalInput" data-i18n="goalLabel">每周目标</label>
-        <input type="text" id="weeklyGoalInput" placeholder="2000-3000" onchange="setWeeklyGoal(this.value)">
-        <span id="goalSummary"></span>
+        <label for="weeklyGoalInput" data-i18n="goalLabel">每月目标</label>
+        <span class="goal-input"><span class="goal-cur">$</span><input type="text" id="weeklyGoalInput" placeholder="8000-12000" onchange="setWeeklyGoal(this.value)"></span>
+        <div class="goal-prog" id="goalProg" hidden><i></i></div>
+        <span class="goal-stat" id="goalStat"></span>
       </div>
       <div class="report-chart" id="weeklyChart"></div>
     </section>
@@ -954,7 +955,7 @@ const I18N = {
     subtitle: 'LIFO 逐批结算 · 持仓 · 自选', tabLedger: '交易盈亏', tabPositions: '持仓', tabWatchlist: '自选', tabReport: '周报',
     notesTitle: '笔记目录', btnAddNote: '+ 添加笔记', noteTitleLabel: '标题', noteTitlePh: '为什么卖早了',
     noteTickerLabel: '代码 (可选)', noteDateLabel: '日期', btnAdd: '添加', noteBodyLabel: '内容', noteBodyPh: '写点什么…',
-    weeklyChartTitle: '每周已实现盈亏', monthlyChartTitle: '每月已实现盈亏', reviewTitle: '操作评价', btnGenReview: '生成评价', goalLabel: '每周目标',
+    weeklyChartTitle: '每周已实现盈亏', monthlyChartTitle: '每月已实现盈亏', reviewTitle: '操作评价', btnGenReview: '生成评价', goalLabel: '每月目标',
     reviewEmpty: '点"生成评价"，我会看你最近的交易，给点反馈（比如卖早了、加仓时机怎么样之类的）',
     addTradeTitle: '添加交易', realizedTitle: '已实现盈亏（按批次真实结算 · LIFO）', openLotsTitle: '未平仓批次',
     posSortTitle: '持仓', btnRefreshPrices: '刷新股价', resetSeed: '清空数据',
@@ -978,7 +979,7 @@ const I18N = {
     subtitle: 'LIFO lot matching · Positions · Watchlist', tabLedger: 'Trades', tabPositions: 'Positions', tabWatchlist: 'Watchlist', tabReport: 'Report',
     notesTitle: 'Notes Directory', btnAddNote: '+ Add Note', noteTitleLabel: 'Title', noteTitlePh: 'Why I sold too early',
     noteTickerLabel: 'Ticker (optional)', noteDateLabel: 'Date', btnAdd: 'Add', noteBodyLabel: 'Body', noteBodyPh: 'Write something…',
-    weeklyChartTitle: 'Weekly Realized P&L', monthlyChartTitle: 'Monthly Realized P&L', reviewTitle: 'Trading Review', btnGenReview: 'Generate Review', goalLabel: 'Weekly goal',
+    weeklyChartTitle: 'Weekly Realized P&L', monthlyChartTitle: 'Monthly Realized P&L', reviewTitle: 'Trading Review', btnGenReview: 'Generate Review', goalLabel: 'Monthly goal',
     reviewEmpty: 'Click "Generate Review" — I\'ll look at your recent trades and give feedback (e.g. sold too early, timing on adds, etc.)',
     addTradeTitle: 'Add Trade', realizedTitle: 'Realized P&L (lot-matched · LIFO)', openLotsTitle: 'Open Lots',
     posSortTitle: 'Positions', btnRefreshPrices: 'Refresh prices', resetSeed: 'Clear all data',
@@ -1257,8 +1258,8 @@ function renderWelcome(){
              '从交易记录<b>自动算出</b>，不用单独维护。历史不全会有提示和「(估)」标记——补一笔买入或在行内改。',
              'Derived <b>from your trades</b>, not entered. Gaps in history show a warning and <b>(est)</b> marks — add the missing buy or edit the row.')}
       ${item(I.bars, L('周报（每周 / 每月盈亏）','Report (weekly & monthly P&L)'),
-             '把已实现盈亏按周、按月摊开。设一个<b>每周目标</b>，看哪几周达标。',
-             'Realized P&L laid out by week and by month. Set a <b>weekly target</b> to see which weeks cleared it.')}
+             '把已实现盈亏按周、按月摊开。设一个<b>每月目标</b>，看当月进度。',
+             'Realized P&L laid out by week and by month. Set a <b>monthly goal</b> to track progress through the month.')}
       ${item(I.cal, L('日历 + 同步','Calendar + sync'),
              '日历里标事件、写<b>计划</b>。加个免费 Finnhub key，<b>同步</b>会自动拉<b>财报日</b> + 宏观（FOMC / CPI / 非农）。',
              'Tag events with a <b>plan</b> note. A free Finnhub key lets <b>Sync</b> pull <b>earnings dates</b> plus macro (FOMC / CPI / jobs).')}
@@ -1737,40 +1738,28 @@ function toggleBar(barId){
   renderReport();
 }
 
-function renderBarChart(containerId, data, prefix, emptyMsg, goal){
+function renderBarChart(containerId, data, prefix, emptyMsg){
   const el = document.getElementById(containerId);
   if(data.length===0){
     el.innerHTML = `<div class="empty">${emptyMsg || L('这段时间还没有已实现的交易','No realized trades in this period')}</div>`;
     return;
   }
-  const maxAbs = Math.max(...data.map(d=>Math.abs(d.value)), goal ? goal.max : 0, 1);
-  const posOf = v => 50 + Math.max(-1, Math.min(1, v/maxAbs)) * 50;   // % across the track
-  let band = '';
-  if(goal){
-    const l = posOf(goal.min), r = posOf(goal.max);
-    band = `<div class="rbar-goal-band" style="left:${l}%; width:${Math.max(r-l,0.4)}%;"></div>`;
-  }
+  const maxAbs = Math.max(...data.map(d=>Math.abs(d.value)), 1);
   el.innerHTML = data.map(d=>{
     const barId = prefix + '-' + d.label;
     const pct = Math.min(Math.abs(d.value)/maxAbs*100, 100);
     const cls = d.value>=0 ? 'gain' : 'loss';
     const side = d.value>=0 ? 'left:50%;' : `right:50%;`;
     const expanded = expandedBars.has(barId);
-    const hit = goal && d.value >= goal.min;
-    const goalTag = goal
-      ? `<div class="rbar-goal-tag ${hit?'hit':'miss'}">${hit ? '✓' : fmtSigned(d.value - goal.min)}</div>`
-      : '';
     const detailRows = d.trades.slice().sort((a,b)=> new Date(b.date)-new Date(a.date)).map(t=>
       `<div class="rbar-trade"><span>${String(t.date).slice(0,10)}</span><span class="rbar-trade-sym">${t.sym}</span><span>${fmt(t.qty,0)} @ ${fmt(t.price)}</span><span class="${t.pnl>=0?'gain':'loss'}">${fmtSigned(t.pnl)}</span></div>`
     ).join('');
     return `<div class="rbar-row" onclick="toggleBar('${barId}')">
       <div class="rbar-label">${d.label}</div>
       <div class="rbar-track">
-        ${band}
         <div class="rbar-fill ${cls}" style="${side} width:${pct/2}%;"></div>
       </div>
       <div class="rbar-val ${cls}">${fmtSigned(d.value)}</div>
-      ${goalTag}
     </div>
     <div class="rbar-detail ${expanded?'show':''}">${detailRows}</div>`;
   }).join('');
@@ -1782,26 +1771,26 @@ function renderReport(){
 
   const goalInput = document.getElementById('weeklyGoalInput');
   if(goalInput && document.activeElement !== goalInput) goalInput.value = weeklyGoal;
-  const sumEl = document.getElementById('goalSummary');
-  if(sumEl){
+  const prog = document.getElementById('goalProg');
+  const stat = document.getElementById('goalStat');
+  if(prog && stat){
+    const moTotal = weekly.reduce((s,w)=> s + w.value, 0);   // selected month's realized P&L
     if(goal && weekly.length){
-      const hits = weekly.filter(w => w.value >= goal.min).length;
-      const target = goal.min === goal.max ? fmt(goal.min,0) : `${fmt(goal.min,0)}–${fmt(goal.max,0)}`;
-      sumEl.textContent = L(`本月 ${hits} / ${weekly.length} 周达标（目标 ${target}）`,
-                           `${hits} of ${weekly.length} weeks hit ${target} this month`);
-      sumEl.style.color = hits === weekly.length ? 'var(--gain)' : 'var(--text-dim)';
-    } else if(goal){
-      sumEl.textContent = L('本月还没有已平仓的周', 'no closed weeks this month yet');
-      sumEl.style.color = 'var(--text-dim)';
-    } else if(weeklyGoal){
-      sumEl.textContent = L('填个数字或区间，比如 2000-3000', 'enter a number or range, e.g. 2000-3000');
-      sumEl.style.color = 'var(--loss)';
+      const pct = Math.max(0, Math.min(100, moTotal / goal.min * 100));
+      prog.hidden = false;
+      prog.firstElementChild.style.width = pct + '%';
+      const mo = reportMonth.toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {month:'short'});
+      const target = goal.min === goal.max ? `$${fmt(goal.min,0)}` : `$${fmt(goal.min,0)}–${fmt(goal.max,0)}`;
+      stat.textContent = `${mo} $${fmt(moTotal,0)} / ${target} · ${Math.round(moTotal / goal.min * 100)}%`;
+      stat.style.color = moTotal >= goal.min ? 'var(--gain)' : 'var(--text-dim)';
     } else {
-      sumEl.textContent = '';
+      prog.hidden = true;
+      stat.textContent = goal ? L('本月还没有已平仓交易','no closed trades this month yet') : '';
+      stat.style.color = 'var(--text-dim)';
     }
   }
 
-  renderBarChart('weeklyChart', weekly, 'wk', L('有平仓交易后，这里按周 / 按月拆你的已实现盈亏，看赚钱的节奏。','Once you have closed trades, this breaks your realized P&L out by week and by month.'), goal);
+  renderBarChart('weeklyChart', weekly, 'wk', L('有平仓交易后，这里按周 / 按月拆你的已实现盈亏，看赚钱的节奏。','Once you have closed trades, this breaks your realized P&L out by week and by month.'));
   renderBarChart('monthlyChart', monthly, 'mo');
   const rangeEl = document.getElementById('weeklyRange');
   if(rangeEl){
