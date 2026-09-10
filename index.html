@@ -90,16 +90,15 @@
   .welcome-card .wc-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
   .welcome-card .wc-sub{ font-size:12px; color:var(--text-dim); }
   .welcome-card .wc-sub a, .warn a{ color:var(--gold); cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
-  .welcome-modal{ max-width:640px; max-height:84vh; overflow-y:auto; }
-  #welcomeBody .modal-title{ margin-bottom:4px; }
-  #welcomeBody .w-intro{ font-size:12.5px; color:var(--text-dim); line-height:1.6; margin:0 0 16px; }
-  #welcomeBody .w-intro b{ color:var(--text); font-weight:600; }
-  #welcomeBody .w-grid{ display:grid; grid-template-columns:1fr 1fr; gap:15px 22px; }
-  #welcomeBody .w-item .w-h{ font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text); margin:0 0 4px; }
-  #welcomeBody .w-item p{ font-size:11.5px; color:var(--text-dim); line-height:1.5; margin:0; }
+  .modal-card.welcome-modal{ max-width:860px; width:calc(100vw - 40px); max-height:86vh; overflow-y:auto; padding:26px 30px; }
+  #welcomeBody .modal-title{ margin-bottom:18px; font-size:16px; }
+  #welcomeBody .w-grid{ display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,auto); grid-auto-flow:column; gap:20px 40px; }
+  #welcomeBody .w-item .w-h{ display:flex; align-items:center; gap:7px; font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text); margin:0 0 5px; }
+  #welcomeBody .w-item .w-h svg.i{ font-size:14px; color:var(--gold); }
+  #welcomeBody .w-item p{ font-size:12.5px; color:var(--text-dim); line-height:1.6; margin:0; }
   #welcomeBody b{ color:var(--text); font-weight:600; }
-  #welcomeBody .w-actions{ margin-top:16px; padding-top:13px; border-top:1px solid var(--line); font-size:11px; color:var(--text-dim); }
-  @media (max-width:560px){ #welcomeBody .w-grid{ grid-template-columns:1fr; } }
+  #welcomeBody .w-actions{ margin-top:20px; padding-top:15px; border-top:1px solid var(--line); font-size:11.5px; color:var(--text-dim); }
+  @media (max-width:520px){ #welcomeBody .w-grid{ grid-template-columns:1fr; grid-template-rows:none; grid-auto-flow:row; gap:16px; } }
 
   /* warnings / reconciliation */
   .warn{
@@ -518,10 +517,19 @@
 
   /* report charts */
   .report-pager{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; color:var(--text-dim); }
+  .goal-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 10px; margin-bottom:12px; font-size:12px; color:var(--text-dim); }
+  .goal-bar label{ font-weight:600; }
+  .goal-bar input{ width:110px; background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); color:var(--text); padding:6px 9px; font-family:var(--mono); font-size:12px; transition:border-color .12s; }
+  .goal-bar input:focus{ outline:none; border-color:var(--gold); background:var(--panel); }
+  .goal-bar #goalSummary{ font-family:var(--mono); font-size:11px; }
   .report-chart{
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px 18px 8px;
   }
   .rbar-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer; }
+  .rbar-goal-band{ position:absolute; top:0; bottom:0; background:rgba(25,24,20,0.14); border-left:1px dashed var(--text-dim); border-right:1px dashed var(--text-dim); }
+  .rbar-goal-tag{ width:52px; flex:0 0 auto; text-align:right; font-family:var(--mono); font-size:11px; font-weight:700; color:var(--text-dim); }
+  .rbar-goal-tag.hit{ color:var(--gain); }
+  .rbar-goal-tag.miss{ color:var(--loss); }
   .rbar-row:hover .rbar-label{ color:var(--text); }
   .rbar-detail{
     display:none; margin:-4px 0 14px 100px; padding:8px 10px; background:var(--ink);
@@ -700,13 +708,13 @@
         <span class="badge"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg></span>
         <h2 id="calMonthLabel">—</h2>
         <div class="grow" style="gap:6px;">
+          <button class="btn-ghost btn-small" id="calSyncBtn" onclick="syncCalendar()" data-i18n="btnCalSync" style="margin-right:4px;">同步日历</button>
           <button class="btn-ghost btn-small btn-arrow" onclick="calPrev()">‹</button>
           <button class="btn-ghost btn-small" onclick="calToday()">Today</button>
           <button class="btn-ghost btn-small btn-arrow" onclick="calNext()">›</button>
         </div>
       </div>
       <div class="cal-sync">
-        <button class="btn-ghost btn-small" id="calSyncBtn" onclick="syncCalendar()" data-i18n="btnCalSync">同步日历</button>
         <span id="calSyncNote"></span>
       </div>
       <div class="cal-legend">
@@ -751,6 +759,11 @@
         <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>
         <h2 data-i18n="weeklyChartTitle">每周已实现盈亏</h2>
         <div class="grow report-pager" id="weeklyRange"></div>
+      </div>
+      <div class="goal-bar">
+        <label for="weeklyGoalInput" data-i18n="goalLabel">每周目标</label>
+        <input type="text" id="weeklyGoalInput" placeholder="2000-3000" onchange="setWeeklyGoal(this.value)">
+        <span id="goalSummary"></span>
       </div>
       <div class="report-chart" id="weeklyChart"></div>
     </section>
@@ -876,6 +889,7 @@ const MACRO_FOMC = [
 ];
 const MERGED_BATCHES_KEY = 'ledger_merged_batches_v1';
 const LANG_KEY = 'ledger_lang_v1';
+const GOAL_KEY = 'ledger_weekly_goal_v1';
 const REVIEW_KEY = 'ledger_review_v1';
 const AI_ENABLED_KEY = 'ledger_ai_enabled_v1';
 const AI_KEY_KEY = 'ledger_ai_key_v1';
@@ -929,6 +943,7 @@ let notes = [];
 let watchlist = [];
 let calendarEvents = {};
 let lang = 'en';
+let weeklyGoal = '';   // user's weekly realized-P&L target, e.g. "2000-3000"
 // demo mode is derived, not stored: true whenever any demo-* trade is present
 function isDemoMode(){ return trades.some(t => String(t.id).indexOf('demo-') === 0); }
 
@@ -939,7 +954,7 @@ const I18N = {
     subtitle: 'LIFO 逐批结算 · 持仓 · 自选', tabLedger: '交易盈亏', tabPositions: '持仓', tabWatchlist: '自选', tabReport: '周报',
     notesTitle: '笔记目录', btnAddNote: '+ 添加笔记', noteTitleLabel: '标题', noteTitlePh: '为什么卖早了',
     noteTickerLabel: '代码 (可选)', noteDateLabel: '日期', btnAdd: '添加', noteBodyLabel: '内容', noteBodyPh: '写点什么…',
-    weeklyChartTitle: '每周已实现盈亏', monthlyChartTitle: '每月已实现盈亏', reviewTitle: '操作评价', btnGenReview: '生成评价',
+    weeklyChartTitle: '每周已实现盈亏', monthlyChartTitle: '每月已实现盈亏', reviewTitle: '操作评价', btnGenReview: '生成评价', goalLabel: '每周目标',
     reviewEmpty: '点"生成评价"，我会看你最近的交易，给点反馈（比如卖早了、加仓时机怎么样之类的）',
     addTradeTitle: '添加交易', realizedTitle: '已实现盈亏（按批次真实结算 · LIFO）', openLotsTitle: '未平仓批次',
     posSortTitle: '持仓', btnRefreshPrices: '刷新股价', resetSeed: '清空数据',
@@ -963,7 +978,7 @@ const I18N = {
     subtitle: 'LIFO lot matching · Positions · Watchlist', tabLedger: 'Trades', tabPositions: 'Positions', tabWatchlist: 'Watchlist', tabReport: 'Report',
     notesTitle: 'Notes Directory', btnAddNote: '+ Add Note', noteTitleLabel: 'Title', noteTitlePh: 'Why I sold too early',
     noteTickerLabel: 'Ticker (optional)', noteDateLabel: 'Date', btnAdd: 'Add', noteBodyLabel: 'Body', noteBodyPh: 'Write something…',
-    weeklyChartTitle: 'Weekly Realized P&L', monthlyChartTitle: 'Monthly Realized P&L', reviewTitle: 'Trading Review', btnGenReview: 'Generate Review',
+    weeklyChartTitle: 'Weekly Realized P&L', monthlyChartTitle: 'Monthly Realized P&L', reviewTitle: 'Trading Review', btnGenReview: 'Generate Review', goalLabel: 'Weekly goal',
     reviewEmpty: 'Click "Generate Review" — I\'ll look at your recent trades and give feedback (e.g. sold too early, timing on adds, etc.)',
     addTradeTitle: 'Add Trade', realizedTitle: 'Realized P&L (lot-matched · LIFO)', openLotsTitle: 'Open Lots',
     posSortTitle: 'Positions', btnRefreshPrices: 'Refresh prices', resetSeed: 'Clear all data',
@@ -1078,6 +1093,7 @@ async function loadAll(){
     const res = await window.storage.get(LANG_KEY);
     lang = res.value === 'zh' ? 'zh' : 'en';
   }catch(e){ lang = 'en'; }
+  try{ weeklyGoal = (await window.storage.get(GOAL_KEY)).value || ''; }catch(e){ weeklyGoal = ''; }
   applyStaticI18n();
   render();
   renderPositions();
@@ -1094,9 +1110,14 @@ async function loadAll(){
 function refreshCalSyncNote(){
   const el = document.getElementById('calSyncNote');
   if(!el) return;
-  el.textContent = calSyncAt
-    ? L(`上次同步 ${new Date(calSyncAt).toLocaleDateString('zh-CN')}`, `last synced ${new Date(calSyncAt).toLocaleDateString('en-US')}`)
-    : L('未同步 · 需要免费 Finnhub key（「持仓」页「刷新股价」旁），点后自动拉财报日和宏观事件。也可以点某天的 + 手动加。',
+  const row = el.closest('.cal-sync');
+  if(calSyncAt){
+    el.textContent = '';
+    if(row) row.style.display = 'none';
+    return;
+  }
+  if(row) row.style.display = '';
+  el.textContent = L('未同步 · 需要免费 Finnhub key（「持仓」页「刷新股价」旁），点后自动拉财报日和宏观事件。也可以点某天的 + 手动加。',
         'Not synced · needs a free Finnhub key (Positions tab, by "Refresh prices"), then it pulls earnings dates and macro events. Or click a day\'s + to add your own.');
 }
 
@@ -1214,33 +1235,39 @@ function renderWelcome(){
   const demoBtn = trades.length
     ? ''
     : `<div class="w-actions"><button class="btn-ghost btn-small" onclick="loadDemoData()" style="margin-right:8px;">${L('加载示例数据','Load demo data')}</button>${L('填一份假交易看看填满的样子，随时一键清空。','Fake trades so you can see it populated — clear any time.')}</div>`;
-  const item = (h, zh, en) => `<div class="w-item"><div class="w-h">${h}</div><p>${L(zh, en)}</p></div>`;
+  const ic = p => `<svg class="i" viewBox="0 0 24 24">${p}</svg>`;
+  const item = (icon, h, zh, en) => `<div class="w-item"><div class="w-h">${ic(icon)}${h}</div><p>${L(zh, en)}</p></div>`;
+  const I = {
+    loop:'<path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+    down:'<path d="M12 3v13"/><path d="M7 12l5 5 5-5"/><path d="M5 21h14"/>',
+    pie:'<path d="M21.2 15.9A10 10 0 1 1 8.1 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>',
+    bars:'<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>',
+    target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/>',
+    cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/>',
+    star:'<path d="M12 3l1.7 4.8L18.5 9.5l-4.8 1.7L12 16l-1.7-4.8L5.5 9.5l4.8-1.7z"/><path d="M18 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',
+    lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  };
   el.innerHTML = `
     <div class="modal-title">${L('LOOP 怎么用','How LOOP works')}</div>
-    <div class="w-intro">${L('券商用<b>均价法</b>：一只股票所有买入摊成一个成本。LOOP 另外按<b>后进先出（LIFO）</b>把每笔卖出配对到最近买入的批次。「交易盈亏」页顶部两个数字是同一份成交记录的两种算法，<b>差额</b>就是均价法藏起来的盈亏。',
-                       'Your broker uses <b>average cost</b> — every buy of a stock blended into one number. LOOP also matches each sale to your most recent buys, <b>last-in-first-out</b>. The two figures atop the Trades tab are both methods on the same trades; the <b>difference</b> is the P&L average cost hides.')}</div>
     <div class="w-grid">
-      ${item(L('录入交易','Getting trades in'),
-             '「交易盈亏」页<b>导入对账单</b>吃 IBKR Activity Statement 的 CSV（Performance &amp; Reports → Statements → Activity）。重复导入会自动去重。或<b>+ 添加</b>手动录。',
-             'On the Trades tab, <b>Import statement</b> takes an IBKR Activity Statement CSV (Performance &amp; Reports → Statements → Activity). Re-imports are deduped. Or <b>+ Add</b> by hand.')}
-      ${item(L('持仓','Positions'),
-             '从交易记录<b>自动算出</b>，不用单独维护。历史不全时会有提示和「(估)」标记——补一笔买入，或直接在行内改。',
-             'Worked out <b>from your trades</b>, not entered separately. Incomplete history shows a warning and "(est)" marks — add the missing buy, or edit the row.')}
-      ${item(L('每周 / 每月盈亏','Weekly / monthly P&L'),
-             '「周报」页把已实现盈亏按周、按月摊开，看哪段时间真的在赚、哪笔在磨损。',
-             'The Report tab lays realized P&L out by week and by month — see which stretches actually made money.')}
-      ${item(L('价格目标','Price targets'),
-             '「自选」页记下每只票在等的买入 / 卖出 / 关注价位，加一句原因。',
-             'On the Watchlist tab, note buy / sell / watch levels you\'re waiting for, each with a one-line reason.')}
-      ${item(L('日历 + 同步','Calendar + sync'),
-             '日历里标事件、写<b>计划</b>。填个免费 Finnhub key，点<b>同步</b>会自动拉你这些票的<b>财报日</b> + 核心宏观（FOMC / CPI / 非农 / PPI），之后每周自动更新。',
-             'Tag dated events with a <b>plan</b> note. Add a free Finnhub key and <b>Sync</b> pulls <b>earnings dates</b> for your tickers plus core macro (FOMC / CPI / NFP / PPI), refreshed weekly.')}
-      ${item(L('AI 复盘（默认关闭）','AI review (off by default)'),
-             '「周报」页底部。在「设置」填你自己的 <b>Anthropic key</b> 后，可把近期交易摘要发去换一段反馈。Key 明文存本机——<b>别在公用电脑开</b>。',
-             'Bottom of the Report tab. Add your own <b>Anthropic key</b> in Settings to send a recent-trades summary for feedback. Key stored in plaintext — <b>not on shared computers</b>.')}
-      ${item(L('你的数据','Your data'),
-             '只存在这个浏览器，不上传。<b>导出备份</b>存的那份 JSON 是唯一的备份——清缓存 / 换浏览器就没了。',
-             'Stays in this browser, never uploaded. The JSON from <b>Export backup</b> is your only copy — clearing site data or switching browsers wipes it.')}
+      ${item(I.down, L('录入交易','Getting trades in'),
+             '<b>导入对账单</b>读 IBKR Activity Statement 的 CSV（Performance &amp; Reports → Statements）。或<b>+ 添加</b>手动录。',
+             '<b>Import statement</b> reads an IBKR Activity Statement CSV (Performance &amp; Reports → Statements). Or <b>+ Add</b> by hand.')}
+      ${item(I.pie, L('持仓','Positions'),
+             '从交易记录<b>自动算出</b>，不用单独维护。历史不全会有提示和「(估)」标记——补一笔买入或在行内改。',
+             'Derived <b>from your trades</b>, not entered. Gaps in history show a warning and <b>(est)</b> marks — add the missing buy or edit the row.')}
+      ${item(I.bars, L('周报（每周 / 每月盈亏）','Report (weekly & monthly P&L)'),
+             '把已实现盈亏按周、按月摊开。设一个<b>每周目标</b>，看哪几周达标。',
+             'Realized P&L laid out by week and by month. Set a <b>weekly target</b> to see which weeks cleared it.')}
+      ${item(I.cal, L('日历 + 同步','Calendar + sync'),
+             '日历里标事件、写<b>计划</b>。加个免费 Finnhub key，<b>同步</b>会自动拉<b>财报日</b> + 宏观（FOMC / CPI / 非农）。',
+             'Tag events with a <b>plan</b> note. A free Finnhub key lets <b>Sync</b> pull <b>earnings dates</b> plus macro (FOMC / CPI / jobs).')}
+      ${item(I.star, L('AI 复盘（默认关闭）','AI review (off by default)'),
+             '「周报」页。填你自己的 <b>Anthropic key</b>（设置里）换一段近期交易的反馈。明文存本机——<b>别在公用电脑开</b>。',
+             'Report tab. Your own <b>Anthropic key</b> (in Settings) gets feedback on recent trades. Stored in plaintext — <b>not shared computers</b>.')}
+      ${item(I.lock, L('你的数据','Your data'),
+             '只存在这个浏览器，不上传。<b>导出备份</b>的那份 JSON 是唯一的备份——清缓存就没了。',
+             'Lives in this browser only, never uploaded. <b>Export backup</b> is your one copy — clearing site data wipes it.')}
     </div>
     ${demoBtn}
   `;
@@ -1279,10 +1306,12 @@ async function loadDemoData(){
   watchlist = JSON.parse(JSON.stringify(DEMO_WATCH));
   calendarEvents = JSON.parse(JSON.stringify(DEMO_CALENDAR));
   cash = { usd:5000, cad:0 };
-  await Promise.all([ saveTrades(), savePosMeta(), saveWatch(), saveCalendar(), saveCash() ]);
+  calSyncAt = Date.now();
+  await Promise.all([ saveTrades(), savePosMeta(), saveWatch(), saveCalendar(), saveCash(),
+    window.storage.set(CALSYNC_KEY, String(calSyncAt)).catch(()=>{}) ]);
   closeWelcome();
   switchTab('ledger');
-  render(); renderPositions(); renderTargets(); renderCalendar(); renderReport();
+  render(); renderPositions(); renderTargets(); renderCalendar(); renderReport(); refreshCalSyncNote();
 }
 
 async function exitDemo(){
@@ -1295,7 +1324,7 @@ async function exitDemo(){
 }
 
 // ---------- Backup: export / import all local data as one JSON file ----------
-const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, PRICES_KEY, ALIASES_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, CALSYNC_KEY, RECON_DISMISS_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY];
+const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, PRICES_KEY, ALIASES_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, CALSYNC_KEY, RECON_DISMISS_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY, GOAL_KEY];
 
 async function exportBackup(){
   const data = {};
@@ -1654,6 +1683,24 @@ function reportMonthPrev(){ reportMonth.setMonth(reportMonth.getMonth()-1); rend
 function reportMonthNext(){ reportMonth.setMonth(reportMonth.getMonth()+1); renderReport(); }
 function reportMonthToday(){ reportMonth = new Date(); reportMonth.setDate(1); renderReport(); }
 
+// "2000-3000" / "2k-3k" / "2500" -> {min,max}, or null
+function parseGoal(str){
+  if(!str) return null;
+  const toks = String(str).replace(/[,，$]/g,'').match(/\d+(?:\.\d+)?\s*[kK]?/g);
+  if(!toks || !toks.length) return null;
+  const val = s => parseFloat(s) * (/[kK]/.test(s) ? 1000 : 1);
+  const a = val(toks[0]);
+  const b = toks[1] != null ? val(toks[1]) : a;
+  if(!isFinite(a) || !isFinite(b)) return null;
+  return { min: Math.min(a,b), max: Math.max(a,b) };
+}
+async function saveGoal(){ try{ await window.storage.set(GOAL_KEY, weeklyGoal); }catch(e){} }
+function setWeeklyGoal(v){
+  weeklyGoal = (v || '').trim();
+  saveGoal();
+  renderReport();
+}
+
 function computeReportData(){
   const {closed} = runFIFO(AT(), 'LIFO');
 
@@ -1690,28 +1737,40 @@ function toggleBar(barId){
   renderReport();
 }
 
-function renderBarChart(containerId, data, prefix, emptyMsg){
+function renderBarChart(containerId, data, prefix, emptyMsg, goal){
   const el = document.getElementById(containerId);
   if(data.length===0){
     el.innerHTML = `<div class="empty">${emptyMsg || L('这段时间还没有已实现的交易','No realized trades in this period')}</div>`;
     return;
   }
-  const maxAbs = Math.max(...data.map(d=>Math.abs(d.value)), 1);
+  const maxAbs = Math.max(...data.map(d=>Math.abs(d.value)), goal ? goal.max : 0, 1);
+  const posOf = v => 50 + Math.max(-1, Math.min(1, v/maxAbs)) * 50;   // % across the track
+  let band = '';
+  if(goal){
+    const l = posOf(goal.min), r = posOf(goal.max);
+    band = `<div class="rbar-goal-band" style="left:${l}%; width:${Math.max(r-l,0.4)}%;"></div>`;
+  }
   el.innerHTML = data.map(d=>{
     const barId = prefix + '-' + d.label;
     const pct = Math.min(Math.abs(d.value)/maxAbs*100, 100);
     const cls = d.value>=0 ? 'gain' : 'loss';
     const side = d.value>=0 ? 'left:50%;' : `right:50%;`;
     const expanded = expandedBars.has(barId);
+    const hit = goal && d.value >= goal.min;
+    const goalTag = goal
+      ? `<div class="rbar-goal-tag ${hit?'hit':'miss'}">${hit ? '✓' : fmtSigned(d.value - goal.min)}</div>`
+      : '';
     const detailRows = d.trades.slice().sort((a,b)=> new Date(b.date)-new Date(a.date)).map(t=>
       `<div class="rbar-trade"><span>${String(t.date).slice(0,10)}</span><span class="rbar-trade-sym">${t.sym}</span><span>${fmt(t.qty,0)} @ ${fmt(t.price)}</span><span class="${t.pnl>=0?'gain':'loss'}">${fmtSigned(t.pnl)}</span></div>`
     ).join('');
     return `<div class="rbar-row" onclick="toggleBar('${barId}')">
       <div class="rbar-label">${d.label}</div>
       <div class="rbar-track">
+        ${band}
         <div class="rbar-fill ${cls}" style="${side} width:${pct/2}%;"></div>
       </div>
       <div class="rbar-val ${cls}">${fmtSigned(d.value)}</div>
+      ${goalTag}
     </div>
     <div class="rbar-detail ${expanded?'show':''}">${detailRows}</div>`;
   }).join('');
@@ -1719,7 +1778,30 @@ function renderBarChart(containerId, data, prefix, emptyMsg){
 
 function renderReport(){
   const {weekly, monthly} = computeReportData();
-  renderBarChart('weeklyChart', weekly, 'wk', L('有平仓交易后，这里按周 / 按月拆你的已实现盈亏，看赚钱的节奏。','Once you have closed trades, this breaks your realized P&L out by week and by month.'));
+  const goal = parseGoal(weeklyGoal);
+
+  const goalInput = document.getElementById('weeklyGoalInput');
+  if(goalInput && document.activeElement !== goalInput) goalInput.value = weeklyGoal;
+  const sumEl = document.getElementById('goalSummary');
+  if(sumEl){
+    if(goal && weekly.length){
+      const hits = weekly.filter(w => w.value >= goal.min).length;
+      const target = goal.min === goal.max ? fmt(goal.min,0) : `${fmt(goal.min,0)}–${fmt(goal.max,0)}`;
+      sumEl.textContent = L(`本月 ${hits} / ${weekly.length} 周达标（目标 ${target}）`,
+                           `${hits} of ${weekly.length} weeks hit ${target} this month`);
+      sumEl.style.color = hits === weekly.length ? 'var(--gain)' : 'var(--text-dim)';
+    } else if(goal){
+      sumEl.textContent = L('本月还没有已平仓的周', 'no closed weeks this month yet');
+      sumEl.style.color = 'var(--text-dim)';
+    } else if(weeklyGoal){
+      sumEl.textContent = L('填个数字或区间，比如 2000-3000', 'enter a number or range, e.g. 2000-3000');
+      sumEl.style.color = 'var(--loss)';
+    } else {
+      sumEl.textContent = '';
+    }
+  }
+
+  renderBarChart('weeklyChart', weekly, 'wk', L('有平仓交易后，这里按周 / 按月拆你的已实现盈亏，看赚钱的节奏。','Once you have closed trades, this breaks your realized P&L out by week and by month.'), goal);
   renderBarChart('monthlyChart', monthly, 'mo');
   const rangeEl = document.getElementById('weeklyRange');
   if(rangeEl){
