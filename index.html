@@ -160,10 +160,18 @@
     gap:8px 10px; align-items:end; max-width:880px;
   }
   .form-grid.fg-4{ grid-template-columns: 1.1fr 1fr 1fr 1fr auto; max-width:680px; }
+  /* add-trade form mirrors the ledger columns: date · symbol · buy qty@price · sell qty@price */
+  .form-grid.fg-trade{ grid-template-columns: 1.15fr 0.9fr 1.7fr 1.7fr 0.9fr auto; max-width:1000px; }
+  .pair{ display:flex; align-items:center; gap:6px; }
+  .pair input{ flex:1 1 0; min-width:0; }
+  .pair span{ color:var(--text-dim); font-family:var(--mono); font-size:12px; }
   @media (max-width:760px){
-    .form-grid, .form-grid.fg-4{ grid-template-columns:1fr 1fr; max-width:none; }
+    .form-grid, .form-grid.fg-4, .form-grid.fg-trade{ grid-template-columns:1fr 1fr; max-width:none; }
     .form-grid > button{ grid-column:1 / -1; margin-top:2px; }
   }
+  /* date inputs: no calendar icon — the whole field still opens the picker on click */
+  input[type="date"]{ position:relative; }
+  input[type="date"]::-webkit-calendar-picker-indicator{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
   .field label{ display:block; font-size:10px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:5px; }
   /* ---- form inputs: one look everywhere ---- */
   .field input, .field select, .field textarea,
@@ -639,14 +647,15 @@
       </div>
 
       <div id="addTradeForm" class="form-card" style="display:none; margin-bottom:14px;">
-        <div class="form-grid">
+        <div class="form-grid fg-trade">
           <div class="field"><label data-i18n="fDate">日期</label><input type="date" id="f-date"></div>
           <div class="field"><label data-i18n="fSymbol">代码</label><input type="text" id="f-symbol" placeholder="AAPL" style="text-transform:uppercase;" oninput="updateLotDropdown()"></div>
-          <div class="field"><label data-i18n="fSide">方向</label>
-            <select id="f-side" onchange="updateLotDropdown()"><option value="BUY">BUY</option><option value="SELL">SELL</option></select>
+          <div class="field"><label data-i18n="fBuy">买入 数量@价格</label>
+            <div class="pair"><input type="number" id="f-buy-qty" placeholder="100" step="any" oninput="updateLotDropdown()"><span>@</span><input type="number" id="f-buy-price" placeholder="230.00" step="any"></div>
           </div>
-          <div class="field"><label data-i18n="fQty">数量</label><input type="number" id="f-qty" placeholder="100" step="any"></div>
-          <div class="field"><label data-i18n="fPrice">价格</label><input type="number" id="f-price" placeholder="239.90" step="any"></div>
+          <div class="field"><label data-i18n="fSell">卖出 数量@价格</label>
+            <div class="pair"><input type="number" id="f-sell-qty" placeholder="100" step="any" oninput="updateLotDropdown()"><span>@</span><input type="number" id="f-sell-price" placeholder="239.90" step="any"></div>
+          </div>
           <div class="field"><label data-i18n="fComm">佣金 (可选)</label><input type="number" id="f-commission" placeholder="0.83" step="any"></div>
           <button class="btn-primary" onclick="addTrade()" data-i18n="fAdd">添加</button>
         </div>
@@ -961,7 +970,7 @@ const I18N = {
     posSortTitle: '持仓', btnRefreshPrices: '刷新股价', resetSeed: '清空数据',
     btnImport: '导入对账单', btnAdd2: '+ 添加', btnExportBackup: '导出备份', btnImportBackup: '导入备份',
     btnSettings: '设置', btnParsePaste: '解析粘贴内容', btnCancel: '取消',
-    fDate: '日期', fSymbol: '代码', fSide: '方向', fQty: '数量', fPrice: '价格', fComm: '佣金 (可选)', fAdd: '添加',
+    fDate: '日期', fSymbol: '代码', fSide: '方向', fQty: '数量', fPrice: '价格', fBuy: '买入 数量@价格', fSell: '卖出 数量@价格', fComm: '佣金 (可选)', fAdd: '添加',
     fLotLabel: '选择批次 (可选 — 不选就自动 LIFO 配对)', fLotAuto: '自动配对 (LIFO)',
     pSymbol: '代码', pQty: '持股数', pAvg: '均价', pCur: '现价',
     aiEnableLabel: '启用 AI 复盘（默认关闭）', aiKeyLabel: 'Anthropic API Key',
@@ -985,7 +994,7 @@ const I18N = {
     posSortTitle: 'Positions', btnRefreshPrices: 'Refresh prices', resetSeed: 'Clear all data',
     btnImport: 'Import statement', btnAdd2: '+ Add', btnExportBackup: 'Export backup', btnImportBackup: 'Import backup',
     btnSettings: 'Settings', btnParsePaste: 'Parse pasted text', btnCancel: 'Cancel',
-    fDate: 'Date', fSymbol: 'Symbol', fSide: 'Side', fQty: 'Qty', fPrice: 'Price', fComm: 'Commission (opt.)', fAdd: 'Add',
+    fDate: 'Date', fSymbol: 'Symbol', fSide: 'Side', fQty: 'Qty', fPrice: 'Price', fBuy: 'Buy qty@price', fSell: 'Sell qty@price', fComm: 'Commission (opt.)', fAdd: 'Add',
     fLotLabel: 'Pick a lot (optional — leave blank for auto LIFO)', fLotAuto: 'Auto match (LIFO)',
     pSymbol: 'Symbol', pQty: 'Shares', pAvg: 'Avg cost', pCur: 'Last price',
     aiEnableLabel: 'Enable AI review (off by default)', aiKeyLabel: 'Anthropic API Key',
@@ -2151,11 +2160,12 @@ function getOpenLotsForSymbol(sym){
 }
 
 function updateLotDropdown(){
-  const side = document.getElementById('f-side').value;
+  // the manual lot picker only makes sense for a sell-only entry against existing lots
+  const sellOnly = !document.getElementById('f-buy-qty').value && !!document.getElementById('f-sell-qty').value;
   const sym = document.getElementById('f-symbol').value.trim().toUpperCase();
   const field = document.getElementById('f-lot-field');
   const select = document.getElementById('f-lot');
-  if(side !== 'SELL' || !sym){
+  if(!sellOnly || !sym){
     field.style.display = 'none';
     select.innerHTML = '<option value="">' + t('fLotAuto') + '</option>';
     return;
@@ -2185,24 +2195,32 @@ function updateTrade(id, field, value){
 function addTrade(){
   const date = document.getElementById('f-date').value;
   const symbol = document.getElementById('f-symbol').value.trim().toUpperCase();
-  const side = document.getElementById('f-side').value;
-  const qty = parseFloat(document.getElementById('f-qty').value);
-  const price = parseFloat(document.getElementById('f-price').value);
+  const buyQty = parseFloat(document.getElementById('f-buy-qty').value);
+  const buyPrice = parseFloat(document.getElementById('f-buy-price').value);
+  const sellQty = parseFloat(document.getElementById('f-sell-qty').value);
+  const sellPrice = parseFloat(document.getElementById('f-sell-price').value);
   const comm = parseFloat(document.getElementById('f-commission').value) || 0;
   const targetLotId = document.getElementById('f-lot') ? document.getElementById('f-lot').value : '';
 
-  if(!date || !symbol || !qty || !price){
-    alert(L('日期、代码、数量、价格都要填','Date, symbol, qty and price are all required'));
+  const hasBuy = buyQty > 0 && buyPrice > 0;
+  const hasSell = sellQty > 0 && sellPrice > 0;
+  const halfBuy = !hasBuy && (buyQty > 0 || buyPrice > 0);
+  const halfSell = !hasSell && (sellQty > 0 || sellPrice > 0);
+  if(!date || !symbol || (!hasBuy && !hasSell) || halfBuy || halfSell){
+    alert(L('日期、代码要填，且至少填完整的一边（买入或卖出的 数量 和 价格）','Date and symbol are required, plus at least one complete side (buy or sell: qty and price)'));
     return;
   }
-  const newTrade = {id:'t'+Date.now(), sym:symbol, side, qty, price, comm, date};
-  if(side==='SELL' && targetLotId) newTrade.targetLotId = targetLotId;
-  trades.push(newTrade);
+  // a round trip is stored as two trades; the buy gets the smaller id so it sorts first on the same day.
+  // Commission goes on the sell leg when there is one (the lot engine only nets the closing trade's fee).
+  const stamp = Date.now();
+  if(hasBuy) trades.push({id:'t'+stamp+'a', sym:symbol, side:'BUY', qty:buyQty, price:buyPrice, comm: hasSell ? 0 : comm, date});
+  if(hasSell){
+    const sell = {id:'t'+stamp+'b', sym:symbol, side:'SELL', qty:sellQty, price:sellPrice, comm, date};
+    if(!hasBuy && targetLotId) sell.targetLotId = targetLotId;
+    trades.push(sell);
+  }
   saveTrades();
-  document.getElementById('f-symbol').value='';
-  document.getElementById('f-qty').value='';
-  document.getElementById('f-price').value='';
-  document.getElementById('f-commission').value='';
+  for(const id of ['f-symbol','f-buy-qty','f-buy-price','f-sell-qty','f-sell-price','f-commission']) document.getElementById(id).value='';
   document.getElementById('addTradeForm').style.display='none';
   updateLotDropdown();
   render();
@@ -2359,7 +2377,7 @@ function render(){
       const leftBlock = `<div class="qtyprice buyavg-edit">
              <span class="expand-toggle" onclick="toggleExpand('${c.id}')">${fmt(matchedQty,0)}</span>
              <span>@</span>
-             <input type="number" step="any" class="row-edit price-edit ${hasOverride?'overridden':''}" value="${fmt(buyAvg)}" onchange="updateTrade('${c.id}','buyAvgOverride',this.value)" title="${overrideTitle}">
+             <input type="number" step="any" class="row-edit price-edit ${hasOverride?'overridden':''}" value="${pxv2(buyAvg)}" onchange="updateTrade('${c.id}','buyAvgOverride',this.value)" title="${overrideTitle}">
            </div>`;
       const rightBlock = `<div class="qtyprice sell-edit">
              <input type="number" step="any" class="row-edit qty-edit" value="${c.qty}" onchange="updateTrade('${c.id}','qty',this.value)">
