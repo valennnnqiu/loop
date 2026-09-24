@@ -705,6 +705,7 @@
         <div class="field"><label data-i18n="pCur">现价</label><input type="number" id="p-cur" placeholder="155.00" step="any"></div>
         <button class="btn-primary" onclick="addPosition()" data-i18n="fAdd">添加</button>
       </div>
+      <div id="p-note" style="margin-top:9px; font-family:var(--mono); font-size:11.5px; color:var(--gold);"></div>
     </div>
 
     <div class="pos-layout">
@@ -1475,22 +1476,43 @@ function unmergeTicker(sym){ delete aliases[sym]; saveAliases(); render(); }
 function openAddPosition(){
   const f = document.getElementById('addPosForm');
   f.style.display = f.style.display==='none' ? 'block' : 'none';
-  if(f.style.display==='block') document.getElementById('p-symbol').focus();
+  if(f.style.display==='block'){ const n=document.getElementById('p-note'); if(n) n.textContent=''; document.getElementById('p-symbol').focus(); }
 }
 function addPosition(){
   const s = document.getElementById('p-symbol').value.trim().toUpperCase();
   const q = parseFloat(document.getElementById('p-qty').value);
   const a = parseFloat(document.getElementById('p-avg').value);
   const c = parseFloat(document.getElementById('p-cur').value);
+  const note = document.getElementById('p-note');
   if(!s || !isFinite(q) || q===0){ alert(L('代码和持股数要填','Symbol and shares are required')); return; }
-  posMeta[s] = { ...(posMeta[s]||{}), qty:q, avg: isFinite(a)?a:0 };
-  if(isFinite(c)) posMeta[s].price = c;
+
+  // entering a symbol you already hold folds the new lot into it (weighted-average cost)
+  // instead of overwriting: start from what the table currently shows for that symbol
+  const m = posMeta[s] || {};
+  const derived = m.deleted ? null : derivedHoldings().find(h => h.sym === s);
+  const oldQty = m.deleted ? 0 : (m.qty != null ? m.qty : (derived ? derived.qty : 0));
+  const oldAvg = m.deleted ? 0 : (m.avg != null ? m.avg : (derived ? derived.avgCost : 0));
+  const merged = mergeLot(oldQty, oldAvg, q, a);
+
+  const keep = { ...m }; delete keep.deleted;
+  if(merged.qty === 0) posMeta[s] = { deleted: true };
+  else posMeta[s] = { ...keep, qty: merged.qty, avg: merged.avg };
+  if(isFinite(c) && merged.qty !== 0) posMeta[s].price = c;
   savePosMeta();
-  document.getElementById('p-symbol').value = '';
+
+  if(note){
+    note.textContent = merged.qty === 0
+      ? L(`${s} 已平仓，从持仓里移除`, `${s} closed out — removed from positions`)
+      : oldQty
+        ? L(`${s}：${fmt(oldQty,0)} + ${fmt(q,0)} → ${fmt(merged.qty,0)} 股，均价 ${fmt(merged.avg)}`,
+            `${s}: ${fmt(oldQty,0)} + ${fmt(q,0)} → ${fmt(merged.qty,0)} sh @ avg ${fmt(merged.avg)}`)
+        : L(`${s}：${fmt(merged.qty,0)} 股，均价 ${fmt(merged.avg)}`, `${s}: ${fmt(merged.qty,0)} sh @ ${fmt(merged.avg)}`);
+  }
+  // keep the form open with the symbol filled, ready for the next lot
   document.getElementById('p-qty').value = '';
   document.getElementById('p-avg').value = '';
   document.getElementById('p-cur').value = '';
-  document.getElementById('addPosForm').style.display = 'none';
+  document.getElementById('p-qty').focus();
   renderPositions();
 }
 

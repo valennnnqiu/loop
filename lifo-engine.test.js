@@ -177,3 +177,23 @@ test('LIFO and average-cost agree once the position is fully closed', () => {
   const avg = Object.values(runAverageCost(trades)).reduce((s, v) => s + v, 0);
   approx(lifo, avg, 'total realized is method-independent when flat', 1e-6);
 });
+
+test('mergeLot: three buys of the same stock fold into one weighted-average position', () => {
+  const { mergeLot } = require('./lifo-engine.js');
+  let p = mergeLot(0, 0, 100, 1000);              // first lot
+  p = mergeLot(p.qty, p.avg, 20, 1100);           // (100*1000 + 20*1100) / 120
+  assert.strictEqual(p.qty, 120);
+  assert.ok(Math.abs(p.avg - 1016.6666667) < 1e-6);
+  p = mergeLot(p.qty, p.avg, 10, 1200);
+  assert.strictEqual(p.qty, 130);
+  assert.ok(Math.abs(p.avg - (100 * 1000 + 20 * 1100 + 10 * 1200) / 130) < 1e-9);
+});
+
+test('mergeLot: blank price keeps the old average; reducing keeps it too; closing empties; flipping re-prices', () => {
+  const { mergeLot } = require('./lifo-engine.js');
+  assert.deepStrictEqual(mergeLot(10, 50, 5, NaN), { qty: 15, avg: 50 });
+  assert.deepStrictEqual(mergeLot(10, 50, -4, 70), { qty: 6, avg: 50 });
+  assert.deepStrictEqual(mergeLot(10, 50, -10, 70), { qty: 0, avg: 0 });
+  assert.deepStrictEqual(mergeLot(10, 50, -15, 70), { qty: -5, avg: 70 });
+  assert.deepStrictEqual(mergeLot(-10, 50, -10, 60), { qty: -20, avg: 55 });   // adding to a short
+});

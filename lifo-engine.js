@@ -116,5 +116,26 @@
     return { closed: closed.reverse(), openLots: queues, warnings };
   }
 
-  return { runFIFO, runAverageCost };
+  // Fold a newly entered lot into an existing position (signed qty, so shorts work).
+  //  same direction  -> quantities add, average cost is quantity-weighted
+  //  opposite, partial -> quantity shrinks, average cost of what is left is unchanged
+  //  opposite, flips   -> the remainder is a fresh position at the new price
+  // A blank/NaN price on a same-direction add keeps the old average (nothing to weight with).
+  function mergeLot(oldQty, oldAvg, qty, price) {
+    const EPS = 0.0000001;
+    const hasPrice = isFinite(price);
+    if (Math.abs(oldQty) < EPS) return { qty, avg: hasPrice ? price : 0 };
+    const total = oldQty + qty;
+    if (Math.sign(oldQty) === Math.sign(qty)) {
+      const avg = hasPrice
+        ? (Math.abs(oldQty) * oldAvg + Math.abs(qty) * price) / (Math.abs(oldQty) + Math.abs(qty))
+        : oldAvg;
+      return { qty: total, avg };
+    }
+    if (Math.abs(total) < EPS) return { qty: 0, avg: 0 };
+    if (Math.sign(total) === Math.sign(oldQty)) return { qty: total, avg: oldAvg };
+    return { qty: total, avg: hasPrice ? price : 0 };
+  }
+
+  return { runFIFO, runAverageCost, mergeLot };
 });
