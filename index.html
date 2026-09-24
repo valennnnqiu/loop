@@ -100,6 +100,23 @@
   #welcomeBody .w-actions{ margin-top:20px; padding-top:15px; border-top:1px solid var(--line); font-size:11.5px; color:var(--text-dim); }
   @media (max-width:520px){ #welcomeBody .w-grid{ grid-template-columns:1fr; grid-template-rows:none; grid-auto-flow:row; gap:16px; } }
 
+  /* watch-out news panel */
+  .news-watch{ background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:var(--radius-sm); padding:11px 14px 8px; margin-bottom:14px; }
+  .nw-head{ display:flex; align-items:center; gap:7px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; }
+  .nw-head svg.i{ font-size:14px; color:var(--gold); }
+  .nw-head .nw-meta{ margin-left:auto; font-weight:400; text-transform:none; letter-spacing:0; font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+  .nw-head .nw-meta a{ color:var(--gold); cursor:pointer; text-decoration:underline; text-underline-offset:2px; margin-left:8px; }
+  .nw-row{ display:flex; align-items:baseline; gap:10px; padding:6px 0; border-top:1px solid var(--line); font-size:12.5px; line-height:1.45; }
+  .nw-row a{ color:var(--text); text-decoration:none; flex:1 1 auto; min-width:0; }
+  .nw-row a:hover{ text-decoration:underline; text-underline-offset:2px; }
+  .nw-tag{ flex:0 0 84px; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:1px 7px; border-radius:999px; text-align:center; white-space:nowrap; }
+  .nw-tag.trade{ background:var(--gold-dim); color:var(--gold); }
+  .nw-tag.fed{ background:var(--panel-2); color:var(--text-dim); }
+  .nw-tag.geo{ background:var(--loss-dim); color:var(--loss); }
+  .nw-src{ flex:0 0 auto; font-family:var(--mono); font-size:11px; color:var(--text-dim); white-space:nowrap; }
+  .nw-empty{ font-size:12px; color:var(--text-dim); padding:2px 0 6px; }
+  @media (max-width:560px){ .nw-row{ flex-wrap:wrap; } .nw-src{ flex-basis:100%; } }
+
   /* warnings / reconciliation */
   .warn{
     background:var(--gold-dim); border:1px solid transparent; border-left:3px solid var(--gold);
@@ -727,6 +744,7 @@
       <div class="cal-sync">
         <span id="calSyncNote"></span>
       </div>
+      <div class="news-watch" id="newsWatch" style="display:none;"></div>
       <div class="cal-legend">
         <span><i class="dot earnings"></i><span data-i18n="legendEarnings">财报</span></span>
         <span><i class="dot macro"></i><span data-i18n="legendMacro">宏观</span></span>
@@ -862,6 +880,7 @@
 
 <script src="lifo-engine.js"></script>
 <script src="ibkr-import.js"></script>
+<script src="news-watch.js"></script>
 <script>
 // Storage shim: in the Claude artifact environment window.storage is provided by
 // the host. Running the file locally (double-click), fall back to localStorage
@@ -1040,6 +1059,7 @@ async function toggleLang(){
   renderReport();
   updateReviewButton();
   refreshCalSyncNote();
+  renderNewsWatch();
 }
 
 function switchTab(name){
@@ -1116,6 +1136,8 @@ async function loadAll(){
   refreshCalSyncNote();
   // weekly auto-sync of the calendar if a Finnhub key is set
   if(finnhubKey && Date.now() - calSyncAt > 7*24*3600*1000){ syncCalendar(); }
+  try{ newsCache = JSON.parse((await window.storage.get(NEWS_KEY)).value) || newsCache; }catch(e){}
+  refreshNews(false);
 }
 
 function refreshCalSyncNote(){
@@ -1164,6 +1186,54 @@ function macroEventsForRange(months=6){
     push(`${y}-${String(m+1).padStart(2,'0')}-13`, '≈ PPI');
   }
   return out;
+}
+
+// ---------- Market-news "watch out" panel (Finnhub general news, keyword-filtered) ----------
+const NEWS_KEY = 'ledger_news_v1';         // cache only, not part of backups
+const NEWS_TTL_MS = 30 * 60 * 1000;
+let newsCache = { at: 0, items: [] };
+
+const escHtml = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function agoStr(unixSec){
+  const m = Math.max(0, Math.round((Date.now()/1000 - unixSec) / 60));
+  if(m < 60) return L(`${m} 分钟前`, `${m}m ago`);
+  const h = Math.round(m / 60);
+  if(h < 48) return L(`${h} 小时前`, `${h}h ago`);
+  return L(`${Math.round(h/24)} 天前`, `${Math.round(h/24)}d ago`);
+}
+
+async function refreshNews(force){
+  if(!/\S/.test(finnhubKey)){ renderNewsWatch(); return; }
+  if(!force && newsCache.at && Date.now() - newsCache.at < NEWS_TTL_MS){ renderNewsWatch(); return; }
+  try{
+    const r = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${encodeURIComponent(finnhubKey)}`);
+    if(!r.ok) throw new Error('news ' + r.status);
+    const arr = await r.json();
+    newsCache = { at: Date.now(), items: pickWatchItems(arr, { heldSyms: derivedHoldings().map(h => h.sym) }) };
+    try{ await window.storage.set(NEWS_KEY, JSON.stringify(newsCache)); }catch(e){}
+  }catch(e){ /* offline / rate-limited: keep whatever we cached */ }
+  renderNewsWatch();
+}
+
+function renderNewsWatch(){
+  const el = document.getElementById('newsWatch');
+  if(!el) return;
+  if(!/\S/.test(finnhubKey)){ el.style.display = 'none'; return; }   // no key -> feature is invisible
+  const TAG = { trade: L('中国 / 贸易','China / trade'), fed: L('美联储 / 宏观','Fed / macro'), geo: L('地缘','Geopolitics') };
+  const rows = newsCache.items.map(it => {
+    const tp = it.topics[0] || 'fed';
+    const head = it.url
+      ? `<a href="${escHtml(it.url)}" target="_blank" rel="noopener noreferrer">${escHtml(it.headline)}</a>`
+      : `<a>${escHtml(it.headline)}</a>`;
+    return `<div class="nw-row"><span class="nw-tag ${tp}">${TAG[tp]}</span>${head}<span class="nw-src">${escHtml(it.source)} · ${agoStr(it.datetime)}</span></div>`;
+  }).join('');
+  const upd = newsCache.at ? new Date(newsCache.at).toTimeString().slice(0,5) : '';
+  el.innerHTML = `
+    <div class="nw-head"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><path d="M12 18.5v.01"/></svg>${L('留意 · 近期新闻','Watch out · in the news')}
+      <span class="nw-meta">${upd ? L('更新 ','updated ') + upd : ''}<a onclick="refreshNews(true)">${L('刷新','refresh')}</a></span></div>
+    ${rows || `<div class="nw-empty">${newsCache.at ? L('暂时没有命中关键词的大盘新闻。','No market-moving headlines flagged right now.') : L('正在获取…','Loading…')}</div>`}
+    <div class="nw-empty" style="padding-top:6px;">${L('按关键词粗筛（关税、中国、美联储、制裁等），不是判断，点标题看原文。','Keyword filter (tariffs, China, Fed, sanctions…), not analysis — open the headline for the source.')}</div>`;
+  el.style.display = 'block';
 }
 
 async function syncCalendar(){
@@ -1222,6 +1292,7 @@ async function syncCalendar(){
   try{ await window.storage.set(CALSYNC_KEY, String(calSyncAt)); }catch(e){}
 
   btn.disabled = false; btn.textContent = t('btnCalSync');
+  refreshNews(true);
   const n = Object.values(fresh).reduce((s,l)=>s+l.length,0);
   document.getElementById('calSyncNote').textContent =
     L(`已同步 ${n} 项 · ${new Date().toTimeString().slice(0,5)}`, `${n} events · ${new Date().toTimeString().slice(0,5)}`)
@@ -1271,8 +1342,8 @@ function renderWelcome(){
              '把已实现盈亏按周、按月摊开。设一个<b>每月目标</b>，看当月进度。',
              'Realized P&L laid out by week and by month. Set a <b>monthly goal</b> to track progress through the month.')}
       ${item(I.cal, L('日历 + 同步','Calendar + sync'),
-             '日历里标事件、写<b>计划</b>。加个免费 Finnhub key，<b>同步</b>会自动拉<b>财报日</b> + 宏观（FOMC / CPI / 非农）。',
-             'Tag events with a <b>plan</b> note. A free Finnhub key lets <b>Sync</b> pull <b>earnings dates</b> plus macro (FOMC / CPI / jobs).')}
+             '日历里标事件、写<b>计划</b>。加个免费 Finnhub key：自动拉<b>财报日</b> + 宏观，并标出可能影响大盘的<b>新闻</b>。',
+             'Tag events with a <b>plan</b> note. A free Finnhub key pulls <b>earnings dates</b> + macro, and flags market-moving <b>news</b>.')}
       ${item(I.star, L('AI 复盘（默认关闭）','AI review (off by default)'),
              '「周报」页。填你自己的 <b>Anthropic key</b>（设置里）换一段近期交易的反馈。明文存本机——<b>别在公用电脑开</b>。',
              'Report tab. Your own <b>Anthropic key</b> (in Settings) gets feedback on recent trades. Stored in plaintext — <b>not shared computers</b>.')}

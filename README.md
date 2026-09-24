@@ -55,7 +55,9 @@ The matching engine is split out for testing:
 lifo-engine.js        pure LIFO / average-cost core (browser global + Node module)
 lifo-engine.test.js   node --test
 ibkr-import.js         IBKR Activity Statement CSV parser
-index.html             the app (loads the two .js files)
+news-watch.js          keyword filter for the market-news "watch out" panel
+news-watch.test.js     node --test
+index.html             the app (loads the .js files)
 ```
 
 ```bash
@@ -63,11 +65,12 @@ node --test                              # run the engine tests
 node ibkr-import.js path/to/statement.csv   # dry-run the CSV parser
 ```
 
-For distribution the two `.js` files can be inlined back into a single HTML file.
+For distribution the `.js` files can be inlined back into a single HTML file.
 
 ## Privacy / 隐私
 
 No backend, no analytics. Network calls are limited to: Google Fonts (styling);
-*only if you turn on AI review*, the Anthropic API; and *only if you click Refresh
-prices*, Finnhub (`finnhub.io`, your own free API key, sends ticker symbols only).
+*only if you turn on AI review*, the Anthropic API; and *only if you use a
+Finnhub key* (`finnhub.io`, your own free key): Refresh prices and the weekly calendar sync send ticker symbols
+only, and with a key saved LOOP also fetches general market headlines on page load (nothing personal is sent).
 Your trades never leave your machine.
