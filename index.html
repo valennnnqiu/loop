@@ -1614,9 +1614,7 @@ function renderPositions(){
       <div class="pl-detail ${open?'show':''}" onclick="event.stopPropagation()">
         <div class="lot-row"><span class="k">${L('成本','Cost basis')}</span><span>$${fmt(h.costBasis,2)} · C$${fmt(h.costBasis*fx,2)}</span></div>
         <div class="lot-row"><span class="k">${L('占比','Weight')}</span><span>${fmt(pct,1)}%</span></div>
-        ${overridden ? `<div class="lot-row"><span class="expand-toggle" onclick="resetPosAuto('${h.sym}')">${L('恢复自动（用交易记录算）','reset to auto (from trades)')}</span></div>` : ''}
-        ${merged.length ? `<div class="lot-row"><span class="k">${L('已合并','merged in')}</span><span>${merged.map(m=>`${m} <span class="expand-toggle" onclick="unmergeTicker('${m}')">${L('拆分','unmerge')}</span>`).join(' · ')}</span></div>`
-          : `<div class="lot-row"><span class="expand-toggle" onclick="mergeTicker('${h.sym}')">${L('合并另一个代码到这里（同一只股票改过代码）','merge another symbol into this one')}</span></div>`}
+        ${merged.length ? `<div class="lot-row"><span class="k">${L('已合并','merged in')}</span><span>${merged.map(m=>`${m} <span class="expand-toggle" onclick="unmergeTicker('${m}')">${L('拆分','unmerge')}</span>`).join(' · ')}</span></div>` : ''}
         ${(() => {
           const row = (qty, price, date, cls) => `<div class="lot-row ${cls||''}"><span class="lot-qty">${qty<0?L('卖出 ','sold '):''}${fmt(Math.abs(qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${price==null?'—':fmt(price)}</span><span class="lot-date">${date}</span></div>`;
           if(h.ovQty && h.log && h.log.length){          // manual entries: these add up to the row above
