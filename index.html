@@ -432,6 +432,7 @@
     background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
   }
   .cal-cell{ background:var(--panel); min-width:0; min-height:96px; padding:8px; position:relative; display:flex; flex-direction:column; gap:4px; overflow:hidden; }
+  .cal-cell.weekend{ background:var(--panel-2); }
   .cal-cell.dim{ background:var(--ink); }
   .cal-cell.dim .cal-date{ color:var(--text-dim); opacity:0.5; }
   .cal-date{ font-family:var(--mono); font-size:12px; color:var(--text-dim); }
@@ -734,7 +735,7 @@
         <span><i class="dot hold"></i>Hold</span>
       </div>
       <div class="cal-dow">
-        <div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div><div>SUN</div>
+        <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
       </div>
       <div class="cal-grid" id="calGrid"></div>
     </section>
@@ -1927,8 +1928,8 @@ function renderCalendar(){
     calMonth.toLocaleDateString('en-US', {month:'long', year:'numeric'});
 
   const firstOfMonth = new Date(year, month, 1);
-  // Monday-start offset: JS getDay() 0=Sun..6=Sat -> convert to 0=Mon..6=Sun
-  const startOffset = (firstOfMonth.getDay() + 6) % 7;
+  // Sunday-start weeks: JS getDay() is already 0=Sun..6=Sat
+  const startOffset = firstOfMonth.getDay();
   const gridStart = new Date(year, month, 1 - startOffset);
 
   const todayKey = dateKey(new Date());
@@ -1939,8 +1940,9 @@ function renderCalendar(){
     const key = dateKey(d);
     const isDim = d.getMonth() !== month;
     const isToday = key === todayKey;
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
     const events = (calendarEvents[key] || []).slice().sort((a,b)=> (a.source||'').startsWith('auto') === (b.source||'').startsWith('auto') ? 0 : (a.source||'').startsWith('auto') ? -1 : 1);
-    html += `<div class="cal-cell ${isDim?'dim':''}">
+    html += `<div class="cal-cell ${isWeekend?'weekend':''} ${isDim?'dim':''}">
       <div class="cal-date ${isToday?'today':''}">${d.getDate()}</div>
       ${events.map(ev=>{
         const auto = (ev.source||'').startsWith('auto');
