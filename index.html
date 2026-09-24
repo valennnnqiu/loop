@@ -364,7 +364,6 @@
   .pl-tk{ min-width:0; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .pl-tk b{ font-weight:700; font-size:13px; }
   .pl-tk .tag{ font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:1px 6px; border-radius:999px; }
-  .pl-tk .tag.manual{ background:var(--gold-dim); color:var(--gold); }
   .pl-tk .tag.short{ background:var(--loss-dim); color:var(--loss); }
   .pl-num{ font-family:var(--mono); font-size:12px; color:var(--text-dim); text-align:right; white-space:nowrap; }
   .pl-val{ font-family:var(--mono); font-size:12.5px; font-weight:600; text-align:right; }
@@ -1446,6 +1445,7 @@ function setPosMeta(sym, field, value){
   const v = parseFloat(value);
   if(value === '' || !isFinite(v)) delete m[field];
   else m[field] = v;
+  if(field === 'qty' || field === 'avg') delete m.log;
   if(Object.keys(m).length === 0) delete posMeta[sym];
   savePosMeta();
   renderPositions();
@@ -1495,8 +1495,12 @@ function addPosition(){
   const merged = mergeLot(oldQty, oldAvg, q, a);
 
   const keep = { ...m }; delete keep.deleted;
+  // remember what was typed so the expanded row can list these lots (they sum to the position);
+  // the first manual add on top of an existing position records that starting point as a base line
+  let log = m.deleted ? [] : (Array.isArray(m.log) ? m.log.slice() : (oldQty ? [{ qty: oldQty, avg: oldAvg, base: true }] : []));
+  log.push({ qty: q, avg: isFinite(a) ? a : null, date: dateKey(new Date()) });
   if(merged.qty === 0) posMeta[s] = { deleted: true };
-  else posMeta[s] = { ...keep, qty: merged.qty, avg: merged.avg };
+  else posMeta[s] = { ...keep, qty: merged.qty, avg: merged.avg, log };
   if(isFinite(c) && merged.qty !== 0) posMeta[s].price = c;
   savePosMeta();
 
@@ -1569,7 +1573,7 @@ function renderPositions(){
     return {
       ...h, qty, avgCost: avg, costBasis, last, priced, deleted: !!m.deleted,
       mv: qty*last, pnl: qty*last - costBasis,
-      ovQty: m.qty!=null, ovAvg: m.avg!=null, manual: !h.lots.length && m.qty!=null,
+      ovQty: m.qty!=null, ovAvg: m.avg!=null, manual: !h.lots.length && m.qty!=null, log: Array.isArray(m.log) ? m.log : null,
     };
   }).filter(h=> !h.deleted);
   holdings.sort((a,b)=> b.mv - a.mv);
@@ -1599,7 +1603,7 @@ function renderPositions(){
     listHtml += `
       <div class="pl-row ${open?'open':''}" onclick="togglePos('${h.sym}')">
         <span class="swatch" style="background:${tkColor(h.sym)}"></span>
-        <div class="pl-tk"><b>${h.sym}</b>${short?`<span class="tag short">${L('空','short')}</span>`:''}${h.manual?`<span class="tag manual">${L('手动','manual')}</span>`:''}</div>
+        <div class="pl-tk"><b>${h.sym}</b>${short?`<span class="tag short">${L('空','short')}</span>`:''}</div>
         <div class="pl-num">${num(pxv(h.qty), `setPosMeta('${h.sym}','qty',this.value)`, h.ovQty)}</div>
         <div class="pl-num">${num(pxv2(h.avgCost), `setPosMeta('${h.sym}','avg',this.value)`, h.ovAvg)}</div>
         <div class="pl-num">${num(pxv2(h.last), `setPosMeta('${h.sym}','price',this.value)`, false)}</div>
@@ -1613,8 +1617,19 @@ function renderPositions(){
         ${overridden ? `<div class="lot-row"><span class="expand-toggle" onclick="resetPosAuto('${h.sym}')">${L('恢复自动（用交易记录算）','reset to auto (from trades)')}</span></div>` : ''}
         ${merged.length ? `<div class="lot-row"><span class="k">${L('已合并','merged in')}</span><span>${merged.map(m=>`${m} <span class="expand-toggle" onclick="unmergeTicker('${m}')">${L('拆分','unmerge')}</span>`).join(' · ')}</span></div>`
           : `<div class="lot-row"><span class="expand-toggle" onclick="mergeTicker('${h.sym}')">${L('合并另一个代码到这里（同一只股票改过代码）','merge another symbol into this one')}</span></div>`}
-        ${h.lots.length ? `<div class="pos-lots-label" style="margin-top:10px;">${L('未平仓批次','Open lots')} · ${h.lots.length}</div>` +
-          h.lots.map(l=>`<div class="lot-row ${l.qty<0?'short':''} ${l.estimated?'est':''}"><span class="lot-qty">${l.qty<0?L('空 ','short '):''}${fmt(Math.abs(l.qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${fmt(l.unitCost)}</span><span class="lot-date">${String(l.date).slice(0,10)}</span></div>`).join('') : ''}
+        ${(() => {
+          const row = (qty, price, date, cls) => `<div class="lot-row ${cls||''}"><span class="lot-qty">${qty<0?L('卖出 ','sold '):''}${fmt(Math.abs(qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${price==null?'—':fmt(price)}</span><span class="lot-date">${date}</span></div>`;
+          if(h.ovQty && h.log && h.log.length){          // manual entries: these add up to the row above
+            return `<div class="pos-lots-label" style="margin-top:10px;">${L('批次','Lots')} · ${h.log.length}</div>` +
+              h.log.map(e => row(e.qty, e.avg, e.base ? L('原有','existing') : e.date, e.qty<0?'short':'')).join('');
+          }
+          const hint = (h.ovQty && h.lots.length)
+            ? `<div class="lot-row"><span class="k">${L('数量是手动设的，下面的批次来自交易记录，合计可能对不上','Quantity is set by hand — the lots below come from your trades and may not add up')}</span></div>` : '';
+          return h.lots.length
+            ? hint + `<div class="pos-lots-label" style="margin-top:10px;">${L('未平仓批次','Open lots')} · ${h.lots.length}</div>` +
+              h.lots.map(l => `<div class="lot-row ${l.qty<0?'short':''} ${l.estimated?'est':''}"><span class="lot-qty">${l.qty<0?L('空 ','short '):''}${fmt(Math.abs(l.qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${fmt(l.unitCost)}</span><span class="lot-date">${String(l.date).slice(0,10)}</span></div>`).join('')
+            : '';
+        })()}
       </div>`;
   }
   const cashPct = totalPortfolioUSD>0 ? (cashUSDEq/totalPortfolioUSD*100) : 0;
@@ -2190,7 +2205,8 @@ function handleCsvText(text){
   }
   const { added, duplicates } = mergeImportedTrades(trades, res.trades);
   const similar = added.filter(a => trades.some(t => sameTradeIsh(a, t)));
-  importParsed = { res, added, duplicates, similar };
+  const stale = manualSymsIn(res.trades);
+  importParsed = { res, added, duplicates, similar, stale };
 
   const syms = [...new Set(added.map(t=>t.sym))].sort();
   const p = document.getElementById('importPreview');
@@ -2200,10 +2216,11 @@ function handleCsvText(text){
     ${L(`共解析 ${res.trades.length} 笔成交。`,`Parsed ${res.trades.length} trades.`)}<br>
     ${L(`本次<b>新增 ${added.length} 笔</b>`,`<b>${added.length} new</b>`)}${duplicates ? L(`，跳过 ${duplicates} 笔已导入的`,`, ${duplicates} already imported`) : ''}${added.length ? L(`，涉及 ${syms.length} 只股票：${syms.join(' ')}`,` · ${syms.length} tickers: ${syms.join(' ')}`) : ''}
     ${similar.length ? `<br><span class="dup">${L(`⚠ 其中 ${similar.length} 笔与现有记录高度相似，可能是同一笔交易的两份来源。如果要用对账单作为唯一数据源，建议先清空现有交易。`,`⚠ ${similar.length} of these look very similar to existing rows — likely the same trade from two sources. If the statement is your only source, clear existing trades first.`)}</span>` : ''}
+    ${stale.length ? `<br>${L(`以对账单为准：这些代码手动填的持仓会被对账单算出来的替换 — ${stale.join(' ')}`,`Statement wins: hand-entered positions for ${stale.join(' ')} will be replaced by what the statement works out.`)}` : ''}
     ${res.warnings.length ? `<br><span class="dup">${res.warnings.join('<br>')}</span>` : ''}
     <ul>${added.slice(0,12).map(t=>`<li>${t.day} ${t.side==='SELL'?L('卖','sell'):L('买','buy')} ${fmt(t.qty,0)} ${t.sym} @ ${fmt(t.price)}</li>`).join('')}${added.length>12?`<li>${L(`… 还有 ${added.length-12} 笔`,`… ${added.length-12} more`)}</li>`:''}</ul>
     <div class="import-actions">
-      ${added.length ? `<button class="btn-primary btn-small" onclick="confirmImport()">${L(`确认导入 ${added.length} 笔`,`Import ${added.length}`)}</button>` : ''}
+      ${(added.length || stale.length) ? `<button class="btn-primary btn-small" onclick="confirmImport()">${added.length ? L(`确认导入 ${added.length} 笔`,`Import ${added.length}`) : L('按对账单更新持仓','Apply statement to positions')}</button>` : ''}
       <button class="btn-ghost btn-small" onclick="resetImport()">${L('重来','Reset')}</button>
     </div>`;
 }
@@ -2214,10 +2231,25 @@ function parseImportPaste(){
   handleCsvText(text);
 }
 
+// symbols in an imported statement that currently carry hand-entered position values
+// (quantity / average / entered lots / deleted flag). The statement wins over those.
+function manualSymsIn(stmtTrades){
+  const syms = [...new Set(stmtTrades.map(t => aliases[t.sym] || t.sym))];
+  return syms.filter(sym => { const m = posMeta[sym]; return m && (m.qty != null || m.avg != null || m.log || m.deleted); }).sort();
+}
+function dropManualPos(sym){
+  const m = posMeta[sym]; if(!m) return;
+  delete m.qty; delete m.avg; delete m.log; delete m.deleted;   // keep the last price
+  if(Object.keys(m).length === 0) delete posMeta[sym];
+}
+
 function confirmImport(){
-  if(!importParsed || !importParsed.added.length) return;
+  if(!importParsed) return;
+  const stale = manualSymsIn(importParsed.res.trades);
+  if(!importParsed.added.length && !stale.length) return;
   trades = trades.concat(importParsed.added);
   saveTrades();
+  if(stale.length){ stale.forEach(dropManualPos); savePosMeta(); }
   closeImport();
   render();
 }
