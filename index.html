@@ -1623,10 +1623,8 @@ function renderPositions(){
             return `<div class="pos-lots-label" style="margin-top:10px;">${L('批次','Lots')} · ${h.log.length}</div>` +
               h.log.map(e => row(e.qty, e.avg, e.base ? L('原有','existing') : e.date, e.qty<0?'short':'')).join('');
           }
-          const hint = (h.ovQty && h.lots.length)
-            ? `<div class="lot-row"><span class="k">${L('数量是手动设的，下面的批次来自交易记录，合计可能对不上','Quantity is set by hand — the lots below come from your trades and may not add up')}</span></div>` : '';
           return h.lots.length
-            ? hint + `<div class="pos-lots-label" style="margin-top:10px;">${L('未平仓批次','Open lots')} · ${h.lots.length}</div>` +
+            ? `<div class="pos-lots-label" style="margin-top:10px;">${L('未平仓批次','Open lots')} · ${h.lots.length}</div>` +
               h.lots.map(l => `<div class="lot-row ${l.qty<0?'short':''} ${l.estimated?'est':''}"><span class="lot-qty">${l.qty<0?L('空 ','short '):''}${fmt(Math.abs(l.qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${fmt(l.unitCost)}</span><span class="lot-date">${String(l.date).slice(0,10)}</span></div>`).join('')
             : '';
         })()}
