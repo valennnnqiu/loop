@@ -29,7 +29,7 @@ probably isn't what you need.
 
 ## Use it / 怎么用
 
-1. Download **`index.html`**.
+1. Download **`dist/loop.html`** — one self-contained file, nothing else needed.
 2. Open it in any modern browser (double-click, or drag into a tab).
 3. First time? The welcome screen has a **load demo data** link (fills it with
    fake trades so you can look around, one click to clear), and the **?** in the
@@ -65,7 +65,8 @@ node --test                              # run the engine tests
 node ibkr-import.js path/to/statement.csv   # dry-run the CSV parser
 ```
 
-For distribution the `.js` files can be inlined back into a single HTML file.
+`node build.js` inlines the `.js` files into `index.html` and writes the single-file `dist/loop.html`
+(re-run it after changing any source file, then commit the result).
 
 ## Privacy / 隐私
 

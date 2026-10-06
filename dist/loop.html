@@ -1,0 +1,2960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOOP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* direction F — modern fintech */
+    --ink:#F4F2EC;          /* page background */
+    --panel:#FFFFFF;        /* card surface */
+    --panel-2:#EFEDE4;      /* inset (inputs) */
+    --line:#E7E2D6;         /* hairline */
+    --line-strong:#D6CFBF;  /* stronger hairline */
+    --paper:#F0EDE3;        /* stub */
+    --paper-shadow:#D6CFBF;
+    --text:#191814;         /* ink */
+    --text-dim:#847F71;
+    --gain:#0B9A57;
+    --gain-dim:#E4F3EA;
+    --loss:#DA3B32;
+    --loss-dim:#FBE4E2;
+    --gold:#1B4D3E;         /* deep evergreen accent */
+    --gold-dim:#E3EEE8;
+    --indigo:#1B4D3E;
+    --indigo-dim:#E3EEE8;
+    --radius:14px;
+    --radius-sm:9px;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --disp:'Hanken Grotesk','Noto Sans SC',-apple-system,'PingFang SC',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: var(--ink);
+    color:var(--text);
+    font-family: var(--disp);
+    padding: 28px 24px 90px;
+    -webkit-font-smoothing:antialiased;
+    font-variant-numeric:tabular-nums;
+  }
+  .wrap{ max-width:980px; margin:0 auto; }
+  svg.i{ width:1em; height:1em; stroke:currentColor; fill:none; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; flex:0 0 auto; }
+
+  /* header */
+  header.top{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:24px; flex-wrap:wrap; gap:12px;
+  }
+  header.top .brand{ display:flex; align-items:center; gap:11px; }
+  header.top .brand-logo{
+    width:32px; height:32px; border-radius:10px; background:var(--text); color:var(--panel);
+    display:flex; align-items:center; justify-content:center; font-size:16px; flex:0 0 auto;
+  }
+  header.top h1{ font-size:18px; margin:0; font-weight:800; letter-spacing:0.14em; }
+  header.top .sub{ display:none; }
+  .head-right{ display:flex; align-items:center; gap:8px; }
+  .ticket-mark{
+    font-family:var(--mono); font-size:10.5px; color:var(--text-dim);
+    text-align:right; line-height:1.6;
+  }
+  .icon-btn{ width:34px; height:34px; border-radius:999px; font-size:15px; }
+  .method-toggle{ display:flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; }
+  .method-btn{ background:var(--panel); color:var(--text-dim); border:none; padding:8px 14px; font-size:12px; cursor:pointer; }
+  .method-btn.active{ background:var(--text); color:var(--panel); font-weight:600; }
+
+  /* summary — KPI cards */
+  .summary{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:12px; margin-bottom:22px;
+  }
+  .stat{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .stat .label{ font-size:11px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+  .stat .value{ font-family:var(--mono); font-size:20px; font-weight:600; margin-top:8px; letter-spacing:-0.01em; }
+  .stat .value.gain{ color:var(--gain); }
+  .stat .value.loss{ color:var(--loss); }
+  .stat .value .cad-sub{ display:block; font-family:var(--mono); font-size:11.5px; font-weight:400; color:var(--text-dim); margin-top:3px; letter-spacing:0; }
+  .stat .note{ font-size:11.5px; color:var(--text-dim); margin-top:5px; }
+
+  /* first-run welcome */
+  .welcome-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px; }
+  .welcome-card .wc-title{ font-weight:700; font-size:16px; margin-bottom:8px; }
+  .welcome-card p{ margin:0 0 14px; font-size:13px; color:var(--text-dim); line-height:1.6; }
+  .welcome-card .wc-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .welcome-card .wc-sub{ font-size:12px; color:var(--text-dim); }
+  .welcome-card .wc-sub a, .warn a{ color:var(--gold); cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+  .modal-card.welcome-modal{ max-width:860px; width:calc(100vw - 40px); max-height:86vh; overflow-y:auto; padding:26px 30px; }
+  #welcomeBody .modal-title{ margin-bottom:18px; font-size:16px; }
+  #welcomeBody .w-grid{ display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,auto); grid-auto-flow:column; gap:20px 40px; }
+  #welcomeBody .w-item .w-h{ display:flex; align-items:center; gap:7px; font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text); margin:0 0 5px; }
+  #welcomeBody .w-item .w-h svg.i{ font-size:14px; color:var(--gold); }
+  #welcomeBody .w-item p{ font-size:12.5px; color:var(--text-dim); line-height:1.6; margin:0; }
+  #welcomeBody b{ color:var(--text); font-weight:600; }
+  #welcomeBody .w-actions{ margin-top:20px; padding-top:15px; border-top:1px solid var(--line); font-size:11.5px; color:var(--text-dim); }
+  @media (max-width:520px){ #welcomeBody .w-grid{ grid-template-columns:1fr; grid-template-rows:none; grid-auto-flow:row; gap:16px; } }
+
+  /* warnings / reconciliation */
+  .warn{
+    background:var(--gold-dim); border:1px solid transparent; border-left:3px solid var(--gold);
+    border-radius:var(--radius-sm);
+    padding:11px 14px; font-size:12.5px; color:var(--text); margin-bottom:18px;
+    line-height:1.65; display:none;
+  }
+  .warn.show{ display:block; position:relative; padding-right:34px; }
+  .warn-x{ position:absolute; top:8px; right:8px; width:20px; height:20px; font-size:12px; border-radius:6px; }
+  .warn b{ color:var(--gold); font-weight:700; }
+  .warn.err{ background:var(--loss-dim); border-left-color:var(--loss); }
+  .warn.err b{ color:var(--loss); }
+  .warn .recline{ margin-top:4px; }
+  .warn .recline:first-child{ margin-top:0; }
+
+  /* import panel */
+  .import-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin-bottom:16px;
+  }
+  .import-drop{
+    border:1.5px dashed var(--line-strong); border-radius:var(--radius-sm); padding:22px 16px; text-align:center;
+    font-size:12.5px; color:var(--text-dim); cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .import-drop.drag{ border-color:var(--gold); background:var(--gold-dim); color:var(--gold); }
+  .import-hint{ font-size:11px; color:var(--text-dim); margin-top:8px; line-height:1.6; }
+  .import-preview{
+    margin-top:12px; padding:12px 14px; background:var(--ink); border:1px solid var(--line);
+    border-radius:var(--radius-sm); font-size:12px; line-height:1.7;
+  }
+  .import-preview .big{ font-size:13px; font-weight:700; color:var(--text); }
+  .import-preview ul{ margin:6px 0 0; padding-left:18px; }
+  .import-preview .dup{ color:var(--text-dim); }
+  .import-actions{ display:flex; gap:8px; margin-top:12px; }
+  .import-paste{ min-height:70px; margin-top:10px; font-size:11.5px !important; }
+
+  /* sections */
+  section{ margin-bottom:30px; }
+  .sec-head{
+    display:flex; align-items:center; gap:9px;
+    margin-bottom:14px;
+  }
+  .sec-head .badge{
+    width:30px; height:30px; border-radius:9px; background:var(--gold-dim); color:var(--gold);
+    display:flex; align-items:center; justify-content:center; font-size:15px; flex:0 0 auto;
+  }
+  .sec-head h2{ font-size:15px; margin:0; font-weight:700; letter-spacing:-0.01em; }
+  .sec-head .count{ font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+  .sec-head .grow{ margin-left:auto; display:flex; align-items:center; gap:8px; }
+
+  /* add trade form */
+  .form-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px;
+  }
+  .form-grid{
+    display:grid; grid-template-columns: 1.2fr 1fr 0.9fr 1fr 1fr 1.3fr auto;
+    gap:8px 10px; align-items:end; max-width:880px;
+  }
+  .form-grid.fg-4{ grid-template-columns: 1.1fr 1fr 1fr 1fr auto; max-width:680px; }
+  /* add-trade form mirrors the ledger columns: date · symbol · buy qty@price · sell qty@price */
+  .form-grid.fg-trade{ grid-template-columns: 1.15fr 0.9fr 1.7fr 1.7fr 0.9fr auto; max-width:1000px; }
+  .pair{ display:flex; align-items:center; gap:6px; }
+  .pair input{ flex:1 1 0; min-width:0; }
+  .pair span{ color:var(--text-dim); font-family:var(--mono); font-size:12px; }
+  @media (max-width:760px){
+    .form-grid, .form-grid.fg-4, .form-grid.fg-trade{ grid-template-columns:1fr 1fr; max-width:none; }
+    .form-grid > button{ grid-column:1 / -1; margin-top:2px; }
+  }
+  /* date inputs: no calendar icon — the whole field still opens the picker on click */
+  input[type="date"]{ position:relative; }
+  input[type="date"]::-webkit-calendar-picker-indicator{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+  .field label{ display:block; font-size:10px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:5px; }
+  /* ---- form inputs: one look everywhere ---- */
+  .field input, .field select, .field textarea,
+  .modal-card input, .modal-card select, .modal-card textarea,
+  .fx-row input, .import-paste, .pos-num, .note-body textarea{
+    width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius-sm);
+    color:var(--text); padding:8px 10px; font-family:var(--mono); font-size:13px;
+    transition:border-color .12s ease, box-shadow .12s ease;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus,
+  .modal-card input:focus, .modal-card select:focus, .modal-card textarea:focus,
+  .fx-row input:focus, .import-paste:focus, .pos-num:focus, .note-body textarea:focus,
+  .cell-num:focus, .row-edit:focus, .tg-in:focus{
+    outline:none; border-color:var(--gold); background:var(--panel);
+  }
+  .field textarea, .modal-card textarea, .import-paste, .note-body textarea{ resize:vertical; line-height:1.5; }
+  .field select, .modal-card select{
+    -webkit-appearance:none; appearance:none; padding-right:30px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23847F71' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 11px center;
+  }
+  /* ---- inline-edit cells: transparent until you touch them ---- */
+  .cell-num, .row-edit, .tg-in{
+    width:100%; background:transparent; border:1px solid transparent; border-radius:6px;
+    color:var(--text); font-family:var(--mono); font-size:12px; padding:3px 6px;
+    transition:border-color .12s ease, background .12s ease, box-shadow .12s ease;
+  }
+  .pl-row:hover .cell-num, .cell-num:hover, .row-edit:hover, .tg-row:hover .tg-in{ border-color:var(--line); }
+  .cell-num.overridden, .row-edit.overridden{ color:var(--gold); font-weight:600; }
+  /* ---- buttons: one base, consistent hover / active / focus ---- */
+  button{
+    font-family:var(--disp); font-weight:600; cursor:pointer; border:none; border-radius:999px;
+    padding:9px 16px; font-size:13px; color:var(--text);
+    transition:background .12s ease, border-color .12s ease, color .12s ease, transform .06s ease;
+  }
+  button:active{ transform:translateY(1px); }
+  button:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  button:disabled{ cursor:not-allowed; opacity:0.55; transform:none; }
+  .btn-primary{ background:var(--text); color:var(--panel); }
+  .btn-primary:hover:not(:disabled){ background:#000; }
+  .btn-ghost{ background:var(--panel); border:1px solid var(--line); color:var(--text-dim); }
+  .btn-ghost:hover:not(:disabled){ color:var(--text); border-color:var(--line-strong); background:var(--panel-2); }
+  .btn-small{ padding:6px 12px; font-size:12px; }
+  .btn-arrow{ font-size:17px; line-height:1; padding:5px 14px; }
+
+  /* ---- icon buttons: circle/square, transparent, tint on hover ---- */
+  .icon-btn, .cal-add, .modal-x, .pl-del, .tg-del, .warn-x, .lang-toggle, .del-x{
+    border:none; background:transparent; color:var(--text-dim); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .12s ease, color .12s ease, border-color .12s ease, transform .06s ease;
+  }
+  .icon-btn:active, .cal-add:active, .modal-x:active, .pl-del:active, .tg-del:active, .warn-x:active, .lang-toggle:active, .del-x:active{ transform:translateY(1px); }
+  .icon-btn:hover, .modal-x:hover, .warn-x:hover, .lang-toggle:hover{ color:var(--text); background:var(--panel-2); }
+  .pl-del:hover, .tg-del:hover, .del-x:hover{ color:var(--loss); background:var(--loss-dim); }
+
+  /* closed trades table */
+  .ledger{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto;
+  }
+  .row{
+    display:grid;
+    grid-template-columns: 92px minmax(120px,1fr) 150px 164px 118px 22px;
+    gap:10px; padding:10px 16px; align-items:center;
+    border-bottom:1px solid var(--line); font-size:12.5px;
+  }
+  .row input[type="date"]::-webkit-calendar-picker-indicator{ display:none; }
+  .row input[type="number"]::-webkit-outer-spin-button,
+  .row input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .row input[type="number"]{ -moz-appearance:textfield; }
+  .row:hover{ background:var(--ink); }
+  .row.head{
+    font-size:10px; color:var(--text-dim); font-weight:600; text-transform:uppercase;
+    letter-spacing:0.05em; background:var(--ink);
+  }
+  .row.head:hover{ background:var(--ink); }
+  .row:last-child{ border-bottom:none; }
+  .tk{ display:flex; align-items:center; gap:9px; min-width:0; }
+  .tk .mono{
+    width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-family:var(--disp); font-weight:700; font-size:11px; color:#fff; flex:0 0 auto;
+  }
+  .row .sym{ font-weight:700; font-size:13px; }
+  .tk .sym-edit{ font-weight:700; text-transform:uppercase; width:auto; flex:0 1 auto; min-width:36px; }
+  .sym-edit{ font-weight:700; text-transform:uppercase; }
+  .tk .cover-tag{ flex:0 0 auto; }
+  .row .side-sell{ color:var(--loss); font-size:11px; }
+  .row .qtyprice{ font-family:var(--mono); color:var(--text-dim); font-size:12px; }
+  .pnl-wrap{ display:flex; align-items:center; justify-content:flex-end; gap:7px; }
+  .row .pnl{ font-family:var(--mono); font-weight:700; text-align:right; white-space:nowrap;
+    display:inline-flex; align-items:center; padding:3px 9px; border-radius:999px; font-size:12px; }
+  .row .pnl.gain{ color:var(--gain); background:var(--gain-dim); }
+  .row .pnl.loss{ color:var(--loss); background:var(--loss-dim); }
+  .short-badge{
+    flex:0 0 auto; width:16px; height:16px; border-radius:999px;
+    border:1px solid var(--gold); color:var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:700; text-transform:lowercase; font-family:var(--mono);
+  }
+  .row .reported{ font-family:var(--mono); text-align:right; color:var(--text-dim); font-size:12px; }
+  .row .diff{ font-family:var(--mono); text-align:right; font-size:11px; }
+  .row .del{ color:var(--text-dim); cursor:pointer; text-align:center; }
+  .row .del:hover{ color:var(--loss); }
+  .expand-toggle{ cursor:pointer; color:var(--text-dim); font-family:var(--mono); font-size:11px; text-decoration:underline dotted; text-underline-offset:2px; }
+  .sell-edit{ display:flex; align-items:center; gap:5px; }
+  .sell-edit .qty-edit{ flex:0 0 46px; }
+  .sell-edit .price-edit{ flex:1 1 auto; min-width:0; }
+  .sell-edit span{ color:var(--text-dim); flex:0 0 auto; }
+  .buyavg-edit{ display:flex; align-items:center; gap:5px; }
+  .buyavg-edit span{ color:var(--text-dim); flex:0 0 auto; }
+  .buyavg-edit .price-edit{ flex:0 1 84px; min-width:0; }
+  .buyavg-edit input.overridden{ color:var(--gold); border-color:var(--gold); }
+  .buyavg-edit .expand-toggle{ flex:0 0 auto; }
+  .matched-detail{
+    padding:8px 16px 12px 60px; font-family:var(--mono); font-size:11px; color:var(--text-dim);
+    background:var(--ink); display:none; border-bottom:1px solid var(--line);
+  }
+  .matched-detail.show{ display:block; }
+  .matched-detail .lot{ padding:2px 0; }
+  .matched-detail .lot.est{ color:var(--gold); }
+
+  /* lot queue — small rounded chips */
+  .lane{ display:flex; gap:8px; overflow-x:auto; padding:2px 0 12px; }
+  .symbol-group{ margin-bottom:18px; }
+  .symbol-group h3{
+    font-size:13.5px; font-weight:700; margin:0 0 8px; color:var(--text);
+    display:flex; gap:8px; align-items:baseline;
+  }
+  .symbol-group h3 .qty-total{ color:var(--text-dim); font-weight:400; font-family:var(--mono); font-size:12px; }
+  .stub{
+    flex:0 0 auto; width:120px;
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-sm);
+    padding:10px 12px 12px; font-family:var(--mono);
+  }
+  .stub .qty{ font-size:15px; font-weight:700; }
+  .stub .price{ font-size:11px; margin-top:2px; color:var(--text-dim); }
+  .stub .date{ font-size:9px; margin-top:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.03em; }
+  .stub.est{ background:var(--gold-dim); border-color:var(--gold); }
+  .stub.est .price::after{ content:" (估)"; color:var(--gold); }
+  html[lang="en"] .stub.est .price::after{ content:" (est)"; }
+
+  .empty{
+    color:var(--text-dim); font-size:12.5px; font-style:italic;
+    padding:22px; text-align:center;
+  }
+
+  footer{
+    margin-top:36px; padding-top:16px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+  }
+  footer .hint{ font-size:11.5px; color:var(--text-dim); display:flex; align-items:center; gap:7px; }
+
+  /* tabs — pill nav */
+  .tabs{
+    display:inline-flex; gap:4px; margin-bottom:26px;
+    background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:4px;
+  }
+  .tab-btn{
+    background:transparent; border:none; color:var(--text-dim); font-family:var(--disp);
+    font-weight:600; font-size:13px; padding:8px 16px; cursor:pointer; border-radius:999px;
+    display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
+  }
+  .tab-btn.active{ background:var(--text); color:var(--panel); }
+  .tab-btn:not(.active):hover{ color:var(--text); }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  /* positions — list + donut */
+  .pos-layout{ display:grid; grid-template-columns:1fr 300px; gap:22px; align-items:start; }
+  @media (max-width:820px){ .pos-layout{ grid-template-columns:1fr; } }
+
+  .pos-list{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto;
+  }
+  .pl-row{
+    display:grid; grid-template-columns:10px minmax(72px,1fr) 52px 72px 72px 88px 74px 18px;
+    gap:10px; align-items:center; padding:11px 16px; cursor:pointer;
+    border-bottom:1px solid var(--line); font-size:12.5px;
+  }
+  .pl-row:last-of-type{ border-bottom:none; }
+  .pl-row:hover{ background:var(--ink); }
+  .pl-row.open{ background:var(--panel); box-shadow:inset 3px 0 0 var(--gold); }
+  .pl-row.open:hover{ background:var(--panel); }
+  .pl-row.head{
+    font-size:10px; color:var(--text-dim); font-weight:600; text-transform:uppercase;
+    letter-spacing:0.05em; background:var(--ink); cursor:default; padding:10px 16px;
+  }
+  .pl-row.head:hover{ background:var(--ink); }
+  .pl-row.head .pl-num{ color:var(--text-dim); font-family:var(--disp); }
+  .pl-row .swatch{ width:10px; height:10px; border-radius:3px; }
+  .pl-tk{ min-width:0; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .pl-tk b{ font-weight:700; font-size:13px; }
+  .pl-tk .tag{ font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:1px 6px; border-radius:999px; }
+  .pl-tk .tag.short{ background:var(--loss-dim); color:var(--loss); }
+  .pl-num{ font-family:var(--mono); font-size:12px; color:var(--text-dim); text-align:right; white-space:nowrap; }
+  .pl-val{ font-family:var(--mono); font-size:12.5px; font-weight:600; text-align:right; }
+  .pl-pnl{ font-family:var(--mono); font-size:12.5px; font-weight:700; text-align:right; }
+  .pl-pnl.gain{ color:var(--gain); } .pl-pnl.loss{ color:var(--loss); }
+  .pl-pct{ font-family:var(--mono); font-size:12px; color:var(--text-dim); text-align:right; }
+  /* inline click-to-edit number */
+  .cell-num{ text-align:right; -moz-appearance:textfield; }
+  .cell-num::-webkit-outer-spin-button, .cell-num::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  /* detail-panel inputs (cash, avg) always look editable */
+  .pl-detail .cell-num{ width:120px; text-align:left; border-color:var(--line); background:var(--panel); }
+  .pl-del{ width:18px; height:18px; border-radius:6px; font-size:11px; padding:0; visibility:hidden; }
+  .pl-row:hover .pl-del{ visibility:visible; }
+
+  .pl-detail{ display:none; padding:8px 16px 14px 39px; background:var(--panel-2); box-shadow:inset 3px 0 0 var(--gold); border-bottom:1px solid var(--line); }
+  .pl-detail.show{ display:block; }
+  .lot-row{ display:flex; align-items:baseline; gap:10px; padding:3px 0; font-family:var(--mono); font-size:11.5px; color:var(--text-dim); }
+  .lot-row .k{ color:var(--text-dim); }
+  .lot-row .lot-qty{ font-weight:700; color:var(--text); }
+  .lot-row .lot-date{ margin-left:auto; }
+  .lot-row span:last-child:not(.k){ margin-left:auto; }
+  .lot-row.short .lot-qty{ color:var(--loss); }
+  .lot-row.est .lot-price{ color:var(--gold); }
+  .del-x{ font-size:13px; padding:0 4px; border-radius:6px; }
+
+  /* donut card */
+  .pos-viz{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px;
+    position:sticky; top:16px;
+  }
+  .donut-wrap{ position:relative; width:180px; height:180px; margin:2px auto 14px; }
+  .donut-center{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  }
+  .donut-center .dc-v{ font-family:var(--mono); font-size:17px; font-weight:700; letter-spacing:-0.02em; }
+  .donut-center .dc-k{ font-size:10px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; margin-top:2px; }
+  .pos-legend{ display:flex; flex-direction:column; gap:7px; }
+  .lg-row{ display:grid; grid-template-columns:10px 1fr auto; gap:8px; align-items:center; font-size:12px; }
+  .lg-row .swatch{ width:10px; height:10px; border-radius:3px; }
+  .lg-row b{ font-weight:600; }
+  .lg-row span{ font-family:var(--mono); color:var(--text-dim); }
+  .pos-viz .fx-row{
+    display:flex; align-items:center; gap:8px; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);
+    font-size:11px; color:var(--text-dim);
+  }
+  .pos-viz .fx-row input{ padding:5px 8px; font-size:12px; width:82px; }
+  .pos-total{ font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:8px; text-align:center; }
+
+  /* calendar */
+  .cal-legend{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px; font-size:11.5px; color:var(--text-dim); }
+  .cal-legend span{ display:flex; align-items:center; gap:6px; }
+  .dot{ width:8px; height:8px; border-radius:999px; display:inline-block; }
+  .dot.buy{ background:var(--gain); }
+  .dot.sell{ background:var(--loss); }
+  .dot.hold{ background:#3A6B8A; }
+  .dot.rotate{ background:#B5852A; }
+  .dot.watch{ background:var(--indigo); }
+  .cal-dow{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:1px;
+    font-size:10px; color:var(--text-dim); font-weight:600; text-transform:uppercase;
+    letter-spacing:0.05em; padding:0 2px 8px;
+  }
+  .cal-grid{
+    display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
+  }
+  .cal-cell{ background:var(--panel); min-width:0; min-height:96px; padding:8px; position:relative; display:flex; flex-direction:column; gap:4px; overflow:hidden; }
+  .cal-cell.weekend{ background:var(--panel-2); }
+  .cal-cell.dim{ background:var(--ink); }
+  .cal-cell.dim .cal-date{ color:var(--text-dim); opacity:0.5; }
+  .cal-date{ font-family:var(--mono); font-size:12px; color:var(--text-dim); }
+  .cal-date.today{
+    background:var(--text); color:var(--panel); width:20px; height:20px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center; font-weight:700;
+  }
+  .cal-event{
+    font-size:10.5px; padding:2px 6px; cursor:pointer; border-radius:6px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
+  }
+  .cal-event.has-plan{ padding-right:12px; }
+  .cal-event.buy{ background:var(--gain-dim); color:var(--gain); }
+  .cal-event.sell{ background:var(--loss-dim); color:var(--loss); }
+  .cal-event.hold{ background:#DCE6EC; color:#204A63; }
+  .cal-event.rotate{ background:#F0E6D2; color:#6B4A1E; }
+  .cal-event.watch{ background:var(--indigo-dim); color:var(--indigo); }
+  .cal-event.earnings{ background:#F3E3C7; color:#7A5410; font-weight:600; }
+  .cal-event.macro{ background:#1F1E1B; color:#EDEAE0; }
+  .cal-event.news{ background:#E6E0F2; color:#4B3A82; }
+  .cal-event.news::before{ content:'↗ '; opacity:0.7; }
+  .cal-event.has-plan{ position:relative; }
+  .cal-event.has-plan::after{ content:''; position:absolute; top:3px; right:3px; width:5px; height:5px; border-radius:999px; background:currentColor; opacity:0.65; }
+  .dot.earnings{ background:#B5852A; }
+  .dot.macro{ background:#1F1E1B; }
+  .dot.news{ background:#6B57B0; }
+  .cal-sync{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin-bottom:12px; font-family:var(--mono); font-size:11px; line-height:1.6; color:var(--text-dim); }
+  .cal-add{
+    position:absolute; bottom:6px; right:6px; width:18px; height:18px; border-radius:6px;
+    background:var(--panel); border:1px solid var(--line); font-size:12px; line-height:1;
+  }
+  .cal-add:hover{ color:var(--text); background:var(--panel-2); border-color:var(--line-strong); }
+
+  /* modal */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(25,24,20,0.5);
+    align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-card{
+    position:relative;
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:22px;
+    width:100%; max-width:340px;
+  }
+  .modal-x{ position:absolute; top:14px; right:14px; width:26px; height:26px; border-radius:7px; font-size:13px; }
+  .modal-title{ font-weight:700; font-size:15px; margin:0 0 14px; }
+
+  .lang-toggle{
+    font-family:var(--mono); font-size:11px; font-weight:600;
+    border:1px solid var(--line); border-radius:999px; padding:6px 11px;
+  }
+  .lang-toggle:hover{ border-color:var(--line-strong); }
+
+  /* price targets */
+  .tg-list{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .tg-row{
+    display:grid; grid-template-columns:16px 64px 56px 128px 1fr 18px; gap:11px; align-items:center;
+    padding:11px 16px; border-bottom:1px solid var(--line); font-size:13px;
+  }
+  .tg-row:last-child{ border-bottom:none; }
+  .tg-row:hover{ background:var(--ink); }
+  .tg-icon{ display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .tg-icon.buy{ color:var(--gain); }
+  .tg-icon.sell{ color:var(--loss); }
+  .tg-icon.watch{ color:#3A6B8A; }
+  .tg-sym{ font-weight:700; font-size:13px; }
+  .tg-badge{
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em;
+    padding:2px 8px; border-radius:999px; text-align:center;
+  }
+  .tg-badge.buy{ background:var(--gain-dim); color:var(--gain); }
+  .tg-badge.sell{ background:var(--loss-dim); color:var(--loss); }
+  .tg-badge.watch{ background:#DEE7EF; color:#2E5470; }
+  .tg-in{ font-size:12.5px; }
+  .tg-in.tg-note{ font-family:var(--disp); color:var(--text-dim); }
+  .tg-del{ width:18px; height:18px; border-radius:6px; font-size:11px; padding:0; visibility:hidden; }
+  .tg-row:hover .tg-del{ visibility:visible; }
+
+  /* notes directory (legacy) */
+  .note-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px; margin-bottom:10px;
+  }
+  .note-head{ display:flex; align-items:center; gap:10px; cursor:pointer; }
+  .note-title{ font-weight:700; font-size:14px; flex:1; }
+  .note-ticker{ font-size:10.5px; font-weight:700; color:var(--gold); border:1px solid var(--gold); border-radius:999px; padding:1px 8px; }
+  .note-date{ font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+  .note-body{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); font-size:12.5px; line-height:1.7; color:var(--text); white-space:pre-wrap; display:none; }
+  .note-body.show{ display:block; }
+  .note-body textarea{ min-height:70px; }
+  .note-actions{ display:flex; gap:10px; margin-top:8px; font-size:11px; }
+  .note-actions span{ cursor:pointer; color:var(--text-dim); text-decoration:underline dotted; text-underline-offset:2px; }
+  .note-actions span:hover{ color:var(--loss); }
+
+  /* report charts */
+  .report-pager{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; color:var(--text-dim); }
+  .goal-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 10px; margin-bottom:12px; font-size:12px; color:var(--text-dim); }
+  .goal-bar label{ font-weight:600; }
+  .goal-input{ display:inline-flex; align-items:center; background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding-left:9px; transition:border-color .12s, background .12s; }
+  .goal-input:focus-within{ border-color:var(--gold); background:var(--panel); }
+  .goal-input .goal-cur{ font-family:var(--mono); font-size:12px; color:var(--text-dim); }
+  .goal-input input{ width:96px; background:transparent; border:none; outline:none; color:var(--text); padding:6px 9px 6px 2px; font-family:var(--mono); font-size:12px; }
+  .goal-prog{ flex:1 1 160px; max-width:240px; height:8px; background:var(--panel-2); border-radius:999px; overflow:hidden; }
+  .goal-prog > i{ display:block; height:100%; background:var(--gain); border-radius:999px; transition:width .25s ease; }
+  .goal-stat{ font-family:var(--mono); font-size:11.5px; color:var(--text-dim); }
+  .report-chart{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px 18px 8px;
+  }
+  .rbar-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer; }
+  .rbar-row:hover .rbar-label{ color:var(--text); }
+  .rbar-detail{
+    display:none; margin:-4px 0 14px 100px; padding:8px 10px; background:var(--ink);
+    border-radius:var(--radius-sm); font-family:var(--mono); font-size:11px;
+  }
+  .rbar-detail.show{ display:block; }
+  .rbar-trade{ display:flex; gap:12px; padding:3px 0; }
+  .rbar-trade span{ flex:0 0 auto; }
+  .rbar-trade .rbar-trade-sym{ font-weight:700; min-width:44px; }
+  .rbar-trade span:last-child{ margin-left:auto; font-weight:700; }
+  .rbar-label{ width:90px; flex:0 0 auto; font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+  .rbar-track{ flex:1; height:18px; background:var(--panel-2); border-radius:999px; position:relative; overflow:hidden; }
+  .rbar-fill{ position:absolute; top:0; bottom:0; border-radius:999px; }
+  .rbar-fill.gain{ background:var(--gain); }
+  .rbar-fill.loss{ background:var(--loss); }
+  .rbar-val{ width:100px; flex:0 0 auto; text-align:right; font-family:var(--mono); font-size:12px; font-weight:700; }
+  .rbar-val.gain{ color:var(--gain); }
+  .rbar-val.loss{ color:var(--loss); }
+  #reviewBox{ font-size:13.5px; line-height:1.85; white-space:pre-wrap; border:1px solid var(--line); border-radius:var(--radius); padding:18px; background:var(--panel); }
+
+  /* --- narrow screens --- */
+  @media (max-width:560px){
+    body{ padding:22px 12px 80px; }
+    header.top{ margin-bottom:18px; }
+    .tabs{ display:flex; width:100%; justify-content:space-between; }
+    .tab-btn{ padding:9px 12px; }
+    .tab-btn span{ display:none; }        /* icon-only nav */
+    .tab-btn svg.i{ font-size:17px; }
+    .sec-head{ flex-wrap:wrap; row-gap:8px; }
+    .sec-head .grow{ width:100%; margin-left:0; flex-wrap:wrap; }
+    .summary{ grid-template-columns:1fr; }
+    .stat .value{ font-size:19px; }
+    .cal-cell{ min-height:58px; padding:4px; gap:2px; }
+    .cal-event{ font-size:9px; padding:1px 4px; }
+    .cal-date{ font-size:11px; }
+    .cal-add{ width:15px; height:15px; font-size:10px; }
+    .cal-legend{ gap:10px 12px; font-size:10.5px; }
+    .pos-viz{ position:static; }
+    .import-card, .form-card{ padding:12px; }
+    .modal-card{ max-width:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <span class="brand-logo">↻</span>
+      <h1>LOOP</h1>
+    </div>
+    <div class="head-right">
+      <button class="lang-toggle" id="helpBtn" onclick="openWelcome()" title="How LOOP works" aria-label="Help">?</button>
+      <button class="lang-toggle" id="langToggle" onclick="toggleLang()">EN</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="ledger" onclick="switchTab('ledger')">
+      <svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span data-i18n="tabLedger">交易盈亏</span>
+    </button>
+    <button class="tab-btn" data-tab="positions" onclick="switchTab('positions')">
+      <svg class="i" viewBox="0 0 24 24"><path d="M21.2 15.9A10 10 0 1 1 8.1 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg><span data-i18n="tabPositions">持仓</span>
+    </button>
+    <button class="tab-btn" data-tab="watchlist" onclick="switchTab('watchlist')">
+      <svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg><span data-i18n="tabWatchlist">自选</span>
+    </button>
+    <button class="tab-btn" data-tab="report" onclick="switchTab('report')">
+      <svg class="i" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg><span data-i18n="tabReport">周报</span>
+    </button>
+  </nav>
+
+  <div id="tab-ledger" class="tab-panel active">
+
+    <div class="summary" id="summaryCards"></div>
+
+    <div class="warn" id="demoBox"></div>
+    <div class="warn" id="warnBox"></div>
+    <div class="warn" id="reconBox"></div>
+
+    <section>
+      <div class="sec-head">
+        <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>
+        <h2 data-i18n="realizedTitle">已实现盈亏（按批次真实结算 · LIFO）</h2>
+        <div class="grow" id="ledgerActions">
+          <span class="count" id="closedCount"></span>
+          <button class="btn-ghost btn-small" onclick="openImport()" data-i18n="btnImport">导入对账单</button>
+          <button class="btn-ghost btn-small" onclick="openAddTrade()" data-i18n="btnAdd2">+ 添加</button>
+        </div>
+      </div>
+
+      <div id="importCard" class="import-card" style="display:none;">
+        <div id="importDrop" class="import-drop">
+          <span data-i18n-html="importDropText">把 IBKR Activity Statement 的 <b>.csv</b> 文件拖到这里，或点击选择</span>
+          <input type="file" id="importFile" accept=".csv,text/csv" style="display:none;">
+        </div>
+        <div class="import-hint" data-i18n-html="importHint">
+          IBKR → Performance &amp; Reports → Statements → Activity，格式选 <b>CSV</b>。<br>
+          按「代码+成交时间+数量+价格」去重，同一份对账单重复导入不会重复计算。
+        </div>
+        <textarea id="importPaste" class="import-paste" data-i18n-ph="importPastePh" placeholder="或者把 CSV 内容直接粘贴到这里，然后点下面的「解析」"></textarea>
+        <div class="import-actions">
+          <button class="btn-ghost btn-small" onclick="parseImportPaste()" data-i18n="btnParsePaste">解析粘贴内容</button>
+          <button class="btn-ghost btn-small" onclick="closeImport()" data-i18n="btnCancel">取消</button>
+        </div>
+        <div id="importPreview" class="import-preview" style="display:none;"></div>
+      </div>
+
+      <div id="addTradeForm" class="form-card" style="display:none; margin-bottom:14px;">
+        <div class="form-grid fg-trade">
+          <div class="field"><label data-i18n="fDate">日期</label><input type="date" id="f-date"></div>
+          <div class="field"><label data-i18n="fSymbol">代码</label><input type="text" id="f-symbol" placeholder="AAPL" style="text-transform:uppercase;" oninput="updateLotDropdown()"></div>
+          <div class="field"><label data-i18n="fBuy">买入 数量@价格</label>
+            <div class="pair"><input type="number" id="f-buy-qty" placeholder="100" step="any" oninput="updateLotDropdown()"><span>@</span><input type="number" id="f-buy-price" placeholder="230.00" step="any"></div>
+          </div>
+          <div class="field"><label data-i18n="fSell">卖出 数量@价格</label>
+            <div class="pair"><input type="number" id="f-sell-qty" placeholder="100" step="any" oninput="updateLotDropdown()"><span>@</span><input type="number" id="f-sell-price" placeholder="239.90" step="any"></div>
+          </div>
+          <div class="field"><label data-i18n="fComm">佣金 (可选)</label><input type="number" id="f-commission" placeholder="0.83" step="any"></div>
+          <button class="btn-primary" onclick="addTrade()" data-i18n="fAdd">添加</button>
+        </div>
+        <div class="field" id="f-lot-field" style="display:none; margin-top:10px;">
+          <label data-i18n="fLotLabel">选择批次 (可选 — 不选就自动 LIFO 配对)</label>
+          <select id="f-lot"><option value="" data-i18n="fLotAuto">自动配对 (LIFO)</option></select>
+        </div>
+      </div>
+      <div class="ledger" id="ledgerTable"></div>
+    </section>
+
+    <footer>
+      <div class="hint">
+        <svg class="i" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span data-i18n="footerHint">数据只存在这台电脑的浏览器里，不上传任何服务器。带 "(估)" 标记的批次是追踪起点前已持有、成本未知，按卖价估算。</span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-ghost btn-small" id="btnExportBackup" onclick="exportBackup()" data-i18n="btnExportBackup">导出备份</button>
+        <button class="btn-ghost btn-small" onclick="document.getElementById('backupFile').click()" data-i18n="btnImportBackup">导入备份</button>
+        <input type="file" id="backupFile" accept=".json,application/json" style="display:none;">
+        <button class="btn-ghost btn-small" id="btnClearData" onclick="resetToSeed()" data-i18n="resetSeed">重置为初始数据</button>
+      </div>
+    </footer>
+
+  </div>
+
+  <div id="tab-positions" class="tab-panel">
+
+    <div class="sec-head">
+      <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M21.2 15.9A10 10 0 1 1 8.1 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></span>
+      <h2 data-i18n="posSortTitle">持仓</h2>
+      <div class="grow">
+        <button class="btn-ghost btn-small" id="fetchPricesBtn" onclick="fetchPrices()" data-i18n="btnRefreshPrices">刷新股价</button>
+        <button class="btn-ghost btn-small" onclick="openAddPosition()" data-i18n="btnAdd2">+ 添加</button>
+      </div>
+    </div>
+
+    <div id="addPosForm" class="form-card" style="display:none; margin-bottom:14px;">
+      <div class="form-grid fg-4">
+        <div class="field"><label data-i18n="pSymbol">代码</label><input type="text" id="p-symbol" placeholder="AAPL" style="text-transform:uppercase;"></div>
+        <div class="field"><label data-i18n="pQty">持股数</label><input type="number" id="p-qty" placeholder="100" step="any"></div>
+        <div class="field"><label data-i18n="pAvg">均价</label><input type="number" id="p-avg" placeholder="150.00" step="any"></div>
+        <div class="field"><label data-i18n="pCur">现价</label><input type="number" id="p-cur" placeholder="155.00" step="any"></div>
+        <button class="btn-primary" onclick="addPosition()" data-i18n="fAdd">添加</button>
+      </div>
+      <div id="p-note" style="margin-top:9px; font-family:var(--mono); font-size:11.5px; color:var(--gold);"></div>
+    </div>
+
+    <div class="pos-layout">
+      <div class="pos-list" id="positionsList"></div>
+      <div class="pos-viz" id="positionsViz"></div>
+    </div>
+
+  </div>
+
+  <div id="tab-watchlist" class="tab-panel">
+
+    <section>
+      <div class="sec-head">
+        <span class="badge"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg></span>
+        <h2 id="calMonthLabel">—</h2>
+        <div class="grow" style="gap:6px;">
+          <button class="btn-ghost btn-small" id="calSyncBtn" onclick="syncCalendar()" data-i18n="btnCalSync" style="margin-right:4px;">同步日历</button>
+          <button class="btn-ghost btn-small btn-arrow" onclick="calPrev()">‹</button>
+          <button class="btn-ghost btn-small" onclick="calToday()">Today</button>
+          <button class="btn-ghost btn-small btn-arrow" onclick="calNext()">›</button>
+        </div>
+      </div>
+      <div class="cal-sync">
+        <span id="calSyncNote"></span>
+      </div>
+      <div class="cal-legend">
+        <span><i class="dot earnings"></i><span data-i18n="legendEarnings">财报</span></span>
+        <span><i class="dot macro"></i><span data-i18n="legendMacro">宏观</span></span>
+        <span><i class="dot news"></i><span data-i18n="legendNews">新闻</span></span>
+        <span><i class="dot buy"></i>Buy / Add</span>
+        <span><i class="dot sell"></i>Sell / Reduce</span>
+        <span><i class="dot hold"></i>Hold</span>
+      </div>
+      <div class="cal-dow">
+        <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <span class="badge"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></span>
+        <h2 data-i18n="targetsTitle">价格目标</h2>
+        <div class="grow"><button class="btn-ghost btn-small" onclick="openAddTarget()" data-i18n="btnAddTarget">+ 添加</button></div>
+      </div>
+      <div id="addTargetForm" class="form-card" style="display:none; margin-bottom:14px;">
+        <div class="form-grid fg-4">
+          <div class="field"><label data-i18n="tgSymbol">代码</label><input id="tg-sym" type="text" placeholder="AAPL" style="text-transform:uppercase;"></div>
+          <div class="field"><label data-i18n="tgAction">方向</label>
+            <select id="tg-action"><option value="BUY" data-i18n="tgBuy">买入</option><option value="SELL" data-i18n="tgSell">卖出</option><option value="WATCH" data-i18n="tgWatch">关注</option></select>
+          </div>
+          <div class="field"><label data-i18n="tgLevel">价位</label><input id="tg-level" type="text" placeholder="150-160 / 175 / 190" data-i18n-ph="tgLevelPh"></div>
+          <div class="field"><label data-i18n="tgNote">备注 (可选)</label><input id="tg-note" type="text" placeholder="看图 · ER 前" data-i18n-ph="tgNotePh"></div>
+          <button class="btn-primary" onclick="addTarget()" data-i18n="btnAdd">添加</button>
+        </div>
+      </div>
+      <div id="targetsView"></div>
+    </section>
+
+  </div>
+
+  <div id="tab-report" class="tab-panel">
+
+    <section>
+      <div class="sec-head">
+        <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>
+        <h2 data-i18n="weeklyChartTitle">每周已实现盈亏</h2>
+        <div class="grow report-pager" id="weeklyRange"></div>
+      </div>
+      <div class="goal-bar">
+        <label for="weeklyGoalInput" data-i18n="goalLabel">每月目标</label>
+        <span class="goal-input"><span class="goal-cur">$</span><input type="text" id="weeklyGoalInput" placeholder="8000-12000" onchange="setWeeklyGoal(this.value)"></span>
+        <div class="goal-prog" id="goalProg" hidden><i></i></div>
+        <span class="goal-stat" id="goalStat"></span>
+      </div>
+      <div class="report-chart" id="weeklyChart"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <span class="badge"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="6" width="4" height="15"/><rect x="17" y="9" width="4" height="12"/></svg></span>
+        <h2 data-i18n="monthlyChartTitle">每月已实现盈亏</h2>
+      </div>
+      <div class="report-chart" id="monthlyChart"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2Z"/><path d="M9 22h6"/></svg></span>
+        <h2 data-i18n="reviewTitle">操作评价</h2>
+        <div class="grow">
+          <button class="btn-ghost btn-small" onclick="toggleAiSettings()" data-i18n="btnSettings">设置</button>
+          <button class="btn-primary btn-small" id="genReviewBtn" onclick="generateReview()">生成评价</button>
+        </div>
+      </div>
+
+      <div id="aiSettings" class="form-card" style="display:none; margin-bottom:14px;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+          <input type="checkbox" id="aiEnabled" onchange="saveAiSettings()">
+          <span data-i18n="aiEnableLabel">启用 AI 复盘（默认关闭）</span>
+        </label>
+        <div class="field" style="margin-top:12px;">
+          <label data-i18n="aiKeyLabel">Anthropic API Key</label>
+          <input type="password" id="aiKey" placeholder="sk-ant-…" onchange="saveAiSettings()" autocomplete="off">
+        </div>
+        <div class="import-hint" style="margin-top:8px;" data-i18n-html="aiHint">
+          开启后，「生成评价」会把你最近的交易摘要直接发给 Anthropic API（用你自己的 key 计费）。<br>
+          <b>Key 以明文存在本机浏览器里</b>——不要在公用电脑上开这个功能。关闭开关后不会发起任何请求。
+        </div>
+      </div>
+
+      <div id="reviewBox">
+        <div class="empty" data-i18n="reviewEmpty">点"生成评价"，我会看你最近的交易，给点反馈（比如卖早了、加仓时机怎么样之类的）</div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="modal-overlay" id="eventModal">
+    <div class="modal-card">
+      <button class="modal-x" onclick="closeEventModal()">✕</button>
+      <div class="modal-title" id="eventModalTitle">添加事件</div>
+      <div class="field" style="margin-bottom:10px;">
+        <label data-i18n="evTextLabel">内容</label>
+        <input type="text" id="ev-text" placeholder="AAPL 250">
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label data-i18n="evCatLabel">类别</label>
+        <select id="ev-category">
+          <option value="buy">Buy / Add</option>
+          <option value="sell">Sell / Reduce</option>
+          <option value="hold">Hold</option>
+          <option value="earnings">Earnings</option>
+          <option value="macro">Macro</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:14px;">
+        <label data-i18n="evPlanLabel">计划</label>
+        <textarea id="ev-plan" rows="3" data-i18n-ph="evPlanPh" placeholder="加息风险 → 提前 1-2 天到 X 价先卖，回落再进"></textarea>
+      </div>
+      <div style="display:flex; justify-content:space-between; gap:8px;">
+        <button class="btn-ghost btn-small" id="ev-delete-btn" onclick="deleteEvent()" style="display:none;" data-i18n="evDelete">删除</button>
+        <div style="display:flex; gap:8px; margin-left:auto;">
+          <button class="btn-ghost btn-small" onclick="closeEventModal()" data-i18n="btnCancel">取消</button>
+          <button class="btn-primary btn-small" onclick="saveEvent()" data-i18n="evSave">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="welcomeModal" onclick="if(event.target===this)closeWelcome()">
+    <div class="modal-card welcome-modal">
+      <button class="modal-x" onclick="closeWelcome()">✕</button>
+      <div id="welcomeBody"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ---- lifo-engine.js ---- */
+/*
+ * LOOP — LIFO / average-cost P&L engine
+ * ------------------------------------------------------------------
+ * Pure calculation core, no DOM, no storage. Shared by:
+ *   - real_pnl_ledger.html  (loaded via <script src="lifo-engine.js">)
+ *   - lifo-engine.test.js    (loaded via require(), run with `node --test`)
+ *
+ * Phase 4 (packaging) will inline this back into the single HTML file.
+ * Until then it is the single source of truth for the matching logic —
+ * do not copy these functions elsewhere.
+ *
+ * A "trade" is: { id, sym, side:'BUY'|'SELL', qty, price, comm?, date,
+ *                 targetLotId?, buyAvgOverride? }
+ */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) {
+    module.exports = api;            // Node / test runner
+  } else {
+    Object.assign(root, api);        // browser: expose as globals
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  // Average-cost method: one running average per symbol, realized P&L booked
+  // on every SELL as (proceeds - avg*qty). Used for the "均价法" comparison column.
+  function runAverageCost(list) {
+    const sorted = [...list].sort((a, b) => new Date(a.date) - new Date(b.date) || (a.id < b.id ? -1 : 1));
+    const state = {}; // per symbol: {qty, cost}
+    const pnlByTradeId = {};
+
+    for (const t of sorted) {
+      if (!state[t.sym]) state[t.sym] = { qty: 0, cost: 0 };
+      const s = state[t.sym];
+      if (t.side === 'BUY') {
+        s.cost += t.qty * t.price + (t.comm || 0);
+        s.qty += t.qty;
+      } else {
+        // if somehow oversold beyond tracked history (shouldn't happen with full data),
+        // fall back to this trade's own price as the average so it doesn't go nonsensical
+        const avg = s.qty > 0.0000001 ? s.cost / s.qty : t.price;
+        const costRemoved = avg * t.qty;
+        const proceeds = t.qty * t.price - (t.comm || 0);
+        pnlByTradeId[t.id] = proceeds - costRemoved;
+        s.cost -= avg * Math.min(t.qty, s.qty);
+        s.qty -= t.qty;
+        if (s.qty < 0) s.qty = 0;
+        if (s.cost < 0) s.cost = 0;
+      }
+    }
+    return pnlByTradeId;
+  }
+
+  // Lot-matched method (FIFO or LIFO). Returns:
+  //   closed:   array of { ...trade, matched:[{qty,unitCost,date,estimated,wasShort}], pnl, isCover }
+  //             in reverse-chronological order
+  //   openLots: { [sym]: [{qty(signed), unitCost, date, estimated, sourceId}] }
+  //   warnings: array (currently unused, kept for the cash-flow closure check to fill)
+  function runFIFO(list, matchMethod) {
+    const sorted = [...list].sort((a, b) => new Date(a.date) - new Date(b.date) || (a.id < b.id ? -1 : 1));
+    const queues = {};
+    const closed = [];
+    const warnings = [];
+
+    for (const t of sorted) {
+      if (!queues[t.sym]) queues[t.sym] = [];
+      const q = queues[t.sym];
+      let remaining = t.side === 'BUY' ? t.qty : -t.qty; // signed: +buy, -sell
+      const matched = [];
+      let realizedPnl = 0;
+
+      // if this SELL manually targets a specific lot, close that one first,
+      // regardless of where it sits in the FIFO/LIFO order
+      if (t.side === 'SELL' && t.targetLotId) {
+        const idx = q.findIndex(l => l.sourceId === t.targetLotId && l.qty > 0);
+        if (idx !== -1) {
+          const lot = q[idx];
+          const closeQty = Math.min(lot.qty, -remaining);
+          const pnl = (t.price - lot.unitCost) * closeQty - (t.comm || 0) * (closeQty / t.qty);
+          realizedPnl += pnl;
+          matched.push({ qty: closeQty, unitCost: lot.unitCost, date: lot.date, estimated: lot.estimated, wasShort: false });
+          lot.qty -= closeQty;
+          remaining += closeQty;
+          if (lot.qty < 0.0000001) q.splice(idx, 1);
+        }
+      }
+
+      // close against opposite-sign lots first (this handles normal long-sell,
+      // AND short-cover when a sell happened with nothing to sell against earlier)
+      while (remaining !== 0 && q.length > 0) {
+        const lotIndex = matchMethod === 'LIFO' ? q.length - 1 : 0;
+        const lot = q[lotIndex];
+        const sameSign = (lot.qty > 0 && remaining > 0) || (lot.qty < 0 && remaining < 0);
+        if (sameSign) break; // nothing to close, this trade only adds exposure
+        const closeQty = Math.min(Math.abs(lot.qty), Math.abs(remaining));
+        // pnl: for a long lot being sold, gain = (sellPrice - lotCost) * qty
+        // for a short lot being covered, gain = (lotCost - buyPrice) * qty
+        const pnl = lot.qty > 0
+          ? (t.price - lot.unitCost) * closeQty - (t.comm || 0) * (closeQty / t.qty)
+          : (lot.unitCost - t.price) * closeQty - (t.comm || 0) * (closeQty / t.qty);
+        realizedPnl += pnl;
+        matched.push({ qty: closeQty, unitCost: lot.unitCost, date: lot.date, estimated: lot.estimated, wasShort: lot.qty < 0 });
+        lot.qty += lot.qty > 0 ? -closeQty : closeQty;
+        remaining += remaining > 0 ? -closeQty : closeQty;
+        if (Math.abs(lot.qty) < 0.0000001) q.splice(lotIndex, 1);
+      }
+      if (remaining !== 0) {
+        // opens new exposure (long lot if remaining>0, short lot if remaining<0)
+        q.push({ qty: remaining, unitCost: t.price, date: t.date, estimated: false, sourceId: t.id });
+      }
+
+      if (matched.length > 0) {
+        closed.push({ ...t, matched, pnl: realizedPnl, isCover: t.side === 'BUY' });
+      }
+    }
+    return { closed: closed.reverse(), openLots: queues, warnings };
+  }
+
+  // Fold a newly entered lot into an existing position (signed qty, so shorts work).
+  //  same direction  -> quantities add, average cost is quantity-weighted
+  //  opposite, partial -> quantity shrinks, average cost of what is left is unchanged
+  //  opposite, flips   -> the remainder is a fresh position at the new price
+  // A blank/NaN price on a same-direction add keeps the old average (nothing to weight with).
+  function mergeLot(oldQty, oldAvg, qty, price) {
+    const EPS = 0.0000001;
+    const hasPrice = isFinite(price);
+    if (Math.abs(oldQty) < EPS) return { qty, avg: hasPrice ? price : 0 };
+    const total = oldQty + qty;
+    if (Math.sign(oldQty) === Math.sign(qty)) {
+      const avg = hasPrice
+        ? (Math.abs(oldQty) * oldAvg + Math.abs(qty) * price) / (Math.abs(oldQty) + Math.abs(qty))
+        : oldAvg;
+      return { qty: total, avg };
+    }
+    if (Math.abs(total) < EPS) return { qty: 0, avg: 0 };
+    if (Math.sign(total) === Math.sign(oldQty)) return { qty: total, avg: oldAvg };
+    return { qty: total, avg: hasPrice ? price : 0 };
+  }
+
+  return { runFIFO, runAverageCost, mergeLot };
+});
+
+</script>
+<script>
+/* ---- ibkr-import.js ---- */
+/*
+ * LOOP — IBKR Activity Statement (CSV) importer
+ * ------------------------------------------------------------------
+ * Parses the "Trades" section of an IBKR Activity Statement exported as CSV
+ * into LOOP trade records. Pure (no DOM / no storage), shared by:
+ *   - real_pnl_ledger.html  (file drop / paste box)
+ *   - Node (CLI dry-run:  node ibkr-import.js path/to/statement.csv)
+ *
+ * The Activity Statement CSV is multi-section: every line begins with
+ *   <SectionName>,<RowType>,...
+ * We only care about  Trades,Data,Order,Stocks,...  rows.
+ *
+ * NOTE: the Activity Statement Trades section has NO per-execution id.
+ * Dedup key is composite: SYMBOL|ISO-DATETIME|SIGNED-QTY|PRICE. Seconds are
+ * included in Date/Time so real collisions are near-impossible. For a bullet
+ * proof id, configure a Flex Query that includes TradeID / IBExecID instead.
+ */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else Object.assign(root, api);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  // --- minimal RFC-4180 CSV line splitter (handles "quoted, fields" and "") ---
+  function splitCsvLine(line) {
+    const out = [];
+    let cur = '';
+    let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (inQ) {
+        if (c === '"') {
+          if (line[i + 1] === '"') { cur += '"'; i++; }
+          else inQ = false;
+        } else cur += c;
+      } else if (c === '"') inQ = true;
+      else if (c === ',') { out.push(cur); cur = ''; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out;
+  }
+
+  // "2026-08-07, 10:02:04"  ->  { day: "2026-08-07", date: "2026-08-07T10:02:04" }
+  // `date` keeps the intraday time so the engine sorts same-day trades correctly
+  // (matches how the existing SEED_TRADES store intraday round-trips).
+  function normalizeDateTime(raw) {
+    const s = String(raw).trim().replace(/\s+/g, ' ');
+    const m = s.match(/^(\d{4}-\d{2}-\d{2})(?:[ ,]+(\d{2}:\d{2}:\d{2}))?/);
+    if (!m) return { day: s, date: s };
+    return { day: m[1], date: m[2] ? `${m[1]}T${m[2]}` : m[1] };
+  }
+
+  function dedupKey(t) {
+    return [t.sym, t.date, t.side === 'BUY' ? t.qty : -t.qty, t.price].join('|');
+  }
+
+  /*
+   * parseActivityStatementCsv(text) -> {
+   *   trades: [{ id, sym, side, qty, price, comm, date, datetime, reported, code, source }],
+   *   accountId, period, warnings: [string]
+   * }
+   * `id` is derived from the dedup key so re-importing the same statement is a no-op.
+   */
+  function parseActivityStatementCsv(text) {
+    const lines = String(text).split(/\r?\n/);
+    const rows = lines.filter(l => l.length).map(splitCsvLine);
+    const warnings = [];
+
+    const get = (section, rowType, field) => {
+      const r = rows.find(x => x[0] === section && x[1] === rowType && x[2] === field);
+      return r ? r[3] : undefined;
+    };
+    const accountId = get('Account Information', 'Data', 'Account');
+    const period = get('Statement', 'Data', 'Period');
+
+    // column layout from the Trades header row (defensive against IBKR reordering)
+    const header = rows.find(x => x[0] === 'Trades' && x[1] === 'Header');
+    if (!header) {
+      return { trades: [], accountId, period, warnings: ['CSV 里没有找到 Trades 段 — 导出时勾选 "Trades" 分区'] };
+    }
+    const col = name => header.indexOf(name);
+    const iCat = col('Asset Category');
+    const iSym = col('Symbol');
+    const iDT = col('Date/Time');
+    const iQty = col('Quantity');
+    const iPrice = col('T. Price');
+    const iComm = col('Comm/Fee');
+    const iRealized = col('Realized P/L');
+    const iCode = col('Code');
+
+    const trades = [];
+    let skippedNonStock = 0;
+    for (const r of rows) {
+      if (r[0] !== 'Trades' || r[1] !== 'Data' || r[2] !== 'Order') continue;
+      if ((r[iCat] || '').trim() !== 'Stocks') { skippedNonStock++; continue; }
+
+      const qtyRaw = parseFloat(String(r[iQty]).replace(/,/g, ''));
+      const price = parseFloat(String(r[iPrice]).replace(/,/g, ''));
+      if (!isFinite(qtyRaw) || qtyRaw === 0 || !isFinite(price)) {
+        warnings.push(`跳过一行无法解析的成交：${r[iSym]} ${r[iDT]}`);
+        continue;
+      }
+      const { day, date } = normalizeDateTime(r[iDT]);
+      const commRaw = parseFloat(String(r[iComm]).replace(/,/g, ''));
+      const realized = parseFloat(String(r[iRealized]).replace(/,/g, ''));
+      const t = {
+        sym: String(r[iSym]).trim().toUpperCase(),
+        side: qtyRaw < 0 ? 'SELL' : 'BUY',
+        qty: Math.abs(qtyRaw),
+        price,
+        comm: isFinite(commRaw) ? Math.abs(commRaw) : 0,
+        date,
+        day,
+        code: (r[iCode] || '').trim(),
+        source: 'ibkr-csv',
+      };
+      if (isFinite(realized) && realized !== 0) t.reported = realized;
+      t.id = 'ibkr-' + dedupKey(t);
+      trades.push(t);
+    }
+    if (skippedNonStock) warnings.push(`跳过 ${skippedNonStock} 行非股票成交（期权/外汇等，暂不支持）`);
+
+    trades.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    return { trades, accountId, period, warnings };
+  }
+
+  /*
+   * mergeImportedTrades(existing, imported) -> { merged, added, duplicates }
+   * Adds only trades whose id is not already present. Never mutates `existing`.
+   */
+  function mergeImportedTrades(existing, imported) {
+    const have = new Set(existing.map(t => t.id));
+    const added = [];
+    for (const t of imported) {
+      if (have.has(t.id)) continue;
+      have.add(t.id);
+      added.push(t);
+    }
+    return { merged: existing.concat(added), added, duplicates: imported.length - added.length };
+  }
+
+  return { parseActivityStatementCsv, mergeImportedTrades, dedupKey, splitCsvLine };
+});
+
+// --- CLI dry-run -------------------------------------------------------------
+if (typeof require !== 'undefined' && require.main === module) {
+  const fs = require('fs');
+  const path = process.argv[2];
+  if (!path) { console.error('usage: node ibkr-import.js <statement.csv>'); process.exit(1); }
+  const { parseActivityStatementCsv } = module.exports;
+  const { trades, accountId, period, warnings } = parseActivityStatementCsv(fs.readFileSync(path, 'utf8'));
+  console.log(`account ${accountId}   period ${period}`);
+  console.log(`${trades.length} stock trades parsed:\n`);
+  for (const t of trades) {
+    console.log(
+      `  ${t.day}  ${t.side.padEnd(4)} ${String(t.qty).padStart(6)}  ${t.sym.padEnd(6)} @ ${String(t.price).padEnd(14)}` +
+      ` comm ${String(t.comm).padEnd(12)}` + (t.reported != null ? ` reported ${t.reported}` : '') + `  [${t.code}]`
+    );
+  }
+  if (warnings.length) console.log('\nwarnings:\n' + warnings.map(w => '  - ' + w).join('\n'));
+}
+
+</script>
+<script>
+/* ---- news-watch.js ---- */
+/*
+ * LOOP — market-news "watch out" filter
+ * ------------------------------------------------------------------
+ * Pure logic, no DOM / network / storage. Takes the raw article list from
+ * Finnhub's general market news and keeps the few headlines that look like
+ * they could move the whole market (trade / China, Fed & macro data,
+ * geopolitics). Shared by index.html and news-watch.test.js (node --test).
+ *
+ * This is a keyword heuristic, not understanding: it will miss things and
+ * occasionally flag noise. The UI says so and links to the source.
+ */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else Object.assign(root, api);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  // Each entry: [regex, ...]. Word boundaries keep "war" out of "warrant" and
+  // "Fed" (case-sensitive) out of "fed up" / "Federal Express".
+  const TOPICS = {
+    trade: [
+      /\btariffs?\b/i, /\btrade (?:war|talks?|deal|truce|dispute|deadline)\b/i,
+      /\bchina\b/i, /\bchinese\b/i, /\bbeijing\b/i, /\bxi jinping\b/i, /\btaiwan\b/i,
+      /\bexport (?:controls?|curbs?|restrictions?)\b/i, /\brare earths?\b/i, /\bchip (?:ban|curbs?)\b/i,
+    ],
+    fed: [
+      /\bFed\b/, /\bfederal reserve\b/i, /\bpowell\b/i, /\bFOMC\b/,
+      /\brate (?:cuts?|hikes?|decision)\b/i, /\binterest rates?\b/i, /\btreasury yields?\b/i,
+      /\binflation\b/i, /\bCPI\b/, /\bPCE\b/, /\bjobs report\b/i, /\bnonfarm\b/i, /\bpayrolls?\b/i,
+      /\bunemployment\b/i, /\brecession\b/i,
+    ],
+    geo: [
+      /\bsanctions?\b/i, /\bceasefire\b/i, /\binvasion\b/i, /\bmissile\b/i, /\bwar\b/i,
+      /\bsummit\b/i, /\bembargo\b/i, /\bOPEC\b/, /\bgovernment shutdown\b/i, /\bdebt ceiling\b/i,
+    ],
+  };
+
+  function classifyHeadline(text) {
+    const s = String(text || '');
+    const topics = [];
+    let score = 0;
+    for (const [topic, rules] of Object.entries(TOPICS)) {
+      let hits = 0;
+      for (const re of rules) if (re.test(s)) hits++;
+      if (hits) { topics.push({ topic, hits }); score += hits; }
+    }
+    topics.sort((a, b) => b.hits - a.hits);
+    return { score, topics: topics.map(t => t.topic) };
+  }
+
+  const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
+
+  /*
+   * pickWatchItems(articles, { now, maxAgeDays, limit, heldSyms })
+   *   articles: Finnhub /news items { headline, summary, url, source, datetime(unix s), related }
+   *   -> [{ headline, url, source, datetime, topics, score }]  best first
+   * Ranking: keyword score (+1 if it is tagged with a symbol you hold), then newest.
+   */
+  function pickWatchItems(articles, opts) {
+    const o = Object.assign({ now: Date.now(), maxAgeDays: 7, limit: 5, heldSyms: [] }, opts || {});
+    const cutoff = o.now / 1000 - o.maxAgeDays * 86400;
+    const held = new Set((o.heldSyms || []).map(s => String(s).toUpperCase()));
+    const seen = new Set();
+    const out = [];
+    for (const a of Array.isArray(articles) ? articles : []) {
+      if (!a || !a.headline || !(a.datetime >= cutoff)) continue;
+      const key = a.headline.trim().toLowerCase();
+      if (seen.has(key)) continue;
+      const { score, topics } = classifyHeadline(a.headline);
+      if (!score) continue;
+      seen.add(key);
+      const related = String(a.related || '').toUpperCase().split(',').map(x => x.trim()).filter(Boolean);
+      const boost = related.some(r => held.has(r)) ? 1 : 0;
+      out.push({
+        headline: a.headline.trim(), url: safeUrl(a.url), source: a.source || '',
+        datetime: a.datetime, topics, score: score + boost,
+      });
+    }
+    out.sort((x, y) => y.score - x.score || y.datetime - x.datetime);
+    return out.slice(0, o.limit);
+  }
+
+  return { classifyHeadline, pickWatchItems, NEWS_TOPICS: Object.keys(TOPICS) };
+});
+
+</script>
+<script>
+// Storage shim: in the Claude artifact environment window.storage is provided by
+// the host. Running the file locally (double-click), fall back to localStorage
+// with the same async {value} contract. Phase 2 of the migration.
+if (!window.storage) {
+  window.storage = {
+    async get(key) {
+      const v = localStorage.getItem(key);
+      if (v === null) throw new Error('missing key: ' + key);
+      return { value: v };
+    },
+    async set(key, value) { localStorage.setItem(key, String(value)); },
+    async remove(key) { localStorage.removeItem(key); },
+  };
+}
+
+const STORAGE_KEY = 'ledger_trades_v2';
+const POSITIONS_KEY = 'ledger_positions_v1';
+const PRICES_KEY = 'ledger_prices_v1';
+const ALIASES_KEY = 'ledger_aliases_v1';
+const FINNHUB_KEY = 'ledger_finnhub_key_v1';
+const CASH_KEY = 'ledger_cash_v1';
+const FX_KEY = 'ledger_fx_v1';
+const NOTES_KEY = 'ledger_notes_v1';
+const WATCH_KEY = 'ledger_watch_v1';
+const CALENDAR_KEY = 'ledger_calendar_v1';
+const CALSYNC_KEY = 'ledger_calsync_v1';
+const RECON_DISMISS_KEY = 'ledger_recon_dismissed_v1';
+let calSyncAt = 0;
+
+// FOMC rate-decision dates (day 2 of each meeting). Curated — verify against
+// federalreserve.gov each year. Update this list when the Fed publishes ahead.
+const MACRO_FOMC = [
+  '2026-01-28','2026-03-18','2026-04-29','2026-06-17','2026-07-29','2026-09-16','2026-10-28','2026-12-16',
+  '2027-01-27','2027-03-17','2027-04-28','2027-06-16','2027-07-28','2027-09-22','2027-11-03','2027-12-15',
+];
+const MERGED_BATCHES_KEY = 'ledger_merged_batches_v1';
+const LANG_KEY = 'ledger_lang_v1';
+const GOAL_KEY = 'ledger_weekly_goal_v1';
+const REVIEW_KEY = 'ledger_review_v1';
+const AI_ENABLED_KEY = 'ledger_ai_enabled_v1';
+const AI_KEY_KEY = 'ledger_ai_key_v1';
+
+let aiEnabled = false;
+let aiKey = '';
+
+const SEED_TRADES = [].map((t,i)=>({id:'seed-'+i, ...t}));
+
+// Incremental updates: each batch has fixed ids so re-loading never duplicates,
+// and merging only adds what's missing rather than overwriting existing data/edits.
+const TRADE_UPDATE_BATCHES = [];
+
+async function mergeTradeUpdates(){
+  const res = await window.storage.get(MERGED_BATCHES_KEY).catch(()=>null);
+  const done = res ? JSON.parse(res.value) : [];
+  let changed = false;
+  for(const batch of TRADE_UPDATE_BATCHES){
+    if(done.includes(batch.key)) continue;
+    for(const t of batch.trades){
+      if(!trades.find(x=>x.id===t.id)){
+        trades.push(t);
+        changed = true;
+      }
+    }
+    done.push(batch.key);
+  }
+  if(changed){
+    await saveTrades();
+    await window.storage.set(MERGED_BATCHES_KEY, JSON.stringify(done));
+  }
+}
+
+let trades = [];
+let expandedRows = new Set();
+
+let positions = [];   // legacy — kept only to migrate old backups
+// per-symbol manual layer over the auto-derived holdings:
+//   { SYM: { price?, qty?, avg?, deleted? } }   any field omitted = use the ledger value
+let posMeta = {};
+// ticker merges: { OLD_SYM: NEW_SYM } — OLD_SYM's trades are counted as NEW_SYM
+let aliases = {};
+// trade list with ticker merges applied, for every engine call
+function AT(){
+  if(!Object.keys(aliases).length) return trades;
+  return trades.map(t => aliases[t.sym] ? { ...t, sym: aliases[t.sym] } : t);
+}
+let cash = {usd:0, cad:0};
+let fx = 1.38;
+let notes = [];
+let watchlist = [];
+let calendarEvents = {};
+let lang = 'en';
+let weeklyGoal = '';   // user's weekly realized-P&L target, e.g. "2000-3000"
+// demo mode is derived, not stored: true whenever any demo-* trade is present
+function isDemoMode(){ return trades.some(t => String(t.id).indexOf('demo-') === 0); }
+
+const SEED_CALENDAR = {};
+
+const I18N = {
+  zh: {
+    subtitle: 'LIFO 逐批结算 · 持仓 · 自选', tabLedger: '交易盈亏', tabPositions: '持仓', tabWatchlist: '自选', tabReport: '周报',
+    notesTitle: '笔记目录', btnAddNote: '+ 添加笔记', noteTitleLabel: '标题', noteTitlePh: '为什么卖早了',
+    noteTickerLabel: '代码 (可选)', noteDateLabel: '日期', btnAdd: '添加', noteBodyLabel: '内容', noteBodyPh: '写点什么…',
+    weeklyChartTitle: '每周已实现盈亏', monthlyChartTitle: '每月已实现盈亏', reviewTitle: '操作评价', btnGenReview: '生成评价', goalLabel: '每月目标',
+    reviewEmpty: '点"生成评价"，我会看你最近的交易，给点反馈（比如卖早了、加仓时机怎么样之类的）',
+    addTradeTitle: '添加交易', realizedTitle: '已实现盈亏（按批次真实结算 · LIFO）', openLotsTitle: '未平仓批次',
+    posSortTitle: '持仓', btnRefreshPrices: '刷新股价', resetSeed: '清空数据',
+    btnImport: '导入对账单', btnAdd2: '+ 添加', btnExportBackup: '导出备份', btnImportBackup: '导入备份',
+    btnSettings: '设置', btnParsePaste: '解析粘贴内容', btnCancel: '取消',
+    fDate: '日期', fSymbol: '代码', fSide: '方向', fQty: '数量', fPrice: '价格', fBuy: '买入 数量@价格', fSell: '卖出 数量@价格', fComm: '佣金 (可选)', fAdd: '添加',
+    fLotLabel: '选择批次 (可选 — 不选就自动 LIFO 配对)', fLotAuto: '自动配对 (LIFO)',
+    pSymbol: '代码', pQty: '持股数', pAvg: '均价', pCur: '现价',
+    aiEnableLabel: '启用 AI 复盘（默认关闭）', aiKeyLabel: 'Anthropic API Key',
+    aiHint: '开启后，「生成评价」会把你最近的交易摘要直接发给 Anthropic API（用你自己的 key 计费）。<br>Key 以明文存在本机浏览器里——不要在公用电脑上开这个功能。关闭开关后不会发起任何请求。',
+    importDropText: '把 IBKR Activity Statement 的 <b>.csv</b> 文件拖到这里，或点击选择',
+    importHint: 'IBKR → Performance &amp; Reports → Statements → Activity，格式选 <b>CSV</b>。<br>按「代码+成交时间+数量+价格」去重，同一份对账单重复导入不会重复计算。',
+    importPastePh: '或者把 CSV 内容直接粘贴到这里，然后点下面的「解析」',
+    footerHint: '数据只存在这台电脑的浏览器里，不上传任何服务器。带 "(估)" 标记的批次是追踪起点前已持有、成本未知，按卖价估算。',
+    evTitleAdd: '添加事件', evTextLabel: '内容', evCatLabel: '类别', evDelete: '删除', evSave: '保存',
+    legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
+    targetsTitle: '价格目标', btnAddTarget: '+ 添加', btnCalSync: '同步日历', legendEarnings: '财报', legendMacro: '宏观', legendNews: '新闻', evPlanLabel: '计划', evPlanPh: '加息风险 → 提前 1-2 天到 X 价先卖，回落再进', tgSymbol: '代码', tgAction: '方向', tgLevel: '价位', tgNote: '备注 (可选)',
+    tgBuy: '买入', tgSell: '卖出', tgWatch: '关注', tgLevelPh: '150-160 / 175 / 190', tgNotePh: '看图 · ER 前',
+  },
+  en: {
+    subtitle: 'LIFO lot matching · Positions · Watchlist', tabLedger: 'Trades', tabPositions: 'Positions', tabWatchlist: 'Watchlist', tabReport: 'Report',
+    notesTitle: 'Notes Directory', btnAddNote: '+ Add Note', noteTitleLabel: 'Title', noteTitlePh: 'Why I sold too early',
+    noteTickerLabel: 'Ticker (optional)', noteDateLabel: 'Date', btnAdd: 'Add', noteBodyLabel: 'Body', noteBodyPh: 'Write something…',
+    weeklyChartTitle: 'Weekly Realized P&L', monthlyChartTitle: 'Monthly Realized P&L', reviewTitle: 'Trading Review', btnGenReview: 'Generate Review', goalLabel: 'Monthly goal',
+    reviewEmpty: 'Click "Generate Review" — I\'ll look at your recent trades and give feedback (e.g. sold too early, timing on adds, etc.)',
+    addTradeTitle: 'Add Trade', realizedTitle: 'Realized P&L (lot-matched · LIFO)', openLotsTitle: 'Open Lots',
+    posSortTitle: 'Positions', btnRefreshPrices: 'Refresh prices', resetSeed: 'Clear all data',
+    btnImport: 'Import statement', btnAdd2: '+ Add', btnExportBackup: 'Export backup', btnImportBackup: 'Import backup',
+    btnSettings: 'Settings', btnParsePaste: 'Parse pasted text', btnCancel: 'Cancel',
+    fDate: 'Date', fSymbol: 'Symbol', fSide: 'Side', fQty: 'Qty', fPrice: 'Price', fBuy: 'Buy qty@price', fSell: 'Sell qty@price', fComm: 'Commission (opt.)', fAdd: 'Add',
+    fLotLabel: 'Pick a lot (optional — leave blank for auto LIFO)', fLotAuto: 'Auto match (LIFO)',
+    pSymbol: 'Symbol', pQty: 'Shares', pAvg: 'Avg cost', pCur: 'Last price',
+    aiEnableLabel: 'Enable AI review (off by default)', aiKeyLabel: 'Anthropic API Key',
+    aiHint: 'When on, "Generate Review" sends a summary of your recent trades straight to the Anthropic API (billed to your own key).<br>The key is stored in plain text in this browser — do not enable this on a shared computer. Nothing is sent while the switch is off.',
+    importDropText: 'Drop your IBKR Activity Statement <b>.csv</b> here, or click to choose',
+    importHint: 'IBKR → Performance &amp; Reports → Statements → Activity, format <b>CSV</b>.<br>Deduped by symbol + time + qty + price, so re-importing an overlapping statement is safe.',
+    importPastePh: 'Or paste the CSV text here, then click Parse below',
+    footerHint: 'Data lives only in this browser on this computer, never uploaded. Lots marked "(est)" were held before the tracking window; cost unknown, estimated at the sell price.',
+    evTitleAdd: 'Add event', evTextLabel: 'Text', evCatLabel: 'Category', evDelete: 'Delete', evSave: 'Save',
+    legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
+    targetsTitle: 'Price Targets', btnAddTarget: '+ Add', btnCalSync: 'Sync calendar', legendEarnings: 'Earnings', legendMacro: 'Macro', legendNews: 'News', evPlanLabel: 'Plan', evPlanPh: 'rate-hike risk → sell ~1-2d out at X, buy back lower', tgSymbol: 'Symbol', tgAction: 'Side', tgLevel: 'Level', tgNote: 'Note (optional)',
+    tgBuy: 'Buy', tgSell: 'Sell', tgWatch: 'Watch', tgLevelPh: '150-160 / 175 / 190', tgNotePh: 'chart · pre-ER',
+  }
+};
+function t(key){ return (I18N[lang] && I18N[lang][key]) || key; }
+// inline bilingual string
+function L(zh, en){ return lang==='zh' ? zh : en; }
+
+function applyStaticI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    el.innerHTML = t(el.getAttribute('data-i18n-html'));
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph')));
+  });
+  document.getElementById('langToggle').textContent = lang==='zh' ? 'EN' : '中';
+  document.documentElement.lang = lang;
+  renderWelcome();
+}
+
+async function toggleLang(){
+  lang = lang==='zh' ? 'en' : 'zh';
+  try{ await window.storage.set(LANG_KEY, lang); }catch(e){}
+  applyStaticI18n();
+  render();
+  renderPositions();
+  renderTargets();
+  renderCalendar();
+  renderReport();
+  updateReviewButton();
+  refreshCalSyncNote();
+  renderNewsWatch();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+async function loadAll(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY);
+    trades = JSON.parse(res.value);
+  }catch(e){
+    trades = SEED_TRADES;
+    await saveTrades();
+  }
+  await mergeTradeUpdates();
+  try{ positions = JSON.parse((await window.storage.get(POSITIONS_KEY)).value); }catch(e){ positions = []; }
+  try{ posMeta = JSON.parse((await window.storage.get(PRICES_KEY)).value) || {}; }catch(e){ posMeta = {}; }
+  try{ aliases = JSON.parse((await window.storage.get(ALIASES_KEY)).value) || {}; }catch(e){ aliases = {}; }
+  try{ finnhubKey = (await window.storage.get(FINNHUB_KEY)).value || ''; }catch(e){ finnhubKey = ''; }
+  // migrate old { SYM: number } price map -> { SYM: {price} }
+  for(const k of Object.keys(posMeta)){ if(typeof posMeta[k] === 'number') posMeta[k] = { price: posMeta[k] }; }
+  // migrate: an old backup keeps current prices inside `positions`
+  if(Object.keys(posMeta).length === 0 && positions.length){
+    for(const p of positions){ if(p.sym && p.currentPrice) posMeta[p.sym] = { price: p.currentPrice }; }
+    if(Object.keys(posMeta).length) await savePosMeta();
+  }
+  try{
+    const res = await window.storage.get(CASH_KEY);
+    cash = JSON.parse(res.value);
+  }catch(e){
+    cash = {usd:0, cad:0};
+    await saveCash();
+  }
+  try{
+    const res = await window.storage.get(FX_KEY);
+    fx = parseFloat(res.value);
+  }catch(e){
+    fx = 1.38;
+    await saveFx();
+  }
+  try{
+    const res = await window.storage.get(NOTES_KEY);
+    notes = JSON.parse(res.value);
+  }catch(e){ notes = []; }
+  try{
+    const res = await window.storage.get(WATCH_KEY);
+    watchlist = JSON.parse(res.value);
+  }catch(e){ watchlist = []; }
+  try{
+    const res = await window.storage.get(CALENDAR_KEY);
+    calendarEvents = JSON.parse(res.value);
+  }catch(e){
+    calendarEvents = JSON.parse(JSON.stringify(SEED_CALENDAR));
+    Object.values(calendarEvents).forEach(list=>list.forEach((ev,i)=>ev.id='seedev'+Math.random().toString(36).slice(2)));
+    await saveCalendar();
+  }
+  try{ calSyncAt = parseInt((await window.storage.get(CALSYNC_KEY)).value) || 0; }catch(e){ calSyncAt = 0; }
+  try{ reconDismissed = JSON.parse((await window.storage.get(RECON_DISMISS_KEY)).value) || []; }catch(e){ reconDismissed = []; }
+  try{
+    const res = await window.storage.get(LANG_KEY);
+    lang = res.value === 'zh' ? 'zh' : 'en';
+  }catch(e){ lang = 'en'; }
+  try{ weeklyGoal = (await window.storage.get(GOAL_KEY)).value || ''; }catch(e){ weeklyGoal = ''; }
+  applyStaticI18n();
+  render();
+  renderPositions();
+  renderTargets();
+  renderCalendar();
+  renderReport();
+  loadSavedReview();
+  loadAiSettings();
+  refreshCalSyncNote();
+  // weekly auto-sync of the calendar if a Finnhub key is set
+  if(finnhubKey && Date.now() - calSyncAt > 7*24*3600*1000){ syncCalendar(); }
+  try{ newsCache = JSON.parse((await window.storage.get(NEWS_KEY)).value) || newsCache; }catch(e){}
+  refreshNews(false);
+}
+
+function refreshCalSyncNote(){
+  const el = document.getElementById('calSyncNote');
+  if(!el) return;
+  const row = el.closest('.cal-sync');
+  if(calSyncAt){
+    el.textContent = '';
+    if(row) row.style.display = 'none';
+    return;
+  }
+  if(row) row.style.display = '';
+  el.textContent = L('未同步 · 需要免费 Finnhub key（「持仓」页「刷新股价」旁），点后自动拉财报日和宏观事件。也可以点某天的 + 手动加。',
+        'Not synced · needs a free Finnhub key (Positions tab, by "Refresh prices"), then it pulls earnings dates and macro events. Or click a day\'s + to add your own.');
+}
+
+async function saveTrades(){ try{ await window.storage.set(STORAGE_KEY, JSON.stringify(trades)); }catch(e){} }
+async function savePosMeta(){ try{ await window.storage.set(PRICES_KEY, JSON.stringify(posMeta)); }catch(e){} }
+async function saveAliases(){ try{ await window.storage.set(ALIASES_KEY, JSON.stringify(aliases)); }catch(e){} }
+async function saveCash(){ try{ await window.storage.set(CASH_KEY, JSON.stringify(cash)); }catch(e){} }
+async function saveFx(){ try{ await window.storage.set(FX_KEY, String(fx)); }catch(e){} }
+async function saveNotes(){ try{ await window.storage.set(NOTES_KEY, JSON.stringify(notes)); }catch(e){} }
+async function saveWatch(){ try{ await window.storage.set(WATCH_KEY, JSON.stringify(watchlist)); }catch(e){} }
+async function saveCalendar(){ try{ await window.storage.set(CALENDAR_KEY, JSON.stringify(calendarEvents)); }catch(e){} }
+
+// ---------- Calendar sync: earnings dates + core macro prints (layer A) ----------
+function firstFriday(y, m){ // m: 0-11
+  const d = new Date(y, m, 1);
+  d.setDate(1 + ((5 - d.getDay() + 7) % 7));
+  return d;
+}
+function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+// macro events for the next `months` months, all tagged auto-macro
+function macroEventsForRange(months=6){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const horizon = new Date(today); horizon.setMonth(horizon.getMonth()+months);
+  const out = [];
+  const push = (dateStr, text) => { const d = new Date(dateStr); if(d>=today && d<=horizon) out.push({date:dateStr, text}); };
+  for(const f of MACRO_FOMC) push(f, 'FOMC decision');
+  for(let i=0;i<=months;i++){
+    const dt = new Date(today.getFullYear(), today.getMonth()+i, 1);
+    const y = dt.getFullYear(), m = dt.getMonth();
+    push(iso(firstFriday(y, m)), 'Nonfarm payrolls');
+    push(`${y}-${String(m+1).padStart(2,'0')}-12`, '≈ CPI');
+    push(`${y}-${String(m+1).padStart(2,'0')}-13`, '≈ PPI');
+  }
+  return out;
+}
+
+// ---------- Market-news "watch out" panel (Finnhub general news, keyword-filtered) ----------
+const NEWS_KEY = 'ledger_news_v1';         // cache only, not part of backups
+const NEWS_TTL_MS = 30 * 60 * 1000;
+let newsCache = { at: 0, items: [] };
+
+const escHtml = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function agoStr(unixSec){
+  const m = Math.max(0, Math.round((Date.now()/1000 - unixSec) / 60));
+  if(m < 60) return L(`${m} 分钟前`, `${m}m ago`);
+  const h = Math.round(m / 60);
+  if(h < 48) return L(`${h} 小时前`, `${h}h ago`);
+  return L(`${Math.round(h/24)} 天前`, `${Math.round(h/24)}d ago`);
+}
+
+async function refreshNews(force){
+  if(!/\S/.test(finnhubKey)){ renderNewsWatch(); return; }
+  if(!force && newsCache.at && Date.now() - newsCache.at < NEWS_TTL_MS){ renderNewsWatch(); return; }
+  try{
+    const r = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${encodeURIComponent(finnhubKey)}`);
+    if(!r.ok) throw new Error('news ' + r.status);
+    const arr = await r.json();
+    newsCache = { at: Date.now(), items: pickWatchItems(arr, { limit: 12, heldSyms: derivedHoldings().map(h => h.sym) }) };
+    try{ await window.storage.set(NEWS_KEY, JSON.stringify(newsCache)); }catch(e){}
+  }catch(e){ /* offline / rate-limited: keep whatever we cached */ }
+  renderNewsWatch();
+}
+
+// news shows up inside the calendar: one purple chip on the day it was published,
+// max 2 per day, click opens the article. Not stored in calendarEvents.
+function newsByDay(){
+  if(!/\S/.test(finnhubKey)) return {};
+  const out = {};
+  newsCache.items.forEach((it, idx) => {
+    const k = dateKey(new Date(it.datetime * 1000));
+    const list = out[k] || (out[k] = []);
+    if(list.length < 2) list.push({ it, idx });
+  });
+  return out;
+}
+function openNews(idx){
+  const it = newsCache.items[idx];
+  if(it && it.url) window.open(it.url, '_blank', 'noopener,noreferrer');
+}
+function renderNewsWatch(){ renderCalendar(); }   // kept name: callers just need the calendar redrawn
+
+async function syncCalendar(){
+  const btn = document.getElementById('calSyncBtn');
+  if(!/\S/.test(finnhubKey)){
+    const k = (prompt(L('输入你的 Finnhub API key（用于抓财报日）：','Enter your Finnhub API key (for earnings dates):'),'')||'').trim();
+    if(!k) return;
+    finnhubKey = k;
+    try{ await window.storage.set(FINNHUB_KEY, k); }catch(e){}
+  }
+  btn.disabled = true; btn.textContent = L('同步中…','Syncing…');
+
+  // which tickers: held + watchlist + traded in the last 120 days
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-120);
+  const syms = [...new Set([
+    ...derivedHoldings().map(h=>h.sym),
+    ...watchlist.map(w=>w.sym).filter(Boolean),
+    ...trades.filter(t=> new Date(t.date) >= cutoff).map(t=> aliases[t.sym]||t.sym),
+  ])].filter(Boolean);
+
+  const from = iso(new Date());
+  const toD = new Date(); toD.setDate(toD.getDate()+180);
+  const to = iso(toD);
+  const fresh = {};  // date -> [{text, category, source, id}]
+  const add = (date, text, category, source) => {
+    if(!date) return;
+    (fresh[date] || (fresh[date]=[])).push({ id:`${source}-${text}-${date}`.replace(/[^\w-]/g,''), text, category, source });
+  };
+
+  const failed = [];
+  for(const sym of syms){
+    try{
+      const r = await fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${from}&to=${to}&symbol=${encodeURIComponent(sym)}&token=${encodeURIComponent(finnhubKey)}`);
+      if(!r.ok){ failed.push(sym); continue; }
+      const d = await r.json();
+      for(const e of (d.earningsCalendar||[])){
+        const hr = e.hour === 'bmo' ? ' · pre' : e.hour === 'amc' ? ' · post' : '';
+        add(e.date, `${sym} earnings${hr}`, 'earnings', 'auto-er');
+      }
+    }catch(e){ failed.push(sym); }
+  }
+  for(const m of macroEventsForRange(6)) add(m.date, m.text, 'macro', 'auto-macro');
+
+  // replace only auto-* events; keep everything the user added
+  for(const key of Object.keys(calendarEvents)){
+    calendarEvents[key] = (calendarEvents[key]||[]).filter(ev => !(ev.source||'').startsWith('auto'));
+    if(!calendarEvents[key].length) delete calendarEvents[key];
+  }
+  for(const key of Object.keys(fresh)){
+    const existing = new Set((calendarEvents[key]||[]).map(e=>e.text));
+    const toAdd = fresh[key].filter(e=> !existing.has(e.text)); // don't duplicate an event you already took ownership of
+    if(toAdd.length) calendarEvents[key] = (calendarEvents[key]||[]).concat(toAdd);
+  }
+  await saveCalendar();
+  calSyncAt = Date.now();
+  try{ await window.storage.set(CALSYNC_KEY, String(calSyncAt)); }catch(e){}
+
+  btn.disabled = false; btn.textContent = t('btnCalSync');
+  refreshNews(true);
+  const n = Object.values(fresh).reduce((s,l)=>s+l.length,0);
+  document.getElementById('calSyncNote').textContent =
+    L(`已同步 ${n} 项 · ${new Date().toTimeString().slice(0,5)}`, `${n} events · ${new Date().toTimeString().slice(0,5)}`)
+    + (failed.length ? L(`（${failed.join(' ')} 无数据）`, ` (no data: ${failed.join(' ')})`) : '');
+  renderCalendar();
+}
+
+function resetToSeed(){
+  if(!confirm(L('清空全部交易记录？此操作不可撤销，建议先「导出备份」。','Clear all trades? This cannot be undone — export a backup first.'))) return;
+  trades = [];
+  saveTrades();
+  render();
+}
+
+// ---------- Onboarding: welcome / help panel + demo data ----------
+function openWelcome(){ renderWelcome(); document.getElementById('welcomeModal').classList.add('show'); }
+function closeWelcome(){ document.getElementById('welcomeModal').classList.remove('show'); }
+
+function renderWelcome(){
+  const el = document.getElementById('welcomeBody');
+  if(!el) return;
+  const demoBtn = trades.length
+    ? ''
+    : `<div class="w-actions"><button class="btn-ghost btn-small" onclick="loadDemoData()" style="margin-right:8px;">${L('加载示例数据','Load demo data')}</button>${L('填一份假交易看看填满的样子，随时一键清空。','Fake trades so you can see it populated — clear any time.')}</div>`;
+  const ic = p => `<svg class="i" viewBox="0 0 24 24">${p}</svg>`;
+  const item = (icon, h, zh, en) => `<div class="w-item"><div class="w-h">${ic(icon)}${h}</div><p>${L(zh, en)}</p></div>`;
+  const I = {
+    loop:'<path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+    down:'<path d="M12 3v13"/><path d="M7 12l5 5 5-5"/><path d="M5 21h14"/>',
+    pie:'<path d="M21.2 15.9A10 10 0 1 1 8.1 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>',
+    bars:'<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>',
+    target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/>',
+    cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/>',
+    star:'<path d="M12 3l1.7 4.8L18.5 9.5l-4.8 1.7L12 16l-1.7-4.8L5.5 9.5l4.8-1.7z"/><path d="M18 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',
+    lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  };
+  el.innerHTML = `
+    <div class="modal-title">${L('LOOP 怎么用','How LOOP works')}</div>
+    <div class="w-grid">
+      ${item(I.down, L('录入交易','Getting trades in'),
+             '<b>导入对账单</b>读 IBKR Activity Statement 的 CSV（Performance &amp; Reports → Statements）。或<b>+ 添加</b>手动录。',
+             '<b>Import statement</b> reads an IBKR Activity Statement CSV (Performance &amp; Reports → Statements). Or <b>+ Add</b> by hand.')}
+      ${item(I.pie, L('持仓','Positions'),
+             '从交易记录<b>自动算出</b>，不用单独维护。历史不全会有提示和「(估)」标记——补一笔买入或在行内改。',
+             'Derived <b>from your trades</b>, not entered. Gaps in history show a warning and <b>(est)</b> marks — add the missing buy or edit the row.')}
+      ${item(I.bars, L('周报（每周 / 每月盈亏）','Report (weekly & monthly P&L)'),
+             '把已实现盈亏按周、按月摊开。设一个<b>每月目标</b>，看当月进度。',
+             'Realized P&L laid out by week and by month. Set a <b>monthly goal</b> to track progress through the month.')}
+      ${item(I.cal, L('日历 + 同步','Calendar + sync'),
+             '日历里标事件、写<b>计划</b>。加个免费 Finnhub key：自动拉<b>财报日</b> + 宏观，并标出可能影响大盘的<b>新闻</b>。',
+             'Tag events with a <b>plan</b> note. A free Finnhub key pulls <b>earnings dates</b> + macro, and flags market-moving <b>news</b>.')}
+      ${item(I.star, L('AI 复盘（默认关闭）','AI review (off by default)'),
+             '「周报」页。填你自己的 <b>Anthropic key</b>（设置里）换一段近期交易的反馈。明文存本机——<b>别在公用电脑开</b>。',
+             'Report tab. Your own <b>Anthropic key</b> (in Settings) gets feedback on recent trades. Stored in plaintext — <b>not shared computers</b>.')}
+      ${item(I.lock, L('你的数据','Your data'),
+             '只存在这个浏览器，不上传。<b>导出备份</b>的那份 JSON 是唯一的备份——清缓存就没了。',
+             'Lives in this browser only, never uploaded. <b>Export backup</b> is your one copy — clearing site data wipes it.')}
+    </div>
+    ${demoBtn}
+  `;
+}
+
+const DEMO_TRADES = [
+  {sym:'NVDA', side:'BUY',  qty:20, price:170.00, comm:0, date:'2026-06-12'},
+  {sym:'NVDA', side:'BUY',  qty:10, price:180.00, comm:0, date:'2026-06-20'},
+  {sym:'NVDA', side:'SELL', qty:15, price:195.00, comm:0, date:'2026-07-15', reported:325.00},
+  {sym:'NVDA', side:'BUY',  qty:15, price:178.00, comm:0, date:'2026-08-22'},
+  {sym:'AAPL', side:'BUY',  qty:30, price:210.00, comm:0, date:'2026-06-25'},
+  {sym:'AAPL', side:'SELL', qty:30, price:198.00, comm:0, date:'2026-08-04', reported:-360.00},
+  {sym:'MSFT', side:'BUY',  qty:15, price:430.00, comm:0, date:'2026-07-01'},
+  {sym:'MSFT', side:'SELL', qty:10, price:465.00, comm:0, date:'2026-08-19', reported:350.00},
+  {sym:'AMD',  side:'SELL', qty:25, price:165.00, comm:0, date:'2026-07-10'},
+  {sym:'AMD',  side:'BUY',  qty:25, price:152.00, comm:0, date:'2026-08-12', reported:325.00},
+  {sym:'META', side:'BUY',  qty:12, price:690.00, comm:0, date:'2026-07-28'},
+  {sym:'SMCI', side:'BUY',  qty:40, price:45.00,  comm:0, date:'2026-08-01'},
+  {sym:'SMCI', side:'SELL', qty:40, price:51.20,  comm:0, date:'2026-09-02', reported:248.00},
+];
+const DEMO_PRICES  = { NVDA:{price:188.50}, MSFT:{price:452.00}, META:{price:721.00} };
+const DEMO_WATCH   = [
+  {id:'demo-tg-1', sym:'NVDA', action:'SELL',  level:'200-210', note:'trim into strength'},
+  {id:'demo-tg-2', sym:'META', action:'BUY',   level:'650-670', note:'add on pullback'},
+  {id:'demo-tg-3', sym:'AMD',  action:'WATCH', level:'150',     note:'reclaim = re-enter'},
+];
+const DEMO_CALENDAR = {
+  '2026-09-17': [{id:'demo-ev-1', text:'FOMC rate decision', category:'macro', source:'auto-demo', plan:'no new adds day-of; let it settle'}],
+  '2026-09-25': [{id:'demo-ev-2', text:'NVDA earnings', category:'earnings', source:'auto-demo', plan:'decide before, not after — trim to core if run-up is big'}],
+};
+
+async function loadDemoData(){
+  if(trades.length && !confirm(L('这会用示例数据替换当前屏幕上的内容。继续？','This replaces what\'s on screen with sample data. Continue?'))) return;
+  trades = DEMO_TRADES.map((t,i)=>({ id:'demo-'+i, ...t }));
+  posMeta = JSON.parse(JSON.stringify(DEMO_PRICES));
+  watchlist = JSON.parse(JSON.stringify(DEMO_WATCH));
+  calendarEvents = JSON.parse(JSON.stringify(DEMO_CALENDAR));
+  cash = { usd:5000, cad:0 };
+  calSyncAt = Date.now();
+  await Promise.all([ saveTrades(), savePosMeta(), saveWatch(), saveCalendar(), saveCash(),
+    window.storage.set(CALSYNC_KEY, String(calSyncAt)).catch(()=>{}) ]);
+  closeWelcome();
+  switchTab('ledger');
+  render(); renderPositions(); renderTargets(); renderCalendar(); renderReport(); refreshCalSyncNote();
+}
+
+async function exitDemo(){
+  if(!confirm(L('清空示例数据，从空白开始？（如果你已经在上面加了自己的交易，也会一起清掉——先「导出备份」。）',
+               'Clear the demo data and start blank? (Anything you added on top goes too — export a backup first.)'))) return;
+  for(const k of [STORAGE_KEY, PRICES_KEY, POSITIONS_KEY, WATCH_KEY, CALENDAR_KEY, CASH_KEY, CALSYNC_KEY, RECON_DISMISS_KEY]){
+    try{ if(window.storage.remove) await window.storage.remove(k); else await window.storage.set(k, ''); }catch(e){}
+  }
+  location.reload();
+}
+
+// ---------- Backup: export / import all local data as one JSON file ----------
+const BACKUP_KEYS = [STORAGE_KEY, POSITIONS_KEY, PRICES_KEY, ALIASES_KEY, CASH_KEY, FX_KEY, NOTES_KEY, WATCH_KEY, CALENDAR_KEY, CALSYNC_KEY, RECON_DISMISS_KEY, MERGED_BATCHES_KEY, LANG_KEY, REVIEW_KEY, GOAL_KEY];
+
+async function exportBackup(){
+  const data = {};
+  for(const k of BACKUP_KEYS){
+    try{ const res = await window.storage.get(k); data[k] = res.value; }catch(e){ /* key not set yet */ }
+  }
+  const payload = { app:'loop-ledger', version:1, exportedAt:new Date().toISOString(), data };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'loop-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
+}
+
+async function importBackup(file){
+  let payload;
+  try{ payload = JSON.parse(await file.text()); }
+  catch(e){ alert(L('这个文件不是有效的 JSON','Not a valid JSON file')); return; }
+  if(!payload || payload.app !== 'loop-ledger' || typeof payload.data !== 'object'){
+    alert(L('这不像 LOOP 的备份文件（缺少标识字段）。','This does not look like a LOOP backup (missing marker fields).')); return;
+  }
+  const keys = Object.keys(payload.data).filter(k => BACKUP_KEYS.includes(k));
+  if(keys.length === 0){ alert(L('备份里没有可识别的数据。','No recognisable data in this backup.')); return; }
+  if(!confirm(L(`这会用备份覆盖当前全部本地数据（${keys.length} 项），当前数据将丢失。\n建议先「导出备份」留一份。确定继续吗？`,`This overwrites all local data (${keys.length} keys) with the backup; current data will be lost.\nExport a backup first. Continue?`))) return;
+  for(const k of keys){
+    try{ await window.storage.set(k, payload.data[k]); }catch(e){}
+  }
+  alert(L('已恢复，页面将重新加载。','Restored — the page will reload.'));
+  location.reload();
+}
+
+// ---------- Positions (derived from the trade ledger) ----------
+const SEED_POSITIONS = [];
+
+// current holdings straight from the LIFO open-lot queue
+function derivedHoldings(){
+  const {openLots} = runFIFO(AT(), 'LIFO');
+  const out = [];
+  for(const sym of Object.keys(openLots)){
+    const lots = openLots[sym].filter(l => Math.abs(l.qty) > 0.0000001);
+    const qty = lots.reduce((s,l)=> s + l.qty, 0);
+    if(Math.abs(qty) < 0.0000001) continue;
+    const costBasis = lots.reduce((s,l)=> s + l.qty*l.unitCost, 0);
+    out.push({ sym, qty, costBasis, avgCost: costBasis/qty, lots });
+  }
+  return out;
+}
+
+// write one field of the manual layer; empty / matching-the-ledger value clears it
+function setPosMeta(sym, field, value){
+  const m = posMeta[sym] || (posMeta[sym] = {});
+  const v = parseFloat(value);
+  if(value === '' || !isFinite(v)) delete m[field];
+  else m[field] = v;
+  if(field === 'qty' || field === 'avg') delete m.log;
+  if(Object.keys(m).length === 0) delete posMeta[sym];
+  savePosMeta();
+  renderPositions();
+}
+function deletePos(sym){
+  if(!confirm(L(`删除持仓 ${sym}？此仓将不再显示（可用「+ 添加」手动加回）。`,
+               `Delete holding ${sym}? It will no longer appear (re-add it manually with "+ Add").`))) return;
+  posMeta[sym] = { deleted: true };
+  savePosMeta();
+  renderPositions();
+}
+function resetPosAuto(sym){
+  if(posMeta[sym]){ const price = posMeta[sym].price; posMeta[sym] = price!=null ? {price} : undefined;
+    if(!posMeta[sym]) delete posMeta[sym]; savePosMeta(); renderPositions(); }
+}
+function mergeTicker(sym){
+  const to = (prompt(L(`把 ${sym} 合并到哪个代码？（例如 SKHY 的成交实际属于 SKHYV）`,
+                       `Merge ${sym} into which symbol?`), '')||'').trim().toUpperCase();
+  if(!to || to === sym) return;
+  aliases[sym] = to;
+  delete posMeta[sym];          // any overrides on the old symbol no longer apply
+  saveAliases(); savePosMeta();
+  expandedPos.delete(sym);
+  render();                      // ledger + positions + report all recompute
+}
+function unmergeTicker(sym){ delete aliases[sym]; saveAliases(); render(); }
+
+function openAddPosition(){
+  const f = document.getElementById('addPosForm');
+  f.style.display = f.style.display==='none' ? 'block' : 'none';
+  if(f.style.display==='block'){ const n=document.getElementById('p-note'); if(n) n.textContent=''; document.getElementById('p-symbol').focus(); }
+}
+function addPosition(){
+  const s = document.getElementById('p-symbol').value.trim().toUpperCase();
+  const q = parseFloat(document.getElementById('p-qty').value);
+  const a = parseFloat(document.getElementById('p-avg').value);
+  const c = parseFloat(document.getElementById('p-cur').value);
+  const note = document.getElementById('p-note');
+  if(!s || !isFinite(q) || q===0){ alert(L('代码和持股数要填','Symbol and shares are required')); return; }
+
+  // entering a symbol you already hold folds the new lot into it (weighted-average cost)
+  // instead of overwriting: start from what the table currently shows for that symbol
+  const m = posMeta[s] || {};
+  const derived = m.deleted ? null : derivedHoldings().find(h => h.sym === s);
+  const oldQty = m.deleted ? 0 : (m.qty != null ? m.qty : (derived ? derived.qty : 0));
+  const oldAvg = m.deleted ? 0 : (m.avg != null ? m.avg : (derived ? derived.avgCost : 0));
+  const merged = mergeLot(oldQty, oldAvg, q, a);
+
+  const keep = { ...m }; delete keep.deleted;
+  // remember what was typed so the expanded row can list these lots (they sum to the position);
+  // the first manual add on top of an existing position records that starting point as a base line
+  let log = m.deleted ? [] : (Array.isArray(m.log) ? m.log.slice() : (oldQty ? [{ qty: oldQty, avg: oldAvg, base: true }] : []));
+  log.push({ qty: q, avg: isFinite(a) ? a : null, date: dateKey(new Date()) });
+  if(merged.qty === 0) posMeta[s] = { deleted: true };
+  else posMeta[s] = { ...keep, qty: merged.qty, avg: merged.avg, log };
+  if(isFinite(c) && merged.qty !== 0) posMeta[s].price = c;
+  savePosMeta();
+
+  if(note){
+    note.textContent = merged.qty === 0
+      ? L(`${s} 已平仓，从持仓里移除`, `${s} closed out — removed from positions`)
+      : oldQty
+        ? L(`${s}：${fmt(oldQty,0)} + ${fmt(q,0)} → ${fmt(merged.qty,0)} 股，均价 ${fmt(merged.avg)}`,
+            `${s}: ${fmt(oldQty,0)} + ${fmt(q,0)} → ${fmt(merged.qty,0)} sh @ avg ${fmt(merged.avg)}`)
+        : L(`${s}：${fmt(merged.qty,0)} 股，均价 ${fmt(merged.avg)}`, `${s}: ${fmt(merged.qty,0)} sh @ ${fmt(merged.avg)}`);
+  }
+  // keep the form open with the symbol filled, ready for the next lot
+  document.getElementById('p-qty').value = '';
+  document.getElementById('p-avg').value = '';
+  document.getElementById('p-cur').value = '';
+  document.getElementById('p-qty').focus();
+  renderPositions();
+}
+
+function updateCash(field, value){
+  cash[field] = parseFloat(value) || 0;
+  saveCash();
+  renderPositions();
+}
+
+function updateFx(value){
+  fx = parseFloat(value) || 1;
+  saveFx();
+  renderPositions();
+}
+
+let expandedPos = new Set();
+function togglePos(id){
+  if(expandedPos.has(id)) expandedPos.delete(id); else expandedPos.add(id);
+  renderPositions();
+}
+const CASH_COLOR = '#9AA0A6';
+
+// SVG donut: slices = [{label,color,value}], returns markup for a 42x42 viewBox chart
+function donutSvg(slices, total){
+  let acc = 25; // start at 12 o'clock
+  const rings = slices.filter(s=>s.value>0).map(s=>{
+    const pct = total>0 ? s.value/total*100 : 0;
+    const dash = `${pct.toFixed(3)} ${(100-pct).toFixed(3)}`;
+    const off = acc.toFixed(3);
+    acc = (acc - pct + 100) % 100;
+    return `<circle class="donut-seg" r="15.915" cx="21" cy="21" fill="none" stroke="${s.color}" stroke-width="5" stroke-dasharray="${dash}" stroke-dashoffset="${off}"></circle>`;
+  }).join('');
+  return `<svg viewBox="0 0 42 42">
+    <circle r="15.915" cx="21" cy="21" fill="none" stroke="var(--panel-2)" stroke-width="5"></circle>
+    ${rings}
+  </svg>`;
+}
+
+function renderPositions(){
+  const cashUSDEq = cash.usd + (cash.cad||0)/fx;
+  // merge auto-derived holdings with the manual layer
+  const bySym = {};
+  for(const h of derivedHoldings()) bySym[h.sym] = h;
+  for(const sym of Object.keys(posMeta)){
+    if(posMeta[sym].qty != null && !posMeta[sym].deleted && !bySym[sym]) bySym[sym] = { sym, qty:0, costBasis:0, avgCost:0, lots:[] };
+  }
+  let holdings = Object.values(bySym).map(h=>{
+    const m = posMeta[h.sym] || {};
+    const qty = (m.qty != null) ? m.qty : h.qty;
+    const avg = (m.avg != null) ? m.avg : h.avgCost;
+    const costBasis = qty * avg;
+    const priced = m.price != null;
+    const last = priced ? m.price : avg;
+    return {
+      ...h, qty, avgCost: avg, costBasis, last, priced, deleted: !!m.deleted,
+      mv: qty*last, pnl: qty*last - costBasis,
+      ovQty: m.qty!=null, ovAvg: m.avg!=null, manual: !h.lots.length && m.qty!=null, log: Array.isArray(m.log) ? m.log : null,
+    };
+  }).filter(h=> !h.deleted);
+  holdings.sort((a,b)=> b.mv - a.mv);
+  const totalPositionsUSD = holdings.reduce((s,h)=> s + h.mv, 0);
+  const totalPortfolioUSD = totalPositionsUSD + cashUSDEq;
+
+  const list = document.getElementById('positionsList');
+  const ce = 'onclick="event.stopPropagation()"';
+  const num = (val, oc, ov) => `<input type="number" step="any" class="cell-num ${ov?'overridden':''}" value="${val}" ${ce} onchange="${oc}">`;
+
+  let listHtml = `<div class="pl-row head">
+    <span></span>
+    <div>${L('代码','Symbol')}</div>
+    <div class="pl-num">${L('持股','Qty')}</div>
+    <div class="pl-num">${L('均价','Avg')}</div>
+    <div class="pl-num">${L('现价','Last')}</div>
+    <div class="pl-num">${L('市值','Value')}</div>
+    <div class="pl-num">${L('浮盈亏','Unrl.')}</div>
+    <span></span>
+  </div>`;
+  for(const h of holdings){
+    const pct = totalPortfolioUSD>0 ? (h.mv/totalPortfolioUSD*100) : 0;
+    const open = expandedPos.has(h.sym);
+    const short = h.qty < 0;
+    const overridden = h.ovQty || h.ovAvg;
+    const merged = Object.keys(aliases).filter(k=> aliases[k]===h.sym);
+    listHtml += `
+      <div class="pl-row ${open?'open':''}" onclick="togglePos('${h.sym}')">
+        <span class="swatch" style="background:${tkColor(h.sym)}"></span>
+        <div class="pl-tk"><b>${h.sym}</b>${short?`<span class="tag short">${L('空','short')}</span>`:''}</div>
+        <div class="pl-num">${num(pxv(h.qty), `setPosMeta('${h.sym}','qty',this.value)`, h.ovQty)}</div>
+        <div class="pl-num">${num(pxv2(h.avgCost), `setPosMeta('${h.sym}','avg',this.value)`, h.ovAvg)}</div>
+        <div class="pl-num">${num(pxv2(h.last), `setPosMeta('${h.sym}','price',this.value)`, false)}</div>
+        <div class="pl-val">$${fmt(h.mv,0)}</div>
+        <div class="pl-pnl ${h.priced ? (h.pnl>=0?'gain':'loss') : ''}">${h.priced ? fmtSigned(h.pnl,0) : '—'}</div>
+        <button class="pl-del" title="${L('删除这个持仓','delete this holding')}" onclick="event.stopPropagation(); deletePos('${h.sym}')">✕</button>
+      </div>
+      <div class="pl-detail ${open?'show':''}" onclick="event.stopPropagation()">
+        <div class="lot-row"><span class="k">${L('成本','Cost basis')}</span><span>$${fmt(h.costBasis,2)} · C$${fmt(h.costBasis*fx,2)}</span></div>
+        <div class="lot-row"><span class="k">${L('占比','Weight')}</span><span>${fmt(pct,1)}%</span></div>
+        ${merged.length ? `<div class="lot-row"><span class="k">${L('已合并','merged in')}</span><span>${merged.map(m=>`${m} <span class="expand-toggle" onclick="unmergeTicker('${m}')">${L('拆分','unmerge')}</span>`).join(' · ')}</span></div>` : ''}
+        ${(() => {
+          const row = (qty, price, date, cls) => `<div class="lot-row ${cls||''}"><span class="lot-qty">${qty<0?L('卖出 ','sold '):''}${fmt(Math.abs(qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${price==null?'—':fmt(price)}</span><span class="lot-date">${date}</span></div>`;
+          if(h.ovQty && h.log && h.log.length){          // manual entries: these add up to the row above
+            return `<div class="pos-lots-label" style="margin-top:10px;">${L('批次','Lots')} · ${h.log.length}</div>` +
+              h.log.map(e => row(e.qty, e.avg, e.base ? L('原有','existing') : e.date, e.qty<0?'short':'')).join('');
+          }
+          return h.lots.length
+            ? `<div class="pos-lots-label" style="margin-top:10px;">${L('未平仓批次','Open lots')} · ${h.lots.length}</div>` +
+              h.lots.map(l => `<div class="lot-row ${l.qty<0?'short':''} ${l.estimated?'est':''}"><span class="lot-qty">${l.qty<0?L('空 ','short '):''}${fmt(Math.abs(l.qty),0)}${L(' 股',' sh')}</span><span class="lot-price">@ ${fmt(l.unitCost)}</span><span class="lot-date">${String(l.date).slice(0,10)}</span></div>`).join('')
+            : '';
+        })()}
+      </div>`;
+  }
+  const cashPct = totalPortfolioUSD>0 ? (cashUSDEq/totalPortfolioUSD*100) : 0;
+  const cashOpen = expandedPos.has('__cash');
+  listHtml += `
+    <div class="pl-row ${cashOpen?'open':''}" onclick="togglePos('__cash')">
+      <span class="swatch" style="background:${CASH_COLOR}"></span>
+      <div class="pl-tk"><b>Cash</b></div>
+      <div class="pl-num"></div>
+      <div class="pl-num"></div>
+      <div class="pl-num"></div>
+      <div class="pl-val">$${fmt(cashUSDEq,0)}</div>
+      <div class="pl-pnl" style="color:var(--text-dim);">${fmt(cashPct,1)}%</div>
+      <span></span>
+    </div>
+    <div class="pl-detail ${cashOpen?'show':''}" onclick="event.stopPropagation()">
+      <div class="lot-row"><span class="k">USD</span><input type="number" step="any" class="cell-num" ${ce} value="${pxv2(cash.usd)}" onchange="updateCash('usd',this.value)"></div>
+      <div class="lot-row"><span class="k">CAD</span><input type="number" step="any" class="cell-num" ${ce} value="${pxv2(cash.cad)}" onchange="updateCash('cad',this.value)"></div>
+    </div>`;
+  if(!holdings.length) listHtml = `<div class="empty">${L('持仓由你的交易记录自动算出，不用单独维护。先在「交易盈亏」页加交易或导入对账单。','Positions are worked out from your trade ledger — nothing to maintain here. Add trades or import a statement on the Trades tab.')}</div>` + listHtml;
+  list.innerHTML = listHtml;
+
+  // donut + legend
+  const slices = holdings.filter(h=>h.mv>0).map(h=>({label:h.sym, color:tkColor(h.sym), value:h.mv}))
+    .concat([{label:'Cash', color:CASH_COLOR, value:cashUSDEq}]);
+  const legend = slices.filter(s=>s.value>0)
+    .sort((a,b)=>b.value-a.value)
+    .map(s=>`<div class="lg-row"><span class="swatch" style="background:${s.color}"></span><b>${s.label}</b><span>${fmt(totalPortfolioUSD>0? s.value/totalPortfolioUSD*100 : 0,1)}%</span></div>`).join('');
+  document.getElementById('positionsViz').innerHTML = `
+    <div class="donut-wrap">
+      ${donutSvg(slices, totalPortfolioUSD)}
+      <div class="donut-center">
+        <div class="dc-v">$${fmt(totalPortfolioUSD,0)}</div>
+        <div class="dc-k">${L('组合总值','Portfolio')}</div>
+      </div>
+    </div>
+    <div class="pos-legend">${legend}</div>
+    <div class="fx-row">
+      <span>${L('汇率','FX')} USD/CAD</span>
+      <input type="number" step="any" value="${fx}" onchange="updateFx(this.value)">
+    </div>
+    <div class="pos-total">≈ C$${fmt(totalPortfolioUSD*fx,0)}</div>
+  `;
+}
+
+// ---------- Live prices (Finnhub, opt-in, your own free key) ----------
+let finnhubKey = '';
+async function fetchPrices(){
+  const btn = document.getElementById('fetchPricesBtn');
+  if(!/\S/.test(finnhubKey)){
+    const k = (prompt(L('输入你的 Finnhub API key（finnhub.io 免费注册，60 次/分钟）：','Enter your Finnhub API key (free at finnhub.io, 60 req/min):'), '')||'').trim();
+    if(!k) return;
+    finnhubKey = k;
+    try{ await window.storage.set(FINNHUB_KEY, k); }catch(e){}
+  }
+  const syms = [...new Set(derivedHoldings().map(h=>h.sym).concat(Object.keys(posMeta).filter(s=>posMeta[s].qty!=null && !posMeta[s].deleted)))];
+  if(!syms.length) return;
+  btn.disabled = true; btn.textContent = L('刷新中…','Fetching…');
+  let ok = 0; const failed = [];
+  for(const sym of syms){
+    try{
+      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${encodeURIComponent(finnhubKey)}`);
+      if(!r.ok){ failed.push(sym); continue; }
+      const d = await r.json();
+      if(d && typeof d.c === 'number' && d.c > 0){
+        (posMeta[sym] || (posMeta[sym]={})).price = d.c;
+        ok++;
+      } else failed.push(sym);
+    }catch(e){ failed.push(sym); }
+  }
+  await savePosMeta();
+  btn.disabled = false;
+  btn.textContent = t('btnRefreshPrices');
+  if(failed.length && ok === 0) alert(L('股价刷新失败 — 检查 Finnhub key','Price refresh failed — check your Finnhub key'));
+  else if(failed.length) alert(L(`这几个代码 Finnhub 没有报价：${failed.join(' ')}`, `Finnhub has no quote for: ${failed.join(' ')}`));
+  renderPositions();
+}
+
+// ---------- Price targets (watchlist) ----------
+function openAddTarget(){
+  const f = document.getElementById('addTargetForm');
+  f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+
+function addTarget(){
+  const sym = document.getElementById('tg-sym').value.trim().toUpperCase();
+  const action = document.getElementById('tg-action').value;
+  const level = document.getElementById('tg-level').value.trim();
+  const note = document.getElementById('tg-note').value.trim();
+  if(!sym){ alert(L('代码要填','Symbol is required')); return; }
+  watchlist.unshift({id:'tg'+Date.now(), sym, action, level, note});
+  saveWatch();
+  document.getElementById('tg-sym').value='';
+  document.getElementById('tg-level').value='';
+  document.getElementById('tg-note').value='';
+  document.getElementById('addTargetForm').style.display='none';
+  renderTargets();
+}
+
+function deleteTarget(id){
+  watchlist = watchlist.filter(w=>w.id!==id);
+  saveWatch();
+  renderTargets();
+}
+
+function updateTarget(id, field, value){
+  const w = watchlist.find(w=>w.id===id);
+  if(!w) return;
+  w[field] = field==='sym' ? value.trim().toUpperCase() : value;
+  saveWatch();
+  if(field==='sym' || field==='action') renderTargets();
+}
+
+function renderTargets(){
+  const el = document.getElementById('targetsView');
+  if(!watchlist.length){
+    el.innerHTML = `<div class="empty">${L('在等的买入 / 卖出 / 关注价位，附一句原因（比如「看图 · 财报前」）。点右上角「+ 添加」。','Buy / sell / watch levels you\'re waiting for, each with a one-line reason ("chart · pre-ER"). Click "+ Add" above.')}</div>`;
+    return;
+  }
+  const actLabel = a => a==='BUY' ? L('买入','Buy') : a==='SELL' ? L('卖出','Sell') : L('关注','Watch');
+  const actIcon = a => a==='BUY'
+      ? `<svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>`
+    : a==='SELL'
+      ? `<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>`
+      : `<svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const rows = [...watchlist].sort((a,b)=> a.sym<b.sym?-1:a.sym>b.sym?1:0);
+  el.innerHTML = `<div class="tg-list">` + rows.map(w=>`
+    <div class="tg-row">
+      <span class="tg-icon ${w.action.toLowerCase()}">${actIcon(w.action)}</span>
+      <b class="tg-sym">${w.sym}</b>
+      <span class="tg-badge ${w.action.toLowerCase()}">${actLabel(w.action)}</span>
+      <input class="tg-in tg-level" value="${(w.level||'').replace(/"/g,'&quot;')}" placeholder="—" onchange="updateTarget('${w.id}','level',this.value)">
+      <input class="tg-in tg-note" value="${(w.note||'').replace(/"/g,'&quot;')}" placeholder="${L('备注','note')}" onchange="updateTarget('${w.id}','note',this.value)">
+      <button class="tg-del" title="${L('删除','delete')}" onclick="deleteTarget('${w.id}')">✕</button>
+    </div>`).join('') + `</div>`;
+}
+
+// ---------- Weekly / Monthly Report ----------
+function isoWeekKey(d){
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = (date.getUTCDay() + 6) % 7;
+  date.setUTCDate(date.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(date.getUTCFullYear(),0,4));
+  const weekNum = 1 + Math.round(((date - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay()+6)%7)) / 7);
+  return date.getUTCFullYear() + '-W' + String(weekNum).padStart(2,'0');
+}
+
+let reportMonth = new Date();
+reportMonth.setDate(1);
+let expandedBars = new Set();
+
+function reportMonthPrev(){ reportMonth.setMonth(reportMonth.getMonth()-1); renderReport(); }
+function reportMonthNext(){ reportMonth.setMonth(reportMonth.getMonth()+1); renderReport(); }
+function reportMonthToday(){ reportMonth = new Date(); reportMonth.setDate(1); renderReport(); }
+
+// "2000-3000" / "2k-3k" / "2500" -> {min,max}, or null
+function parseGoal(str){
+  if(!str) return null;
+  const toks = String(str).replace(/[,，$]/g,'').match(/\d+(?:\.\d+)?\s*[kK]?/g);
+  if(!toks || !toks.length) return null;
+  const val = s => parseFloat(s) * (/[kK]/.test(s) ? 1000 : 1);
+  const a = val(toks[0]);
+  const b = toks[1] != null ? val(toks[1]) : a;
+  if(!isFinite(a) || !isFinite(b)) return null;
+  return { min: Math.min(a,b), max: Math.max(a,b) };
+}
+async function saveGoal(){ try{ await window.storage.set(GOAL_KEY, weeklyGoal); }catch(e){} }
+function setWeeklyGoal(v){
+  weeklyGoal = (v || '').trim();
+  saveGoal();
+  renderReport();
+}
+
+function computeReportData(){
+  const {closed} = runFIFO(AT(), 'LIFO');
+
+  // monthly: all history, descending (most recent first)
+  const byMonth = {};
+  for(const c of closed){
+    const mo = c.date.slice(0,7);
+    if(!byMonth[mo]) byMonth[mo] = {value:0, trades:[]};
+    byMonth[mo].value += c.pnl;
+    byMonth[mo].trades.push(c);
+  }
+  const months = Object.keys(byMonth).sort().reverse().slice(0,12);
+
+  // weekly: only trades within the currently-selected report month, descending
+  const moKey = reportMonth.getFullYear() + '-' + String(reportMonth.getMonth()+1).padStart(2,'0');
+  const byWeek = {};
+  for(const c of closed){
+    if(!c.date.startsWith(moKey)) continue;
+    const wk = isoWeekKey(new Date(c.date));
+    if(!byWeek[wk]) byWeek[wk] = {value:0, trades:[]};
+    byWeek[wk].value += c.pnl;
+    byWeek[wk].trades.push(c);
+  }
+  const weeks = Object.keys(byWeek).sort().reverse();
+
+  return {
+    weekly: weeks.map(k=>({label:k, value:byWeek[k].value, trades:byWeek[k].trades})),
+    monthly: months.map(k=>({label:k, value:byMonth[k].value, trades:byMonth[k].trades})),
+  };
+}
+
+function toggleBar(barId){
+  if(expandedBars.has(barId)) expandedBars.delete(barId); else expandedBars.add(barId);
+  renderReport();
+}
+
+function renderBarChart(containerId, data, prefix, emptyMsg){
+  const el = document.getElementById(containerId);
+  if(data.length===0){
+    el.innerHTML = `<div class="empty">${emptyMsg || L('这段时间还没有已实现的交易','No realized trades in this period')}</div>`;
+    return;
+  }
+  const maxAbs = Math.max(...data.map(d=>Math.abs(d.value)), 1);
+  el.innerHTML = data.map(d=>{
+    const barId = prefix + '-' + d.label;
+    const pct = Math.min(Math.abs(d.value)/maxAbs*100, 100);
+    const cls = d.value>=0 ? 'gain' : 'loss';
+    const side = d.value>=0 ? 'left:50%;' : `right:50%;`;
+    const expanded = expandedBars.has(barId);
+    const detailRows = d.trades.slice().sort((a,b)=> new Date(b.date)-new Date(a.date)).map(t=>
+      `<div class="rbar-trade"><span>${String(t.date).slice(0,10)}</span><span class="rbar-trade-sym">${t.sym}</span><span>${fmt(t.qty,0)} @ ${fmt(t.price)}</span><span class="${t.pnl>=0?'gain':'loss'}">${fmtSigned(t.pnl)}</span></div>`
+    ).join('');
+    return `<div class="rbar-row" onclick="toggleBar('${barId}')">
+      <div class="rbar-label">${d.label}</div>
+      <div class="rbar-track">
+        <div class="rbar-fill ${cls}" style="${side} width:${pct/2}%;"></div>
+      </div>
+      <div class="rbar-val ${cls}">${fmtSigned(d.value)}</div>
+    </div>
+    <div class="rbar-detail ${expanded?'show':''}">${detailRows}</div>`;
+  }).join('');
+}
+
+function renderReport(){
+  const {weekly, monthly} = computeReportData();
+  const goal = parseGoal(weeklyGoal);
+
+  const goalInput = document.getElementById('weeklyGoalInput');
+  if(goalInput && document.activeElement !== goalInput) goalInput.value = weeklyGoal;
+  const prog = document.getElementById('goalProg');
+  const stat = document.getElementById('goalStat');
+  if(prog && stat){
+    const moTotal = weekly.reduce((s,w)=> s + w.value, 0);   // selected month's realized P&L
+    if(goal && weekly.length){
+      const pct = Math.max(0, Math.min(100, moTotal / goal.min * 100));
+      prog.hidden = false;
+      prog.firstElementChild.style.width = pct + '%';
+      const mo = reportMonth.toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {month:'short'});
+      const target = goal.min === goal.max ? `$${fmt(goal.min,0)}` : `$${fmt(goal.min,0)}–${fmt(goal.max,0)}`;
+      stat.textContent = `${mo} $${fmt(moTotal,0)} / ${target} · ${Math.round(moTotal / goal.min * 100)}%`;
+      stat.style.color = moTotal >= goal.min ? 'var(--gain)' : 'var(--text-dim)';
+    } else {
+      prog.hidden = true;
+      stat.textContent = goal ? L('本月还没有已平仓交易','no closed trades this month yet') : '';
+      stat.style.color = 'var(--text-dim)';
+    }
+  }
+
+  renderBarChart('weeklyChart', weekly, 'wk', L('有平仓交易后，这里按周 / 按月拆你的已实现盈亏，看赚钱的节奏。','Once you have closed trades, this breaks your realized P&L out by week and by month.'));
+  renderBarChart('monthlyChart', monthly, 'mo');
+  const rangeEl = document.getElementById('weeklyRange');
+  if(rangeEl){
+    const moLabel = reportMonth.toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {month:'long', year:'numeric'});
+    rangeEl.innerHTML = `
+      <span style="margin-right:8px;">${moLabel}</span>
+      <button class="btn-ghost btn-small btn-arrow" onclick="reportMonthPrev()">‹</button>
+      <button class="btn-ghost btn-small" onclick="reportMonthToday()">${L('本月','This month')}</button>
+      <button class="btn-ghost btn-small btn-arrow" onclick="reportMonthNext()">›</button>
+    `;
+  }
+}
+
+async function loadSavedReview(){
+  try{
+    const res = await window.storage.get(REVIEW_KEY);
+    const saved = JSON.parse(res.value);
+    document.getElementById('reviewBox').innerHTML = saved.html;
+  }catch(e){ /* no saved review yet, leave placeholder */ }
+}
+
+// ---------- AI review settings (opt-in, off by default) ----------
+async function loadAiSettings(){
+  try{ aiEnabled = (await window.storage.get(AI_ENABLED_KEY)).value === '1'; }catch(e){ aiEnabled = false; }
+  try{ aiKey = (await window.storage.get(AI_KEY_KEY)).value || ''; }catch(e){ aiKey = ''; }
+  const cb = document.getElementById('aiEnabled'); if(cb) cb.checked = aiEnabled;
+  const ki = document.getElementById('aiKey'); if(ki) ki.value = aiKey;
+  updateReviewButton();
+}
+async function saveAiSettings(){
+  aiEnabled = document.getElementById('aiEnabled').checked;
+  aiKey = document.getElementById('aiKey').value.trim();
+  try{ await window.storage.set(AI_ENABLED_KEY, aiEnabled ? '1' : '0'); }catch(e){}
+  try{ await window.storage.set(AI_KEY_KEY, aiKey); }catch(e){}
+  updateReviewButton();
+}
+function toggleAiSettings(){
+  const s = document.getElementById('aiSettings');
+  s.style.display = s.style.display==='none' ? 'block' : 'none';
+}
+function aiReady(){ return aiEnabled && /\S/.test(aiKey); }
+function updateReviewButton(){
+  const btn = document.getElementById('genReviewBtn');
+  if(!btn) return;
+  if(aiReady()){
+    btn.disabled = false;
+    btn.title = '';
+    btn.textContent = lang==='zh' ? '生成评价' : 'Generate Review';
+  } else {
+    btn.disabled = true;
+    btn.title = lang==='zh' ? '先在「设置」里启用并填入 API key' : 'Enable and add an API key under Settings first';
+    btn.textContent = lang==='zh' ? '需在设置里配置' : 'Configure in Settings';
+  }
+}
+
+async function generateReview(){
+  const btn = document.getElementById('genReviewBtn');
+  const box = document.getElementById('reviewBox');
+  if(!aiReady()){
+    document.getElementById('aiSettings').style.display = 'block';
+    box.innerHTML = `<div class="empty">${lang==='zh'?'AI 复盘默认关闭。在上面「设置」里打开开关、填入你自己的 Anthropic API key 后即可使用。':'AI review is off by default. Turn it on and add your own Anthropic API key in Settings above.'}</div>`;
+    return;
+  }
+  btn.disabled = true;
+  box.innerHTML = `<div class="empty">${lang==='zh'?'分析中…':'Analyzing…'}</div>`;
+  try{
+    const {closed} = runFIFO(AT(), 'LIFO');
+    const recent = closed.slice(0, 25).map(c=>({
+      date:c.date, sym:c.sym, side:c.side, qty:c.qty, price:c.price, pnl:Math.round(c.pnl*100)/100
+    }));
+    const positionsSummary = positions.map(p=>({sym:p.sym, qty:p.qty, avgPrice:p.avgPrice, currentPrice:p.currentPrice}));
+    const prompt = (lang==='zh'
+      ? `你是一个直言不讳但有建设性的交易复盘助手。下面是我最近的已实现交易记录（按LIFO配对算出的真实盈亏）和当前持仓。请用中文给我简短的操作评价（4-6条，每条一两句话），指出具体的行为模式，比如：是不是经常卖早了（卖出后价格继续大涨）、加仓时机怎么样、有没有过早止损又后悔、仓位集中度是否合理等。要具体，能引用股票代码和数字，不要泛泛而谈，也不要无脑夸。\n\n最近交易：${JSON.stringify(recent)}\n\n当前持仓：${JSON.stringify(positionsSummary)}`
+      : `You are a blunt but constructive trading review assistant. Below is my recent realized trade history (real P&L computed via LIFO lot matching) and current holdings. Give me a short review (4-6 bullet points, 1-2 sentences each) in English, calling out specific behavioral patterns — e.g. selling too early (price kept rising after I sold), timing on adding to positions, cutting losses too soon and regretting it, concentration risk, etc. Be specific with tickers and numbers, not generic, and don't just praise me.\n\nRecent trades: ${JSON.stringify(recent)}\n\nCurrent positions: ${JSON.stringify(positionsSummary)}`
+    );
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': aiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 900,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if(!response.ok){
+      const err = await response.text();
+      box.innerHTML = `<div class="empty">${lang==='zh'?'请求失败':'Request failed'} (${response.status})<br><span style="font-size:11px;">${err.slice(0,300)}</span></div>`;
+      btn.disabled = false;
+      return;
+    }
+    const data = await response.json();
+    const text = (data.content || []).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    const html = text.replace(/\n/g, '<br>');
+    box.innerHTML = html || `<div class="empty">${lang==='zh'?'没生成出内容，再试一次？':'Nothing came back — try again?'}</div>`;
+    try{ await window.storage.set(REVIEW_KEY, JSON.stringify({html, ts:Date.now()})); }catch(e){}
+  }catch(e){
+    box.innerHTML = `<div class="empty">${lang==='zh'?'生成失败：':'Failed: '}${e.message||e}</div>`;
+  }
+  btn.disabled = false;
+}
+
+// ---------- Calendar ----------
+let calMonth = new Date();
+calMonth.setDate(1);
+let calEditingDate = null;
+let calEditingId = null;
+
+function dateKey(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function calPrev(){ calMonth.setMonth(calMonth.getMonth()-1); renderCalendar(); }
+function calNext(){ calMonth.setMonth(calMonth.getMonth()+1); renderCalendar(); }
+function calToday(){ calMonth = new Date(); calMonth.setDate(1); renderCalendar(); }
+
+function renderCalendar(){
+  const year = calMonth.getFullYear();
+  const month = calMonth.getMonth();
+  document.getElementById('calMonthLabel').textContent =
+    calMonth.toLocaleDateString('en-US', {month:'long', year:'numeric'});
+
+  const firstOfMonth = new Date(year, month, 1);
+  // Sunday-start weeks: JS getDay() is already 0=Sun..6=Sat
+  const startOffset = firstOfMonth.getDay();
+  const gridStart = new Date(year, month, 1 - startOffset);
+
+  const todayKey = dateKey(new Date());
+  const newsDays = newsByDay();
+  const grid = document.getElementById('calGrid');
+  let html = '';
+  for(let i=0; i<42; i++){
+    const d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate()+i);
+    const key = dateKey(d);
+    const isDim = d.getMonth() !== month;
+    const isToday = key === todayKey;
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    const events = (calendarEvents[key] || []).slice().sort((a,b)=> (a.source||'').startsWith('auto') === (b.source||'').startsWith('auto') ? 0 : (a.source||'').startsWith('auto') ? -1 : 1);
+    const news = newsDays[key] || [];
+    html += `<div class="cal-cell ${isWeekend?'weekend':''} ${isDim?'dim':''}">
+      <div class="cal-date ${isToday?'today':''}">${d.getDate()}</div>
+      ${events.map(ev=>{
+        const auto = (ev.source||'').startsWith('auto');
+        const tip = (ev.text + (auto?' · auto':'') + (ev.plan?` — ${ev.plan}`:'')).replace(/"/g,'&quot;');
+        return `<div class="cal-event ${ev.category} ${ev.plan?'has-plan':''}" onclick="openEventModal('${key}','${ev.id}')" title="${tip}">${ev.text}</div>`;
+      }).join('')}
+      ${news.map(({it, idx})=>`<div class="cal-event news" onclick="openNews(${idx})" title="${escHtml(`${it.source} · ${agoStr(it.datetime)} — ${it.headline}`)}">${escHtml(it.headline)}</div>`).join('')}
+      <div class="cal-add" onclick="openEventModal('${key}')">+</div>
+    </div>`;
+    if(i===41) break;
+  }
+  grid.innerHTML = html;
+}
+
+function openEventModal(key, id=null){
+  calEditingDate = key;
+  calEditingId = id;
+  const modal = document.getElementById('eventModal');
+  const title = document.getElementById('eventModalTitle');
+  const textInput = document.getElementById('ev-text');
+  const catSelect = document.getElementById('ev-category');
+  const planInput = document.getElementById('ev-plan');
+  const delBtn = document.getElementById('ev-delete-btn');
+  title.textContent = key;
+  if(id){
+    const ev = (calendarEvents[key]||[]).find(e=>e.id===id);
+    textInput.value = ev ? ev.text : '';
+    catSelect.value = ev ? ev.category : 'buy';
+    planInput.value = ev ? (ev.plan||'') : '';
+    delBtn.style.display = 'inline-block';
+  } else {
+    textInput.value = '';
+    catSelect.value = 'buy';
+    planInput.value = '';
+    delBtn.style.display = 'none';
+  }
+  modal.classList.add('show');
+  textInput.focus();
+}
+
+function closeEventModal(){
+  document.getElementById('eventModal').classList.remove('show');
+  calEditingDate = null;
+  calEditingId = null;
+}
+
+function saveEvent(){
+  const text = document.getElementById('ev-text').value.trim();
+  const category = document.getElementById('ev-category').value;
+  const plan = document.getElementById('ev-plan').value.trim();
+  if(!text){ alert(L('填一下内容','Enter some text')); return; }
+  if(!calendarEvents[calEditingDate]) calendarEvents[calEditingDate] = [];
+  if(calEditingId){
+    const ev = calendarEvents[calEditingDate].find(e=>e.id===calEditingId);
+    if(ev){ ev.text = text; ev.category = category; ev.plan = plan || undefined; delete ev.source; } // saved -> yours, sync leaves it alone
+  } else {
+    calendarEvents[calEditingDate].push({id:'ev'+Date.now(), text, category, plan: plan||undefined});
+  }
+  saveCalendar();
+  closeEventModal();
+  renderCalendar();
+}
+
+function deleteEvent(){
+  if(calendarEvents[calEditingDate]){
+    calendarEvents[calEditingDate] = calendarEvents[calEditingDate].filter(e=>e.id!==calEditingId);
+  }
+  saveCalendar();
+  closeEventModal();
+  renderCalendar();
+}
+
+// ---------- Reconciliation (Phase 1: 数据正确性自检) ----------
+// Two independent checks against the raw trade list:
+//  1. share conservation — an independent buy/sell tally per symbol must equal
+//     what the LIFO engine ends up holding. A mismatch means the engine dropped,
+//     duplicated or mis-split a lot.
+//  2. oversold detection — if the running position for a symbol ever goes below
+//     zero, some shares were held before the tracking window (cost basis unknown,
+//     P&L on those is estimated) or a short wasn't recorded as such.
+function reconcile(list){
+  const issues = [];
+  const { openLots } = runFIFO(list, 'LIFO');
+
+  const tally = {};
+  for(const t of list){
+    if(!tally[t.sym]) tally[t.sym] = {bought:0, sold:0};
+    if(t.side==='BUY') tally[t.sym].bought += t.qty; else tally[t.sym].sold += t.qty;
+  }
+  for(const sym of Object.keys(tally)){
+    const {bought, sold} = tally[sym];
+    const expected = bought - sold;
+    const engine = (openLots[sym]||[]).reduce((s,l)=>s+l.qty, 0);
+    if(Math.abs(expected - engine) > 1e-6){
+      issues.push({level:'err', sym,
+        msg: L(`${sym} 账不平：买入 ${fmt(bought,0)} − 卖出 ${fmt(sold,0)} 应剩 ${fmt(expected,0)} 股，引擎却算出 ${fmt(engine,0)} 股`,
+               `${sym} does not balance: bought ${fmt(bought,0)} − sold ${fmt(sold,0)} = ${fmt(expected,0)} expected, but the engine holds ${fmt(engine,0)}`)});
+    }
+  }
+
+  const sorted = [...list].sort((a,b)=> new Date(a.date) - new Date(b.date) || (a.id<b.id?-1:1));
+  const run = {};
+  const flagged = new Set();
+  for(const t of sorted){
+    run[t.sym] = (run[t.sym]||0) + (t.side==='BUY' ? t.qty : -t.qty);
+    if(run[t.sym] < -1e-6 && !flagged.has(t.sym)){
+      flagged.add(t.sym);
+      issues.push({level:'warn', sym:t.sym,
+        msg: L(`${t.sym} 有一笔卖出超过了当时已知的持仓 — 可能是追踪起点之前就持有的股份，这部分成本按卖价估算，盈亏可能不准`,
+               `${t.sym} had a sell exceeding the known position — likely shares held before the tracking window; cost estimated at the sell price, P&L may be off`)});
+    }
+  }
+  return issues;
+}
+
+let reconDismissed = [];
+const reconKey = i => `${i.level}:${i.sym}`;
+function dismissRecon(){
+  const box = document.getElementById('reconBox');
+  const issues = reconcile(AT()).filter(i=> !reconDismissed.includes(reconKey(i)));
+  for(const i of issues){ if(!reconDismissed.includes(reconKey(i))) reconDismissed.push(reconKey(i)); }
+  try{ window.storage.set(RECON_DISMISS_KEY, JSON.stringify(reconDismissed)); }catch(e){}
+  renderReconciliation();
+}
+function renderReconciliation(){
+  const box = document.getElementById('reconBox');
+  if(!box) return;
+  const issues = reconcile(AT()).filter(i=> !reconDismissed.includes(reconKey(i)));
+  if(issues.length===0){ box.className = 'warn'; box.innerHTML = ''; return; }
+  const hasErr = issues.some(i=>i.level==='err');
+  box.className = 'warn show' + (hasErr ? ' err' : '');
+  box.innerHTML = `<button class="warn-x" onclick="dismissRecon()" title="${L('知道了，别再提示','dismiss')}">✕</button>`
+    + `<b>${hasErr ? L('账目对不上：','Books do not balance: ') : L('注意：','Note: ')}</b>`
+    + issues.map(i=>`<div class="recline">· ${i.msg}</div>`).join('');
+}
+
+// ---------- Import IBKR statement CSV ----------
+let importParsed = null; // last parse result awaiting confirmation
+
+function openImport(){
+  const c = document.getElementById('importCard');
+  c.style.display = c.style.display==='none' ? 'block' : 'none';
+  if(c.style.display==='none') resetImport();
+}
+function closeImport(){ document.getElementById('importCard').style.display='none'; resetImport(); }
+function resetImport(){
+  importParsed = null;
+  document.getElementById('importPaste').value = '';
+  const p = document.getElementById('importPreview');
+  p.style.display = 'none'; p.innerHTML = '';
+}
+
+function sameTradeIsh(a, b){
+  return a.sym === b.sym && a.side === b.side
+    && Math.abs(a.qty - b.qty) < 1e-6
+    && String(a.date).slice(0,10) === String(b.date).slice(0,10)
+    && Math.abs(a.price - b.price) / Math.max(a.price, 1) < 0.005;
+}
+
+function handleCsvText(text){
+  let res;
+  try{ res = parseActivityStatementCsv(text); }
+  catch(e){ alert(L('解析失败：','Parse failed: ') + e.message); return; }
+  if(res.trades.length===0){
+    alert(L('没找到交易记录。\n','No trades found.\n') + (res.warnings.join('\n') || L('确认这是 IBKR Activity Statement 的 CSV 导出。','Make sure this is an IBKR Activity Statement exported as CSV.')));
+    return;
+  }
+  const { added, duplicates } = mergeImportedTrades(trades, res.trades);
+  const similar = added.filter(a => trades.some(t => sameTradeIsh(a, t)));
+  const stale = manualSymsIn(res.trades);
+  importParsed = { res, added, duplicates, similar, stale };
+
+  const syms = [...new Set(added.map(t=>t.sym))].sort();
+  const p = document.getElementById('importPreview');
+  p.style.display = 'block';
+  p.innerHTML = `
+    <div class="big">${res.period || ''}${res.accountId ? ' · '+L('账户','Account')+' '+res.accountId : ''}</div>
+    ${L(`共解析 ${res.trades.length} 笔成交。`,`Parsed ${res.trades.length} trades.`)}<br>
+    ${L(`本次<b>新增 ${added.length} 笔</b>`,`<b>${added.length} new</b>`)}${duplicates ? L(`，跳过 ${duplicates} 笔已导入的`,`, ${duplicates} already imported`) : ''}${added.length ? L(`，涉及 ${syms.length} 只股票：${syms.join(' ')}`,` · ${syms.length} tickers: ${syms.join(' ')}`) : ''}
+    ${similar.length ? `<br><span class="dup">${L(`⚠ 其中 ${similar.length} 笔与现有记录高度相似，可能是同一笔交易的两份来源。如果要用对账单作为唯一数据源，建议先清空现有交易。`,`⚠ ${similar.length} of these look very similar to existing rows — likely the same trade from two sources. If the statement is your only source, clear existing trades first.`)}</span>` : ''}
+    ${stale.length ? `<br>${L(`以对账单为准：这些代码手动填的持仓会被对账单算出来的替换 — ${stale.join(' ')}`,`Statement wins: hand-entered positions for ${stale.join(' ')} will be replaced by what the statement works out.`)}` : ''}
+    ${res.warnings.length ? `<br><span class="dup">${res.warnings.join('<br>')}</span>` : ''}
+    <ul>${added.slice(0,12).map(t=>`<li>${t.day} ${t.side==='SELL'?L('卖','sell'):L('买','buy')} ${fmt(t.qty,0)} ${t.sym} @ ${fmt(t.price)}</li>`).join('')}${added.length>12?`<li>${L(`… 还有 ${added.length-12} 笔`,`… ${added.length-12} more`)}</li>`:''}</ul>
+    <div class="import-actions">
+      ${(added.length || stale.length) ? `<button class="btn-primary btn-small" onclick="confirmImport()">${added.length ? L(`确认导入 ${added.length} 笔`,`Import ${added.length}`) : L('按对账单更新持仓','Apply statement to positions')}</button>` : ''}
+      <button class="btn-ghost btn-small" onclick="resetImport()">${L('重来','Reset')}</button>
+    </div>`;
+}
+
+function parseImportPaste(){
+  const text = document.getElementById('importPaste').value.trim();
+  if(!text){ alert(L('先粘贴 CSV 内容','Paste the CSV text first')); return; }
+  handleCsvText(text);
+}
+
+// symbols in an imported statement that currently carry hand-entered position values
+// (quantity / average / entered lots / deleted flag). The statement wins over those.
+function manualSymsIn(stmtTrades){
+  const syms = [...new Set(stmtTrades.map(t => aliases[t.sym] || t.sym))];
+  return syms.filter(sym => { const m = posMeta[sym]; return m && (m.qty != null || m.avg != null || m.log || m.deleted); }).sort();
+}
+function dropManualPos(sym){
+  const m = posMeta[sym]; if(!m) return;
+  delete m.qty; delete m.avg; delete m.log; delete m.deleted;   // keep the last price
+  if(Object.keys(m).length === 0) delete posMeta[sym];
+}
+
+function confirmImport(){
+  if(!importParsed) return;
+  const stale = manualSymsIn(importParsed.res.trades);
+  if(!importParsed.added.length && !stale.length) return;
+  trades = trades.concat(importParsed.added);
+  saveTrades();
+  if(stale.length){ stale.forEach(dropManualPos); savePosMeta(); }
+  closeImport();
+  render();
+}
+
+function openAddTrade(){
+  const f = document.getElementById('addTradeForm');
+  const show = f.style.display==='none';
+  f.style.display = show ? 'block' : 'none';
+  if(show){
+    const d = document.getElementById('f-date');
+    if(!d.value) d.value = new Date().toISOString().slice(0,10);
+    document.getElementById('f-symbol').focus();
+  }
+  updateLotDropdown();
+}
+
+function getOpenLotsForSymbol(sym){
+  if(!sym) return [];
+  const {openLots} = runFIFO(AT(), 'LIFO');
+  return (openLots[sym] || []).filter(l => l.qty > 0.0000001);
+}
+
+function updateLotDropdown(){
+  // the manual lot picker only makes sense for a sell-only entry against existing lots
+  const sellOnly = !document.getElementById('f-buy-qty').value && !!document.getElementById('f-sell-qty').value;
+  const sym = document.getElementById('f-symbol').value.trim().toUpperCase();
+  const field = document.getElementById('f-lot-field');
+  const select = document.getElementById('f-lot');
+  if(!sellOnly || !sym){
+    field.style.display = 'none';
+    select.innerHTML = '<option value="">' + t('fLotAuto') + '</option>';
+    return;
+  }
+  const lots = getOpenLotsForSymbol(sym);
+  if(lots.length === 0){
+    field.style.display = 'none';
+    select.innerHTML = '<option value="">' + t('fLotAuto') + '</option>';
+    return;
+  }
+  field.style.display = 'block';
+  select.innerHTML = '<option value="">' + t('fLotAuto') + '</option>' +
+    lots.map(l => `<option value="${l.sourceId}">${fmt(l.qty,0)} @ ${fmt(l.unitCost)} · ${String(l.date).slice(0,10)}</option>`).join('');
+}
+
+function updateTrade(id, field, value){
+  const t = trades.find(t=>t.id===id);
+  if(!t) return;
+  if(field==='qty' || field==='price'){ t[field] = parseFloat(value) || 0; }
+  else if(field==='buyAvgOverride'){ t[field] = value==='' ? null : (parseFloat(value) || 0); }
+  else if(field==='sym'){ t[field] = value.trim().toUpperCase(); }
+  else { t[field] = value; }
+  saveTrades();
+  render();
+}
+
+function addTrade(){
+  const date = document.getElementById('f-date').value;
+  const symbol = document.getElementById('f-symbol').value.trim().toUpperCase();
+  const buyQty = parseFloat(document.getElementById('f-buy-qty').value);
+  const buyPrice = parseFloat(document.getElementById('f-buy-price').value);
+  const sellQty = parseFloat(document.getElementById('f-sell-qty').value);
+  const sellPrice = parseFloat(document.getElementById('f-sell-price').value);
+  const comm = parseFloat(document.getElementById('f-commission').value) || 0;
+  const targetLotId = document.getElementById('f-lot') ? document.getElementById('f-lot').value : '';
+
+  const hasBuy = buyQty > 0 && buyPrice > 0;
+  const hasSell = sellQty > 0 && sellPrice > 0;
+  const halfBuy = !hasBuy && (buyQty > 0 || buyPrice > 0);
+  const halfSell = !hasSell && (sellQty > 0 || sellPrice > 0);
+  if(!date || !symbol || (!hasBuy && !hasSell) || halfBuy || halfSell){
+    alert(L('日期、代码要填，且至少填完整的一边（买入或卖出的 数量 和 价格）','Date and symbol are required, plus at least one complete side (buy or sell: qty and price)'));
+    return;
+  }
+  // a round trip is stored as two trades; the buy gets the smaller id so it sorts first on the same day.
+  // Commission goes on the sell leg when there is one (the lot engine only nets the closing trade's fee).
+  const stamp = Date.now();
+  if(hasBuy) trades.push({id:'t'+stamp+'a', sym:symbol, side:'BUY', qty:buyQty, price:buyPrice, comm: hasSell ? 0 : comm, date});
+  if(hasSell){
+    const sell = {id:'t'+stamp+'b', sym:symbol, side:'SELL', qty:sellQty, price:sellPrice, comm, date};
+    if(!hasBuy && targetLotId) sell.targetLotId = targetLotId;
+    trades.push(sell);
+  }
+  saveTrades();
+  for(const id of ['f-symbol','f-buy-qty','f-buy-price','f-sell-qty','f-sell-price','f-commission']) document.getElementById(id).value='';
+  document.getElementById('addTradeForm').style.display='none';
+  updateLotDropdown();
+  render();
+}
+
+function deleteTrade(id){
+  trades = trades.filter(t=>t.id!==id);
+  saveTrades();
+  render();
+}
+
+function toggleExpand(id){
+  if(expandedRows.has(id)) expandedRows.delete(id); else expandedRows.add(id);
+  render();
+}
+
+// runFIFO / runAverageCost live in lifo-engine.js (loaded above) so they can be
+// unit-tested with Node. They are exposed as globals by that file.
+
+function fmt(n, dp=2){
+  return Number(n).toLocaleString('en-US', {minimumFractionDigits:dp, maximumFractionDigits:dp});
+}
+function fmtSigned(n, dp=2){
+  return (n>=0 ? '+' : '−') + fmt(Math.abs(n), dp);
+}
+// value for an <input type=number>: 4 dp is plenty for a manual position row
+function pxv(n){ return +Number(n).toFixed(4); }
+// prices shown to 2 dp
+function pxv2(n){ return +Number(n).toFixed(2); }
+
+// deterministic monogram colour for a ticker (stable across renders)
+const TK_COLORS = ['#C0392B','#1B7A3D','#2A5B9E','#6B4CA8','#B5852A','#2F7D7A','#B03A6B','#4A5D23'];
+function tkColor(sym){
+  let h = 0;
+  for(let i=0;i<sym.length;i++) h = (h*31 + sym.charCodeAt(i)) >>> 0;
+  return TK_COLORS[h % TK_COLORS.length];
+}
+function tkMono(sym){
+  return `<span class="mono" style="background:${tkColor(sym)}">${(sym[0]||'?').toUpperCase()}</span>`;
+}
+
+function render(){
+  const {closed, openLots, warnings} = runFIFO(AT(), 'LIFO');
+
+  // summary
+  const totalReal = closed.reduce((s,c)=>{
+    if(c.buyAvgOverride!=null){
+      const matchedQty = c.matched.reduce((a,m)=>a+m.qty,0);
+      return s + (c.side==='SELL'
+        ? (c.qty*c.price - (c.comm||0)) - c.buyAvgOverride*matchedQty
+        : c.buyAvgOverride*matchedQty - (c.qty*c.price + (c.comm||0)));
+    }
+    return s + c.pnl;
+  },0);
+  // "As reported" side of the comparison: prefer the broker's own realized P&L
+  // from the imported statement (that's the number that matters for tax); fall
+  // back to LOOP's average-cost calc only for manually-entered trades.
+  const avgCostPnl = runAverageCost(AT());
+  const totalReported = closed.reduce((s,c)=> s + (c.reported != null ? c.reported : (avgCostPnl[c.id] ?? 0)), 0);
+  const fromStatement = closed.some(c => c.reported != null);
+  const diff = totalReal - totalReported;
+  const summaryEl = document.getElementById('summaryCards');
+  if(trades.length === 0){
+    summaryEl.innerHTML = `
+      <div class="welcome-card">
+        <div class="wc-title">${L('欢迎使用 LOOP','Welcome to LOOP')}</div>
+        <p>${L('LOOP 把每一笔平仓交易按批次（后进先出 / LIFO）逐笔结算，并和券商的均价法数字对照——让你看清均价法藏起来的那部分盈亏。',
+                'LOOP settles every closed trade lot-by-lot (last-in-first-out) and shows it next to your broker\'s average-cost number — so you can see the P&L average cost hides.')}</p>
+        <div class="wc-actions">
+          <button class="btn-primary btn-small" onclick="openImport(); const c=document.getElementById('importCard'); if(c) c.scrollIntoView({behavior:'smooth',block:'center'});">${L('导入对账单','Import statement')}</button>
+          <button class="btn-ghost btn-small" onclick="openAddTrade()">${L('手动添加一笔','Add a trade')}</button>
+        </div>
+        <div class="wc-sub">${L('随便看看？','Just exploring? ')}<a onclick="loadDemoData()">${L('加载示例数据','load demo data')}</a> · <a onclick="openWelcome()">${L('它是怎么用的','how it works')}</a></div>
+      </div>`;
+  } else {
+  summaryEl.innerHTML = `
+    <div class="stat">
+      <div class="label">${L('真实盈亏 (LIFO)','Real P&L (LIFO)')}</div>
+      <div class="value ${totalReal>=0?'gain':'loss'}">$${fmtSigned(totalReal)}<span class="cad-sub">C$${fmtSigned(totalReal*fx)}</span></div>
+      <div class="note">${L('最近买入的批次先卖出','last lots in, first out')}</div>
+    </div>
+    <div class="stat">
+      <div class="label">${fromStatement ? L('对账单已实现盈亏','As reported by broker') : L('均价法盈亏 (自算)','Average cost (computed)')}</div>
+      <div class="value ${totalReported>=0?'gain':'loss'}">$${fmtSigned(totalReported)}<span class="cad-sub">C$${fmtSigned(totalReported*fx)}</span></div>
+      <div class="note">${fromStatement
+        ? L('直接取自导入的对账单（券商成本口径，加拿大账户通常是均价法）','straight from your imported statement (broker cost method — usually average cost for CAD accounts)')
+        : L('LOOP 按均价法自算，跟 LIFO 同一份记录','LOOP\'s average-cost calc, same trades as LIFO')}</div>
+    </div>
+    <div class="stat">
+      <div class="label">${L('两者差额','Difference')}</div>
+      <div class="value ${diff>=0?'gain':'loss'}">$${fmtSigned(diff)}<span class="cad-sub">C$${fmtSigned(diff*fx)}</span></div>
+      <div class="note">${fromStatement
+        ? L('正数 = LIFO 逐批结算比对账单口径更高','positive = lot-matched LIFO comes out higher than the statement')
+        : L('正数 = 均价法低估了 LIFO 口径的收益','positive = average cost understates the lot-matched gain')}</div>
+    </div>
+  `;
+  }
+
+  const demoBox = document.getElementById('demoBox');
+  if(demoBox){
+    if(isDemoMode()){
+      demoBox.classList.add('show');
+      demoBox.innerHTML = `${L('你正在看的是示例数据。','You\'re viewing demo data. ')}<a onclick="exitDemo()"><b>${L('清空，从头开始','clear it and start fresh')}</b></a>`;
+    } else {
+      demoBox.classList.remove('show');
+    }
+  }
+
+  // on the empty welcome screen, hide chrome the welcome card already covers
+  const blank = trades.length === 0;
+  const la = document.getElementById('ledgerActions'); if(la) la.style.display = blank ? 'none' : '';
+  const eb = document.getElementById('btnExportBackup'); if(eb) eb.hidden = blank;
+  const cb = document.getElementById('btnClearData'); if(cb) cb.hidden = blank;
+
+  // warnings
+  const warnBox = document.getElementById('warnBox');
+  if(warnings.length){
+    warnBox.classList.add('show');
+    warnBox.innerHTML = L('<b>注意：</b>以下代码在追踪窗口开始前就已经持有，成本基准未知，已按卖出当时价格估算 — ',
+                          '<b>Note:</b> these tickers were held before the tracking window; cost basis unknown, estimated at the sell price — ') +
+      warnings.map(w=>`<b>${w.sym}</b> ${fmt(w.qty,0)}${L('股',' sh')}`).join(L('，',', ')) +
+      L('。如果你知道真实买入价，可以在下面补一笔对应的历史买入来修正。',
+        '. Add the matching historical buy below to correct it.');
+  } else {
+    warnBox.classList.remove('show');
+  }
+
+  // ledger
+  document.getElementById('closedCount').textContent = closed.length + L(' 笔',' rows');
+  const ledger = document.getElementById('ledgerTable');
+  if(closed.length===0){
+    ledger.innerHTML = `<div class="empty">${L('还没有已平仓的交易','No closed trades yet')}</div>`;
+  } else {
+    let html = `<div class="row head">
+      <div>${L('日期','Date')}</div><div>${L('代码','Symbol')}</div><div>${L('买入 数量@均价','Buy qty@avg')}</div><div>${L('卖出 数量@均价','Sell qty@avg')}</div>
+      <div style="text-align:right;">${L('真实盈亏 (LIFO)','Realized (LIFO)')}</div><div></div>
+    </div>`;
+    for(const c of closed){
+      const matchedQty = c.matched.reduce((s,m)=>s+m.qty,0);
+      const costBasis = c.matched.reduce((s,m)=>s+m.qty*m.unitCost,0);
+      const computedBuyAvg = matchedQty > 0 ? costBasis/matchedQty : 0;
+      const hasOverride = c.buyAvgOverride!=null;
+      const buyAvg = hasOverride ? c.buyAvgOverride : computedBuyAvg;
+      const displayPnl = hasOverride
+        ? (c.side==='SELL' ? (c.qty*c.price - (c.comm||0)) - buyAvg*matchedQty : buyAvg*matchedQty - (c.qty*c.price + (c.comm||0)))
+        : c.pnl;
+      const expanded = expandedRows.has(c.id);
+      const editableDate = String(c.date).slice(0,10);
+
+      // Same structure for every row: left = opening side (matched-lot avg × qty),
+      // right = the trade itself (qty @ price). For a short cover the "opening"
+      // lots are the short entry; only the marker after the symbol differs.
+      const overrideTitle = L('手动改这个会覆盖自动配对算出来的均价','override the auto-matched average');
+      const leftBlock = `<div class="qtyprice buyavg-edit">
+             <span class="expand-toggle" onclick="toggleExpand('${c.id}')">${fmt(matchedQty,0)}</span>
+             <span>@</span>
+             <input type="number" step="any" class="row-edit price-edit ${hasOverride?'overridden':''}" value="${pxv2(buyAvg)}" onchange="updateTrade('${c.id}','buyAvgOverride',this.value)" title="${overrideTitle}">
+           </div>`;
+      const rightBlock = `<div class="qtyprice sell-edit">
+             <input type="number" step="any" class="row-edit qty-edit" value="${c.qty}" onchange="updateTrade('${c.id}','qty',this.value)">
+             <span>@</span>
+             <input type="number" step="any" class="row-edit price-edit" value="${c.price}" onchange="updateTrade('${c.id}','price',this.value)">
+           </div>`;
+
+      html += `<div class="row">
+        <input type="date" class="row-edit" value="${editableDate}" onchange="updateTrade('${c.id}','date',this.value)">
+        <div class="tk">${tkMono(c.sym)}<input type="text" class="row-edit sym-edit" value="${c.sym}" onchange="updateTrade('${c.id}','sym',this.value)"></div>
+        ${leftBlock}
+        ${rightBlock}
+        <div class="pnl-wrap">
+          ${c.isCover?`<span class="short-badge" title="${L('空头回补','short cover')}">s</span>`:''}
+          <div class="pnl ${displayPnl>=0?'gain':'loss'}">${fmtSigned(displayPnl)}</div>
+        </div>
+        <div class="del" onclick="deleteTrade('${c.id}')">✕</div>
+      </div>`;
+      html += `<div class="matched-detail ${expanded?'show':''}">
+        ${hasOverride ? `<div class="lot" style="color:var(--gold);">${L('已手动改成','overridden to')} @${fmt(buyAvg)} · <span class="expand-toggle" onclick="updateTrade('${c.id}','buyAvgOverride','')">${L('恢复自动配对','revert to auto')}</span></div>` : ''}
+        ${c.isCover ? L('空头开仓批次：','Short entry lots: ') : L('配对批次：','Matched lots: ')}${c.matched.map(m=>`<div class="lot ${m.estimated?'est':''}">${m.wasShort?L('回补空头 ','cover short '):''}${fmt(m.qty,0)}${L(' 股',' sh')} @ ${fmt(m.unitCost)}${m.estimated?L(' — 估算',' — est.'):''}</div>`).join('')}
+      </div>`;
+    }
+    ledger.innerHTML = html;
+  }
+
+  renderReconciliation();
+
+  // keep the positions tab in sync with trade changes
+  if(document.getElementById('positionsList')) renderPositions();
+  if(document.getElementById('weeklyChart')) renderReport();
+}
+
+function initImportUI(){
+  const drop = document.getElementById('importDrop');
+  const file = document.getElementById('importFile');
+  if(!drop || !file) return;
+  drop.addEventListener('click', ()=> file.click());
+  file.addEventListener('change', ()=>{
+    const f = file.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=> handleCsvText(String(r.result));
+    r.readAsText(f);
+    file.value = '';
+  });
+  ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{
+    e.preventDefault(); drop.classList.add('drag');
+  }));
+  ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{
+    e.preventDefault(); drop.classList.remove('drag');
+  }));
+  drop.addEventListener('drop', e=>{
+    const f = e.dataTransfer.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=> handleCsvText(String(r.result));
+    r.readAsText(f);
+  });
+
+  const backup = document.getElementById('backupFile');
+  if(backup) backup.addEventListener('change', ()=>{
+    const f = backup.files[0];
+    if(f) importBackup(f);
+    backup.value = '';
+  });
+}
+
+initImportUI();
+loadAll();
+</script>
+</body>
+</html>
