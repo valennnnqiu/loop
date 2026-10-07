@@ -47,6 +47,21 @@ own Anthropic API key, which is stored **in plain text in this browser's
 localStorage**. Do not enable this on a shared or public computer. With the switch
 off, no request is ever made.
 
+## Stock pages need a data pack / 个股页的数据包
+
+Today, plans, positions, calendar and the P&L views work from your trades alone. The **Stock** page,
+the AI-chain radar, the momentum board and Compare need daily price bars, which a browser page can't fetch
+by itself. Generate them once (Node 18+), then import the file via Settings → Data pack:
+
+```bash
+node tools/make-pack.js                          # default AI-chain universe + SPY/QQQ/SMH
+node tools/make-pack.js NVDA MU AVGO             # just these
+node tools/make-pack.js --from loop-backup.json  # everything you traded / held / watched / planned
+```
+
+Bars come from Yahoo Finance's public chart endpoint (unofficial, no key). Option walls and a macro
+calendar are not included; those sections simply stay hidden. Re-run it whenever you want fresh data.
+
 ## Development / 开发
 
 The matching engine is split out for testing:
@@ -56,8 +71,9 @@ lifo-engine.js        pure LIFO / average-cost core (browser global + Node modul
 lifo-engine.test.js   node --test
 ibkr-import.js         IBKR Activity Statement CSV parser
 news-watch.js          keyword filter for the market-news "watch out" panel
-news-watch.test.js     node --test
-index.html             the app (loads the .js files)
+loop2.js               Today / trade plans / risk / stock page / radar / momentum / compare
+tools/make-pack.js     builds loop-data.json (daily bars from Yahoo) for the stock pages
+index.html             the app shell + core logic (loads the .js files)
 ```
 
 ```bash
@@ -73,5 +89,7 @@ node ibkr-import.js path/to/statement.csv   # dry-run the CSV parser
 No backend, no analytics. Network calls are limited to: Google Fonts (styling);
 *only if you turn on AI review*, the Anthropic API; and *only if you use a
 Finnhub key* (`finnhub.io`, your own free key): Refresh prices and the weekly calendar sync send ticker symbols
-only, and with a key saved LOOP also fetches general market headlines on page load (nothing personal is sent).
+only, and with a key saved LOOP also fetches market headlines on page load and, when you open a stock,
+that symbol's news / earnings / insider data (nothing personal is sent). `tools/make-pack.js` is a separate
+command-line tool that talks to Yahoo Finance; the app itself never does.
 Your trades never leave your machine.

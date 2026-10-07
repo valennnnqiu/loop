@@ -15,5 +15,9 @@ _testdata.json
 # 本地开发服务器配置（各人环境不同）
 .claude/launch.json
 
+# generated market-data pack
+loop-data*.json
+_pack_test.json
+
 # OS
 .DS_Store
