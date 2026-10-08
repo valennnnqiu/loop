@@ -1838,6 +1838,11 @@
   /* trades on big-move days: the verdict is a tag, not a ✓ / ✕ */
   .ab-res{ display:flex; align-items:center; justify-content:flex-end; gap:10px; white-space:nowrap; }
   .ab-res .tag{ min-width:84px; font-style:normal; }
+
+  /* trade ledger: no letter avatars; the sector sits under the symbol as plain grey text */
+  .tk-col{ display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
+  .tk-col .sym-edit{ line-height:18px; }
+  .tk-sec{ font-size:11.5px; line-height:15px; color:var(--text-dim); padding-left:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
 </style>
 </head>
 <body>
@@ -4148,10 +4153,6 @@ function tkColor(sym){
   for(let i=0;i<sym.length;i++) h = (h*31 + sym.charCodeAt(i)) >>> 0;
   return TK_COLORS[h % TK_COLORS.length];
 }
-function tkMono(sym){
-  return `<span class="mono" style="background:${tkColor(sym)}">${(sym[0]||'?').toUpperCase()}</span>`;
-}
-
 function render(){
   const {closed, openLots, warnings} = runFIFO(AT(), 'LIFO');
 
@@ -4277,7 +4278,7 @@ function render(){
 
       html += `<div class="row">
         <input type="date" class="row-edit" value="${editableDate}" onchange="updateTrade('${c.id}','date',this.value)">
-        <div class="tk">${tkMono(c.sym)}<input type="text" class="row-edit sym-edit" value="${c.sym}" onchange="updateTrade('${c.id}','sym',this.value)"></div>
+        <div class="tk"><div class="tk-col"><input type="text" class="row-edit sym-edit" value="${c.sym}" onchange="updateTrade('${c.id}','sym',this.value)"><span class="tk-sec">${typeof sectorOf === 'function' ? esc(secName(sectorOf(c.sym))) : ''}</span></div></div>
         ${leftBlock}
         ${rightBlock}
         <div class="pnl-wrap">
@@ -6838,7 +6839,7 @@ function renderEventReview(){
   const groups = {}; ev.forEach(x => (groups[x.k] = groups[x.k] || []).push(x));
   const avg = a => a.length ? a.reduce((s,v) => s + v, 0) / a.length : null;
   el.innerHTML = `<div class="sec-head"><span class="badge">🔍</span><h2>${L('大涨大跌那天的买卖','Trades on big-move days')}</h2></div>
-    ${ab.length ? `<div class="sk-block"><div class="sk-bh">${L('在异常日（大涨大跌那天）的买卖','Trades on abnormal days')}</div>
+    ${ab.length ? `<div class="sk-block">
       <div class="ab-list">${ab.slice(0, 12).map(x => `<div class="ab-row rv">
         <span class="ab-d">${md(x.t.date)}</span><a class="lnk" onclick="openStock('${x.t.sym}')"><b>${x.t.sym}</b></a>
         <span class="ab-c ${x.chg > 0 ? 'gain-t' : 'loss-t'}">${L('当天','day')} ${sg(x.chg)}</span>

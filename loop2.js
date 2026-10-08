@@ -2497,7 +2497,7 @@ function renderEventReview(){
   const groups = {}; ev.forEach(x => (groups[x.k] = groups[x.k] || []).push(x));
   const avg = a => a.length ? a.reduce((s,v) => s + v, 0) / a.length : null;
   el.innerHTML = `<div class="sec-head"><span class="badge">🔍</span><h2>${L('大涨大跌那天的买卖','Trades on big-move days')}</h2></div>
-    ${ab.length ? `<div class="sk-block"><div class="sk-bh">${L('在异常日（大涨大跌那天）的买卖','Trades on abnormal days')}</div>
+    ${ab.length ? `<div class="sk-block">
       <div class="ab-list">${ab.slice(0, 12).map(x => `<div class="ab-row rv">
         <span class="ab-d">${md(x.t.date)}</span><a class="lnk" onclick="openStock('${x.t.sym}')"><b>${x.t.sym}</b></a>
         <span class="ab-c ${x.chg > 0 ? 'gain-t' : 'loss-t'}">${L('当天','day')} ${sg(x.chg)}</span>
