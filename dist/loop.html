@@ -1209,7 +1209,7 @@
   .rd-tbl td.num{ font-family:var(--mono); white-space:nowrap; }
   .rd-tbl td.num span{ display:block; font-size:11px; }
   .rd-sym{ display:block; font-size:13.5px; line-height:18px; } .rd-sec{ display:block; font-size:11.5px; line-height:16px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .rd-tags{ font-size:12px; line-height:17px; color:var(--text-dim); display:flex; flex-direction:column; } .rd-tags div{ display:flex; gap:6px; min-width:0; } .rd-tags span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; } .rd-tags .more{ flex:none; opacity:.7; border-bottom:1px dotted var(--text-dim); line-height:15px; }
+  .rd-tags{ font-size:12px; line-height:17px; color:var(--text-dim); display:flex; flex-wrap:wrap; gap:0 16px; } .rd-tags span{ white-space:nowrap; }
   .rd-tbl tr.hl-zone td:first-child{ box-shadow:inset 3px 0 0 var(--gain); } .rd-tbl tr.hl-zone td{ background:#F1F9F4; }
   .rd-tbl tr.hl-er td:first-child{ box-shadow:inset 3px 0 0 #D89A2B; }
   .rd-tbl tr.hl-weak .rd-sym{ color:var(--loss); }
@@ -6499,17 +6499,15 @@ function renderRadar(){
     : r.role === 'plan' ? `<span class="my plan">◐ ${esc(planCalc(r.plan, holdingsNow()).label || '')}</span>`
     : r.role === 'watch' ? `<span class="my watch">☆</span>` : `<a class="my none" aria-label="${L('加入观察','watch it')}" onclick="event.stopPropagation(); addWatchSym('${r.sym}')">—</a>`;
   // flags as plain grey text separated by dots (no coloured pills); hover for detail
+  // most important first: insider selling, unusual option flow, leveraged, then the preset's reasons and risks; only the top 4 are shown
   const tagList = r => [
-    r.flow != null && r.flow >= 2 ? `${L('期权异动','Option flow')} ${fmt(r.flow,1)}×` : '',
     r.insAlert ? L('内部人','Insider') : '',
+    r.flow != null && r.flow >= 2 ? `${L('期权异动','Option flow')} ${fmt(r.flow,1)}×` : '',
     isLev(r.sym) ? L('杠杆','Leveraged') : '',
     ...(r.why || []).map(w => capEn(w)),
     ...(r.risk || []).map(w => capEn(w))
   ].filter(Boolean);
-  // flags as plain grey text, one per line (max 2; the rest sit behind "+N", hover lists them all)
-  const tags = r => { const t = tagList(r); if(!t.length) return '';
-    const more = t.length > 2 ? ` <span class="more" data-tip="${esc(t.slice(2).join('\n'))}">+${t.length - 2}</span>` : '';
-    return t.slice(0, 2).map((x, i) => `<div><span>${esc(x)}</span>${i === 1 ? more : ''}</div>`).join(''); };
+  const tags = r => tagList(r).slice(0, 4).map(x => `<span>${esc(x)}</span>`).join('');
   const anyTags = rows.some(r => tags(r) !== '');   // the Tags column only exists when something has a tag
   const rowHtml = r => { const I = r.I; const cls = [r.inZone ? 'hl-zone' : '', r.erD != null && r.erD <= 7 ? 'hl-er' : '', I && I.vsMa50 < 0 ? 'hl-weak' : '', st.open === r.sym ? 'open' : ''].join(' ');
     return `<tr class="${cls}" onclick="openStock('${r.sym}')">

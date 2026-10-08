@@ -2162,17 +2162,15 @@ function renderRadar(){
     : r.role === 'plan' ? `<span class="my plan">◐ ${esc(planCalc(r.plan, holdingsNow()).label || '')}</span>`
     : r.role === 'watch' ? `<span class="my watch">☆</span>` : `<a class="my none" aria-label="${L('加入观察','watch it')}" onclick="event.stopPropagation(); addWatchSym('${r.sym}')">—</a>`;
   // flags as plain grey text separated by dots (no coloured pills); hover for detail
+  // most important first: insider selling, unusual option flow, leveraged, then the preset's reasons and risks; only the top 4 are shown
   const tagList = r => [
-    r.flow != null && r.flow >= 2 ? `${L('期权异动','Option flow')} ${fmt(r.flow,1)}×` : '',
     r.insAlert ? L('内部人','Insider') : '',
+    r.flow != null && r.flow >= 2 ? `${L('期权异动','Option flow')} ${fmt(r.flow,1)}×` : '',
     isLev(r.sym) ? L('杠杆','Leveraged') : '',
     ...(r.why || []).map(w => capEn(w)),
     ...(r.risk || []).map(w => capEn(w))
   ].filter(Boolean);
-  // flags as plain grey text, one per line (max 2; the rest sit behind "+N", hover lists them all)
-  const tags = r => { const t = tagList(r); if(!t.length) return '';
-    const more = t.length > 2 ? ` <span class="more" data-tip="${esc(t.slice(2).join('\n'))}">+${t.length - 2}</span>` : '';
-    return t.slice(0, 2).map((x, i) => `<div><span>${esc(x)}</span>${i === 1 ? more : ''}</div>`).join(''); };
+  const tags = r => tagList(r).slice(0, 4).map(x => `<span>${esc(x)}</span>`).join('');
   const anyTags = rows.some(r => tags(r) !== '');   // the Tags column only exists when something has a tag
   const rowHtml = r => { const I = r.I; const cls = [r.inZone ? 'hl-zone' : '', r.erD != null && r.erD <= 7 ? 'hl-er' : '', I && I.vsMa50 < 0 ? 'hl-weak' : '', st.open === r.sym ? 'open' : ''].join(' ');
     return `<tr class="${cls}" onclick="openStock('${r.sym}')">
