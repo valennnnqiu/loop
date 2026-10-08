@@ -1869,6 +1869,21 @@
     body.nav-collapsed header.top .side-import::before{ content:'+'; font-size:18px; font-weight:500; }
     body.nav-collapsed header.top .head-right{ flex-direction:column; align-items:center; gap:8px; padding:14px 0 0; }
   }
+
+  /* collapsed rail: one column, every item the same 40px rounded square on the same axis; the panel icon takes the logo's place */
+  @media (min-width:900px){
+    .nav-toggle{ width:32px; height:32px; border-radius:8px; }
+    .nav-toggle:hover{ background:var(--panel-2); }
+    body.nav-collapsed .nav-toggle{ transform:none; width:40px; height:40px; border-radius:10px; margin:0; background:var(--panel-2); color:var(--text); }
+    body.nav-collapsed .nav-toggle svg.i{ width:18px; height:18px; }
+    body.nav-collapsed header.top .brand-logo{ display:none; }
+    body.nav-collapsed header.top .brand{ padding:0 0 18px; gap:0; }
+    body.nav-collapsed header.top .tabs{ align-items:center; gap:4px; }
+    body.nav-collapsed header.top .tab-btn{ width:40px; height:40px; padding:0; border-radius:10px; }
+    body.nav-collapsed header.top .side-import{ width:40px; height:40px; border-radius:10px; margin:0 0 14px; }
+    body.nav-collapsed header.top .head-right{ padding:14px 0 0; align-items:center; }
+    body.nav-collapsed .head-right .lang-toggle{ width:40px; height:40px; border-radius:10px; }
+  }
 </style>
 </head>
 <body>
@@ -1878,7 +1893,7 @@
     <div class="brand">
       <span class="brand-logo">♾️</span>
       <h1>LOOP</h1>
-      <button type="button" class="nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="Collapse menu"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button type="button" class="nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="Collapse menu"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
     </div>
   <nav class="tabs">
       <button class="tab-btn active" data-tab="today" onclick="switchTab('today')">
