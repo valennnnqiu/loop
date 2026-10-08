@@ -1704,7 +1704,7 @@ function ladderHtml(sym, all){
 function ladderPlanBtn(sym){
   const lv = levelsFor(sym, Math.max(120, stockDays)), p = lastPx(sym); if(!lv.length || p == null) return '';
   const sup = lv.filter(l => l.hi < p).sort((a,b) => b.mid - a.mid); const S1 = sup.find(l => l.score >= 2) || sup[0];
-  return S1 ? `<button class="btn-ghost btn-small" onclick="planFromLevel('${sym}', ${lv.indexOf(S1)})">${L('设提醒','Set alert')}</button>` : '';
+  return S1 ? `<button class="btn-ghost btn-small" onclick="planFromLevel('${sym}', ${lv.indexOf(S1)})">${L('设计划','Set plan')}</button>` : '';
 }
 
 function optionsHtml(sym){
@@ -1884,7 +1884,7 @@ function renderStock(){
       <div class="sk-title"><div class="sk-l1"><b class="sk-sym">${sym}</b><div class="sk-px"><b>${p != null ? '$' + fmt(p) : '—'}</b>${chg != null ? `<span class="${chg >= 0 ? 'gain-t' : 'loss-t'}">${sg(chg)}</span>` : ''}</div></div>
         <span class="sk-sec-tag">${esc(secName(sectorOf(sym)))}${isLev(sym) ? ` · ${L('杠杆 ETF','Leveraged')}` : ''}</span></div>
       <div class="sk-acts">
-        ${!plan ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${sym}'})">${L('设提醒','Set alert')}</button>` : ''}
+        ${!plan ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${sym}'})">${L('设计划','Set plan')}</button>` : ''}
         ${!watchlist.some(w => w.sym === sym) && !h && !plan ? `<button class="btn-ghost btn-small" onclick="addWatchSym('${sym}')">☆ ${L('观察','Watch')}</button>` : ''}
         ${liveOn() ? `<button class="btn-ghost btn-small" aria-label="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">${L('刷新','Refresh')}</button>` : ''}
       </div>
@@ -2173,7 +2173,7 @@ function radarCard(r){
     <div class="rd-cb"><div>${I ? statusLine(r.sym) : L('还没有 K 线数据','no bars yet')}</div>
       ${nl ? `<div class="muted sm">${nl.sup[0] ? L(`支撑 ${px(nl.sup[0].lo)}–${px(nl.sup[0].hi)} ${dots(nl.sup[0].score)}`, `support ${px(nl.sup[0].lo)}–${px(nl.sup[0].hi)} ${dots(nl.sup[0].score)}`) : ''}${nl.res[0] ? ' · ' + L(`压力 ${px(nl.res[0].lo)}–${px(nl.res[0].hi)} ${dots(nl.res[0].score)}`, `resistance ${px(nl.res[0].lo)}–${px(nl.res[0].hi)} ${dots(nl.res[0].score)}`) : ''}${m ? ` · ${L('动能','momentum')} <span class="mo-badge ${m.grade}">${gradeTxt(m.grade)} ${m.score}</span>` : ''}</div>` : ''}
       ${r.insAlert ? `<div class="dot-warn sm">${r.insAlert.map(a => a.t).join('；')}</div>` : ''}</div>
-    <div class="rd-ca"><button class="btn-ghost btn-small" onclick="openStock('${r.sym}')">${L('个股页','Open')} →</button>${!r.plan ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${r.sym}'})">${L('设提醒','Set alert')}</button>` : ''}${r.role === 'none' ? `<button class="btn-ghost btn-small" onclick="radarDel('${r.sym}')">${L('从雷达移除','remove')}</button>` : ''}</div></div>`;
+    <div class="rd-ca"><button class="btn-ghost btn-small" onclick="openStock('${r.sym}')">${L('个股页','Open')} →</button>${!r.plan ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${r.sym}'})">${L('设计划','Set plan')}</button>` : ''}${r.role === 'none' ? `<button class="btn-ghost btn-small" onclick="radarDel('${r.sym}')">${L('从雷达移除','remove')}</button>` : ''}</div></div>`;
 }
 
 /* ---------- same-chain compare + swap simulation ---------- */
