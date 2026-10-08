@@ -1778,6 +1778,9 @@
   .rk2-erc b{ color:var(--text); } .rk2-erc b.soon{ color:var(--loss); }
   .rk2-loss{ justify-items:end; } .rk2-loss > *{ justify-content:flex-end; }
   @media (max-width:760px){ .rk2-erc{ grid-template-rows:none; grid-auto-flow:column; justify-content:start; column-gap:8px; } }
+
+  /* reserve the scrollbar's space on every page, so content doesn't jump sideways when a page gets long enough to scroll */
+  html{ overflow-y:scroll; scrollbar-gutter:stable; }
 </style>
 </head>
 <body>
