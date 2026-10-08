@@ -221,10 +221,10 @@ function planCardHtml(p, H){
   const warns = c.warns;
   return `<div class="plan-card ${hot?'hot':''} ${alarm?'alarm':''} ${p.closedAt?'closed':''}">
     <div class="pc-head">
-      <a class="sym" onclick="openStock('${esc(p.sym)}')" title="${L('打开个股页','open stock page')}">${esc(p.sym)}</a>
-      <span class="sec-tag">${esc(secName(sectorOf(p.sym)))}</span>
-      <span class="px">${c.price != null ? '$'+fmt(c.price) : '—'}</span>
-      <span class="pill ${c.cls}">${c.label}</span>
+      <div class="pc-id">
+        <div class="pc-l1"><a class="sym" onclick="openStock('${esc(p.sym)}')" title="${L('打开个股页','open stock page')}">${esc(p.sym)}</a><span class="px">${c.price != null ? '$'+fmt(c.price) : '—'}</span></div>
+        <div class="pc-l2"><span>${esc(secName(sectorOf(p.sym)))}</span><i>·</i><span class="pc-st ${c.cls}">${c.label}</span></div>
+      </div>
       <span class="grow">
         ${p.closedAt
           ? `<button class="btn-ghost btn-small" onclick="reopenPlan('${p.id}')">${L('重新打开','Reopen')}</button><button class="btn-ghost btn-small" onclick="deletePlan('${p.id}')">${L('删除','Delete')}</button>`

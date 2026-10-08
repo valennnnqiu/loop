@@ -611,6 +611,13 @@
   .pc-head .px{ font-family:var(--mono); font-size:14px; font-weight:600; }
   .pc-head .dist{ font-family:var(--mono); font-size:11.5px; color:var(--text-dim); }
   .pc-x{ width:28px; height:28px; font-size:13px; }
+  .pc-id{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .pc-l1{ display:flex; align-items:baseline; gap:10px; }
+  .pc-l2{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim); }
+  .pc-l2 i{ font-style:normal; opacity:.6; }
+  .pc-st{ display:inline-flex; align-items:center; gap:5px; font-weight:600; }
+  .pc-st::before{ content:''; width:6px; height:6px; border-radius:999px; background:currentColor; }
+  .pc-st.zone, .pc-st.target{ color:var(--gain); } .pc-st.exec{ color:var(--gold); } .pc-st.stop{ color:var(--loss); } .pc-st.expired{ color:#8A5A10; }
   .pc-head .grow{ margin-left:auto; display:flex; gap:8px; align-items:center; }
   .ruler{ position:relative; height:58px; margin:14px 6px 4px; }
   .ruler .track{ position:absolute; left:0; right:0; top:22px; height:2px; background:var(--line-strong); border-radius:2px; }
@@ -4381,10 +4388,10 @@ function planCardHtml(p, H){
   const warns = c.warns;
   return `<div class="plan-card ${hot?'hot':''} ${alarm?'alarm':''} ${p.closedAt?'closed':''}">
     <div class="pc-head">
-      <a class="sym" onclick="openStock('${esc(p.sym)}')" title="${L('打开个股页','open stock page')}">${esc(p.sym)}</a>
-      <span class="sec-tag">${esc(secName(sectorOf(p.sym)))}</span>
-      <span class="px">${c.price != null ? '$'+fmt(c.price) : '—'}</span>
-      <span class="pill ${c.cls}">${c.label}</span>
+      <div class="pc-id">
+        <div class="pc-l1"><a class="sym" onclick="openStock('${esc(p.sym)}')" title="${L('打开个股页','open stock page')}">${esc(p.sym)}</a><span class="px">${c.price != null ? '$'+fmt(c.price) : '—'}</span></div>
+        <div class="pc-l2"><span>${esc(secName(sectorOf(p.sym)))}</span><i>·</i><span class="pc-st ${c.cls}">${c.label}</span></div>
+      </div>
       <span class="grow">
         ${p.closedAt
           ? `<button class="btn-ghost btn-small" onclick="reopenPlan('${p.id}')">${L('重新打开','Reopen')}</button><button class="btn-ghost btn-small" onclick="deletePlan('${p.id}')">${L('删除','Delete')}</button>`
