@@ -1977,6 +1977,11 @@
   /* shares added outside the plan: plain text, nothing to click */
   .pc-fills{ gap:8px; font-size:12px; }
   .pc-fills b{ font-family:var(--mono); font-weight:600; }
+
+  /* empty Review page: one line and one button */
+  .import-empty{ padding:14px 20px; text-align:left; }
+  .review-empty .import-empty{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .import-empty .ie-t{ font-size:14px; font-weight:600; }
 </style>
 </head>
 <body>
@@ -2211,7 +2216,6 @@
 
     <div class="import-empty" id="importEmpty">
       <div class="ie-t" data-i18n="importEmptyT">还没有交易记录</div>
-      <div class="ie-s" data-i18n="importEmptyS">导入 IBKR 对账单后，持仓和盈亏会自动算出来。</div>
       <button type="button" class="btn-ghost" onclick="importStatement()" data-i18n="sideImport">+ 导入对账单</button>
     </div>
 
