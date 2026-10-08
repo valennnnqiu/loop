@@ -1982,6 +1982,14 @@
   .import-empty{ padding:14px 20px; text-align:left; }
   .review-empty .import-empty{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .import-empty .ie-t{ font-size:14px; font-weight:600; }
+
+  /* every empty state: one slim card — a line on the left, button(s) on the right */
+  .empty-card{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 20px; margin-bottom:14px; }
+  .import-empty{ display:none; }
+  .review-empty .import-empty{ display:flex; }
+  .empty-card .ec-t{ font-size:14px; font-weight:600; display:flex; align-items:baseline; gap:10px; }
+  .empty-card .ec-lead{ font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text-dim); }
+  .empty-card .ec-b{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 </style>
 </head>
 <body>
@@ -2214,10 +2222,7 @@
 
     <div id="sub-trades" class="sub-panel">
 
-    <div class="import-empty" id="importEmpty">
-      <div class="ie-t" data-i18n="importEmptyT">还没有交易记录</div>
-      <button type="button" class="btn-ghost" onclick="importStatement()" data-i18n="sideImport">+ 导入对账单</button>
-    </div>
+    <div class="empty-card import-empty" id="importEmpty"><div class="ec-t" data-i18n="importEmptyT">还没有交易记录</div><div class="ec-b"><button type="button" class="btn-ghost btn-small" onclick="importStatement()" data-i18n="sideImport">+ 导入对账单</button></div></div>
 
     <div class="warn" id="demoBox"></div>
     <div class="warn" id="warnBox"></div>

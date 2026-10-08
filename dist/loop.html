@@ -1982,6 +1982,14 @@
   .import-empty{ padding:14px 20px; text-align:left; }
   .review-empty .import-empty{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .import-empty .ie-t{ font-size:14px; font-weight:600; }
+
+  /* every empty state: one slim card — a line on the left, button(s) on the right */
+  .empty-card{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 20px; margin-bottom:14px; }
+  .import-empty{ display:none; }
+  .review-empty .import-empty{ display:flex; }
+  .empty-card .ec-t{ font-size:14px; font-weight:600; display:flex; align-items:baseline; gap:10px; }
+  .empty-card .ec-lead{ font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text-dim); }
+  .empty-card .ec-b{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 </style>
 </head>
 <body>
@@ -2214,10 +2222,7 @@
 
     <div id="sub-trades" class="sub-panel">
 
-    <div class="import-empty" id="importEmpty">
-      <div class="ie-t" data-i18n="importEmptyT">还没有交易记录</div>
-      <button type="button" class="btn-ghost" onclick="importStatement()" data-i18n="sideImport">+ 导入对账单</button>
-    </div>
+    <div class="empty-card import-empty" id="importEmpty"><div class="ec-t" data-i18n="importEmptyT">还没有交易记录</div><div class="ec-b"><button type="button" class="btn-ghost btn-small" onclick="importStatement()" data-i18n="sideImport">+ 导入对账单</button></div></div>
 
     <div class="warn" id="demoBox"></div>
     <div class="warn" id="warnBox"></div>
@@ -4979,11 +4984,7 @@ function renderPlans(){
     </div>
     ${planFormOpen && !planEditId ? planFormHtml() : ''}
     ${act.length ? `<div class="plan-list">${act.map(p => planFormOpen && planEditId === p.id ? planFormHtml() : planCardHtml(p, H)).join('')}</div>`
-      : (planFormOpen ? '' : stepsCard(L('建第一个交易计划','Create your first trade plan'), [
-          L(`选一只想买的票，定一个<b>${term('zone')}</b>：通常是最近的支撑区。`, `Pick a stock and set a <b>${term('zone')}</b> — usually the nearest support.`),
-          L(`定<b>${term('stop')}</b>（跌破就说明看错了）和<b>目标</b>。`, `Set a <b>${term('stop')}</b> (where you are wrong) and a <b>target</b>.`),
-          L(`看<b>${term('rr')}</b>和建议股数，满意了再保存。只保存计划，不会下单。`, `Check <b>${term('rr')}</b> and the suggested size, then save. Saving never places an order.`),
-        ], `<button class="btn-ghost btn-small" onclick="openPlanForm()">${L('+ 添加','+ Add')}</button>${!hasRisk() ? `<button class="btn-ghost btn-small" onclick="openSettings()">${L('先设每笔风险','Set risk per trade first')}</button>` : ''}`))}
+      : (planFormOpen ? '' : emptyCard(L('还没有交易计划','No trade plans yet'), ecBtn(L('+ 添加','+ Add'), 'openPlanForm()')))}
     ${closed.length ? `<details class="fold closed-list"><summary>${L('已结束的计划','Closed plans')} · ${closed.length}</summary><div class="plan-list" style="margin-top:8px;">${closed.map(p => planCardHtml(p, H)).join('')}</div></details>` : ''}
   `;
   if(planFormOpen){
@@ -5055,11 +5056,7 @@ function renderRisk(){
   if(!top || !sec) return;
   const M = riskModel();
   if(!M.rows.length){
-    top.innerHTML = stepsCard(L('还没有持仓','No positions yet'), [
-      L('到「复盘 → 交易明细」导入 IBKR 对账单，持仓会自动算出来。也可以点上面的「+ 添加」手动加。','Import an IBKR statement under Review → Trades and positions are computed for you. Or add one by hand with "+ Add" above.'),
-      L(`给每只票填<b>${term('stop')}</b>，看全部打到止损价一共会亏多少。`, `Give each holding a <b>${term('stop')}</b> to see the total loss if every stop is hit.`),
-      L('在设置里填单票和板块上限，超了才会提醒你。','Set single-stock and sector limits in Settings — you are only warned when one is exceeded.'),
-    ], `<button class="btn-ghost btn-small" onclick="importStatement()">${L('+ 添加','+ Add')}</button>`);
+    top.innerHTML = emptyCard(L('还没有持仓','No positions yet'), ecBtn(L('+ 导入对账单','+ Import statement'), 'importStatement()'));
     sec.innerHTML = ''; return;
   }
   const big = M.rows[0];
@@ -5239,7 +5236,7 @@ function renderToday(){
     : `<div class="t-list"><div class="t-done"><b>${L('今天没有需要处理的事','Nothing needs you today')}</b>${L('计划都没到价位，持仓没超上限，近期没有财报和重要宏观事件。','No plan is at its levels, no limit is breached, no earnings or major macro ahead.')}</div></div>`);
   const ob = onboardHtml();
   const bare = ob && !trades.length && !plans.length;
-  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}<button type="button" class="btn-ghost btn-small today-import" onclick="importStatement()">${L('+ 导入对账单','+ Import statement')}</button></div>${ob}${bare ? '' : stats + body}`;
+  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}${ob ? '' : `<button type="button" class="btn-ghost btn-small today-import" onclick="importStatement()">${L('+ 导入对账单','+ Import statement')}</button>`}</div>${ob}${bare ? '' : stats + body}`;
 }
 
 // ---------- review: plan reconciliation ----------
@@ -5405,17 +5402,19 @@ function pageHelp(key){
   return `<span class="phelp"><span class="f-tip" tabindex="0" data-tip="${esc(tip)}">i</span></span>`;
 }
 
-function stepsCard(title, steps, actions){
-  return `<div class="steps-card"><div class="sc-t">${title}</div>
-    <ol>${steps.map(s => `<li><span>${s}</span></li>`).join('')}</ol>
-    ${actions ? `<div class="sc-a">${actions}</div>` : ''}</div>`;
+// every empty state in the app: one slim card, a single line on the left, the action button(s) on the right
+function emptyCard(title, buttons, lead){
+  return `<div class="empty-card"><div class="ec-t">${lead ? `<span class="ec-lead">${lead}</span>` : ''}${title}</div><div class="ec-b">${buttons || ''}</div></div>`;
 }
+const ecBtn = (label, js) => `<button type="button" class="btn-ghost btn-small" onclick="${js}">${label}</button>`;
+function openKeySetting(){ openSettings(); setTimeout(() => { const e = document.getElementById('st-td'); if(e) e.focus(); }, 80); }
+const NEED_KEY = () => emptyCard(L('填 Twelve Data key 才能加载行情','Add a Twelve Data key to load prices'), ecBtn(L('填写 key','Add key'), 'openKeySetting()'));
 
 function onboardState(){
   const realTrades = trades.filter(t => !String(t.id).startsWith('demo-'));
   return [
-    { done: realTrades.length > 0, t:L('导入 IBKR 对账单','Import an IBKR statement'), d:L('持仓和盈亏会自动算出来。','Positions and P&L are computed from it.'), go:"importStatement()", btn:L('+ 添加','+ Add') },
-    { done: hasRisk(), t:L('设置每笔风险和仓位上限','Set risk per trade and limits'), d:L('每笔最多亏多少，单票和板块最多占多少。','Max loss per trade, and max weight per stock and sector.'), go:'openSettings()', btn:L('去设置','Settings') },
+    { done: realTrades.length > 0, t:L('导入 IBKR 对账单','Import an IBKR statement'), d:L('持仓和盈亏会自动算出来。','Positions and P&L are computed from it.'), go:"importStatement()", btn:L('+ 导入对账单','+ Import statement') },
+    { done: hasRisk(), t:L('设置每笔风险和仓位上限','Set risk per trade and limits'), d:L('每笔最多亏多少，单票和板块最多占多少。','Max loss per trade, and max weight per stock and sector.'), go:'openSettings()', btn:L('打开设置','Open settings') },
     { done: plans.some(p => !String(p.id).startsWith('demo-')), t:L('建第一个交易计划','Create your first plan'), d:L('写下关注区间、止损价和目标。','Write down the zone, stop and target.'), go:"switchTab('watchlist'); openPlanForm();", btn:L('+ 添加','+ Add') },
     { done: /\S/.test(finnhubKey), optional:true, t:L('（可选）填 Finnhub key','(Optional) Add a Finnhub key'), d:L('finnhub.io 免费注册。有了它才有实时股价和财报日期；不填也能用，价格手动填。','Free at finnhub.io. Needed for live prices and earnings dates; without it, type prices in by hand.'), go:'openSettings()', btn:L('去填','Add key') },
   ];
@@ -5430,18 +5429,12 @@ function onboardHtml(){
   const cur = req.find(s => !s.done);
   const fh = st.find(s => s.optional);
   const idx = cur ? req.indexOf(cur) : req.length - 1;
-  return `<div class="ob2">
-    <div class="ob2-top">
-      <span class="ob2-kicker">${cur ? L(`第 ${idx+1} / ${req.length} 步`, `Step ${idx+1} of ${req.length}`) : L('已完成','All set')}</span>
-      <div class="ob2-seg">${req.map((s, i) => `<i class="${s.done ? 'done' : i === idx ? 'cur' : ''}"></i>`).join('')}</div>
-      <button type="button" class="icon-btn pc-x ob2-hide" aria-label="${L('隐藏','Hide')}" onclick="hideOnboard()">✕</button>
-    </div>
-    ${isDemoMode() ? `<div class="ob2-demo">${L('现在是示例数据','You are viewing demo data')} · <a class="lnk" onclick="exitDemo()">${L('清空，用自己的数据','clear it and use your own')}</a></div>` : ''}
-    ${cur ? `<div class="ob2-title">${cur.t}</div>
-      <div class="ob2-desc">${cur.d}</div>
-      <div class="ob2-cta"><button class="btn-ghost" onclick="${cur.go}">${cur.btn} →</button>
-        ${!trades.length ? `<button class="btn-ghost" onclick="loadDemoData()">${L('先看看示例数据','Try demo data first')}</button>` : ''}</div>` : ''}
-  </div>`;
+  // same card as every other empty state: "1/3 · title" on the left; demo exit, the step's button and ✕ on the right
+  const lead = `${idx + 1}/${req.length}`;
+  const btns = (isDemoMode() ? ecBtn(L('清空示例，用自己的数据','Clear demo data'), 'exitDemo()') : (!trades.length ? ecBtn(L('先看看示例数据','Try demo data'), 'loadDemoData()') : ''))
+    + (cur ? ecBtn(cur.btn, cur.go) : '')
+    + `<button type="button" class="icon-btn pc-x" aria-label="${L('隐藏','Hide')}" onclick="hideOnboard()">✕</button>`;
+  return emptyCard(cur ? cur.t : L('已完成','All set'), btns, lead);
 }
 function hideOnboard(){ cfg.onboardHidden = true; saveCfg(); renderToday(); }
 
@@ -5878,14 +5871,7 @@ function saveTdKey(v){
   if(tdKey && stockSym) ensureBars([stockSym, 'SPY'], { first:true });
   renderL3 && renderL3();
 }
-function liveSetupHtml(){
-  return stepsCard(L('个股页要联网拿 K 线','The Stock page pulls live bars'), [
-    L('到 <b>twelvedata.com</b> 免费注册（10 秒，不用信用卡），复制你的 API key。','Sign up free at <b>twelvedata.com</b> (10 seconds, no card) and copy your API key.'),
-    L('把 key 粘贴到下面。免费版每分钟 8 次请求，LOOP 会自动排队。key 只存在这个浏览器里。','Paste it below. The free plan allows 8 requests a minute; LOOP queues them for you. The key stays in this browser.'),
-  ], `<input id="tdKeyIn" class="sk-in" type="password" autocomplete="off" placeholder="${L('粘贴 Twelve Data key','Paste your Twelve Data key')}" style="max-width:240px" onkeydown="if(event.key==='Enter') saveTdKey(this.value)">
-      <button class="btn-primary btn-small" onclick="saveTdKey(document.getElementById('tdKeyIn').value)">${L('保存','Save')}</button>
-      <a class="lnk" onclick="pickPackFile()">${L('或导入离线数据包','or import an offline data pack')}</a>`);
-}
+function liveSetupHtml(){ return NEED_KEY(); }
 function liveMissingHtml(sym){
   if(live.queue.includes(sym) || (live.running && !live.err[sym])) return `<div class="sk-status">${L(`正在获取 ${sym} 的 K 线…`, `Fetching bars for ${sym}…`)}</div>`;
   const e = live.err[sym];
@@ -6552,7 +6538,7 @@ function renderStock(){
       </div>
     </div>`;
   if(!I){ el.innerHTML = stockPickerHtml() + head + (liveOn() ? liveStatusHtml() + liveMissingHtml(sym)
-      : `<div class="sk-status">${L('没有这只股票的 K 线。','No bars for this symbol.')}</div>` + liveSetupHtml()); return; }
+      : liveSetupHtml()); return; }
   const m = momentum(sym);
   const V0 = verdict(sym);
   const verdictHtml = `<div class="sk-verdict ${V0.k}"><div class="skv-t"><i></i>${V0.t}${m ? `<span class="mo-badge ${m.grade}" title="${L('1–2 周短线动能','1–2 week momentum')}">${L('短线','Short-term')} ${gradeTxt(m.grade)}</span>` : ''}</div><div class="skv-s">${V0.s}</div></div>`;
@@ -6891,7 +6877,7 @@ function renderCompare(){
   const el = document.getElementById('cmpSec'); if(!el) return;
   const head = `<div class="sec-head"><span class="badge">⚖️</span><h2>${L('两只对比','Compare two')}</h2><div class="grow"></div></div>`;
   if(liveOn()) livePack();
-  if(!pack){ el.innerHTML = head + `<div class="watch-empty">${L('填 Twelve Data key（或导入数据包）后可以对比任意两只。','Add a Twelve Data key (or import a data pack) to compare any two stocks.')}</div>`; return; }
+  if(!pack){ el.innerHTML = head + NEED_KEY(); return; }
   cmpDefaults();
   const a = cmp.a, b = cmp.b;
   if(liveOn() && document.getElementById('tab-watchlist').classList.contains('active')) ensureBars([a, b, 'SPY'], { first:true });
