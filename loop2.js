@@ -542,7 +542,7 @@ function renderReviewTop(){
   const el = document.getElementById('reviewTop'); if(!el) return;
   const cell = (label, per, goal) => { const r = periodRealized(per);
     return `<div class="pc-stat"><div class="k">${label}</div><div class="v ${r.pnl >= 0 ? 'gain-t' : 'loss-t'}">${money(r.pnl)}</div>
-      <div class="s">${goal ? `${L('目标','target')} $${fmt(goal.min,0)}${goal.max !== goal.min ? '–' + fmt(goal.max,0) : ''} · ${fmt(r.pnl / goal.min * 100, 0)}%` : L(`${r.n} 笔已平仓`, `${r.n} closed trade${r.n === 1 ? '' : 's'}`)}</div></div>`; };
+      <div class="s">${goal ? L(`完成 ${fmt(r.pnl / goal.min * 100, 0)}%`, `${fmt(r.pnl / goal.min * 100, 0)}% done`) : L(`${r.n} 笔已平仓`, `${r.n} closed trade${r.n === 1 ? '' : 's'}`)}</div></div>`; };
   el.innerHTML = `<div class="pc-stats big-stats rv-top">${cell(L('近 7 天','Last 7 days'), '7d', parseGoal(cfg.weekTarget))}${cell(L('本月','This month'), 'month', parseGoal(weeklyGoal))}${cell(L('今年','This year'), 'ytd', null)}</div>`;
 }
 
