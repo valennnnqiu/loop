@@ -4679,7 +4679,7 @@ function planPreview(){
 
 function openPlanForm(){ planFormOpen = true; planEditId = null; const ps = document.getElementById('plansSection'); if(ps) ps.querySelectorAll('.plan-form').forEach(f => f.remove()); renderPlans(); setTimeout(()=>{ const s=document.getElementById('pf-sym'); if(s) s.focus(); planPreview(); }, 0); }
 function closePlanForm(){ planFormOpen = false; planEditId = null; renderPlans(); }
-function editPlan(id){ planFormOpen = true; planEditId = id; const ps = document.getElementById('plansSection'); if(ps) ps.querySelectorAll('.plan-form').forEach(f => f.remove()); renderPlans(); planPreview(); document.getElementById('plansSection').scrollIntoView({behavior:'smooth', block:'start'}); }
+function editPlan(id){ planFormOpen = true; planEditId = id; const ps = document.getElementById('plansSection'); if(ps) ps.querySelectorAll('.plan-form').forEach(f => f.remove()); renderPlans(); planPreview(); const f = document.querySelector('#plansSection .plan-form'); if(f) f.scrollIntoView({behavior:'smooth', block:'nearest'}); }
 
 function savePlan(){
   const f = readPlanForm();
@@ -4731,8 +4731,8 @@ function renderPlans(){
         <button class="btn-ghost btn-small" onclick="openPlanForm()">${L('+ 添加','+ Add')}</button>
       </div>
     </div>
-    ${planFormOpen ? planFormHtml() : ''}
-    ${act.length ? `<div class="plan-list">${act.map(p => planCardHtml(p, H)).join('')}</div>`
+    ${planFormOpen && !planEditId ? planFormHtml() : ''}
+    ${act.length ? `<div class="plan-list">${act.map(p => planFormOpen && planEditId === p.id ? planFormHtml() : planCardHtml(p, H)).join('')}</div>`
       : (planFormOpen ? '' : stepsCard(L('建第一个交易计划','Create your first trade plan'), [
           L(`选一只想买的票，定一个<b>${term('zone')}</b>：通常是最近的支撑区。`, `Pick a stock and set a <b>${term('zone')}</b> — usually the nearest support.`),
           L(`定<b>${term('stop')}</b>（跌破就说明看错了）和<b>目标</b>。`, `Set a <b>${term('stop')}</b> (where you are wrong) and a <b>target</b>.`),
