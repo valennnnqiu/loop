@@ -165,7 +165,6 @@ function planCalc(p, H){
       const sw = secMV / totalAfter * 100;
       if(sw > cfg.maxSector) warns.push({c:'', t:L(`执行完后「${sec}」板块约占 ${fmt(sw,0)}%，超过板块上限 ${cfg.maxSector}%`, `After execution the ${secName(sec)} sector ≈ ${fmt(sw,0)}%, above the ${cfg.maxSector}% sector limit`)});
     }
-    if(riskAmt == null) warns.push({c:'info', t:L(`没设每笔风险金额，只显示每股风险 $${fmt(rps)}。在右上角「设置」里填默认值，或在这个计划里单独填。`, `No risk amount set — showing risk per share ($${fmt(rps)}) only. Set a default in Settings (top right) or on this plan.`)});
   }
   return { price, mid, riskAmt, rps, shares, trPx, trQty, rrMid, rrNow, fills, bought, state, label, cls, dist, warns };
 }
@@ -215,7 +214,7 @@ function planCardHtml(p, H){
       <div class="tr-v">${fmt(px)}${q != null ? `<span> × ${fmt(q,0)}</span>` : ''}</div></div>`;
   }).join('');
   const off = c.fills.filter(f => !f.inPlan);
-  const warns = c.warns.filter(w => w.c !== 'info'), infos = c.warns.filter(w => w.c === 'info');
+  const warns = c.warns;
   return `<div class="plan-card ${hot?'hot':''} ${alarm?'alarm':''} ${p.closedAt?'closed':''}">
     <div class="pc-head">
       <a class="sym" onclick="openStock('${esc(p.sym)}')" title="${L('打开个股页','open stock page')}">${esc(p.sym)}</a>
@@ -237,7 +236,6 @@ function planCardHtml(p, H){
     <div class="tr-steps">${steps}</div>
     ${off.length ? `<div class="pc-fills"><span class="muted">${L('计划外成交','Off-plan fills')}</span>${off.map(f => `<span class="fill-chip out" title="${L('点一下改成计划内','click to mark in-plan')}" onclick="toggleFillTag('${f.t.id}', false)">${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}</span>`).join('')}</div>` : ''}
     ${warns.length ? `<div class="pc-alert">${warns.map(w => `<div class="${w.c}">${w.t}</div>`).join('')}</div>` : ''}
-    ${infos.map(w => `<div class="pc-info">${w.t}</div>`).join('')}
     ${p.note ? `<div class="pc-note">${esc(p.note)}</div>` : ''}
   </div>`;
 }
