@@ -224,7 +224,8 @@ function planCardHtml(p, H){
       <a class="sym" onclick="openStock('${esc(p.sym)}')" title="${L('打开个股页','open stock page')}">${esc(p.sym)}</a>
       <span class="sec-tag">${esc(secName(sectorOf(p.sym)))}</span>
       <span class="px">${c.price != null ? '$'+fmt(c.price) : '—'}</span>
-      <span class="grow"><span class="pill ${c.cls}">${c.label}</span>
+      <span class="pill ${c.cls}">${c.label}</span>
+      <span class="grow">
         ${p.closedAt
           ? `<button class="btn-ghost btn-small" onclick="reopenPlan('${p.id}')">${L('重新打开','Reopen')}</button><button class="btn-ghost btn-small" onclick="deletePlan('${p.id}')">${L('删除','Delete')}</button>`
           : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button><button class="icon-btn pc-x" title="${L('结束这个计划','Close this plan')}" aria-label="${L('结束','Close')}" onclick="closePlan('${p.id}')">✕</button>`}
