@@ -264,7 +264,8 @@ function planFormHtml(){
   const r = riskSetting();
   const n = v('tranches', 3);
   return `<div class="form-card plan-form f2">
-    <div class="f2-head"><b>${p ? L(`编辑 ${p.sym} 的计划`, `Edit ${p.sym} plan`) : L('新交易计划','New trade plan')}</b><span>${L('带 * 的必须填，其余可以留默认','Fields marked * are required; the rest can stay default')}</span></div>
+    <div class="f2-head"><b>${p ? L(`编辑 ${p.sym} 的计划`, `Edit ${p.sym} plan`) : L('新交易计划','New trade plan')}</b>
+      <div class="f-btns"><button class="btn-primary btn-small" onclick="savePlan()">${p ? L('保存修改','Save changes') : L('保存计划','Save plan')}</button><button type="button" class="icon-btn f-x" title="${L('取消','Cancel')}" aria-label="${L('取消','Cancel')}" onclick="closePlanForm()">✕</button></div></div>
     <div class="f2-grid">
       <div class="f2-main">
         <div class="f2-sec"><div class="f2-sec-t"><span>1</span>${L('股票','Stock')}</div>
@@ -290,11 +291,6 @@ function planFormHtml(){
         </details>
       </div>
       <div class="f2-side"><div class="f2-prev-t">${L('预览','Preview')}</div><div id="pfPreview"></div></div>
-    </div>
-    <div class="f2-actions">
-      <button class="btn-primary" onclick="savePlan()">${p ? L('保存修改','Save changes') : L('保存计划','Save plan')}</button>
-      <button class="btn-ghost" onclick="closePlanForm()">${L('取消','Cancel')}</button>
-      <span class="muted">${L('只保存计划，不会下单。','Saves a plan only — never places orders.')}</span>
     </div>
   </div>`;
 }

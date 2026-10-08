@@ -1512,7 +1512,7 @@
   /* momentum v4 — same card language as the risk list */
   .mm-cap{ font-size:12px; font-weight:700; color:var(--text-dim); margin:4px 2px 8px; }
   .mm-list{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:16px; overflow:hidden; }
-  .mm-row{ display:grid; grid-template-columns:84px minmax(0,1fr) 96px 250px; cursor:pointer; gap:18px; align-items:center; padding:14px 20px; border-top:1px solid var(--line); }
+  .mm-row{ display:grid; grid-template-columns:84px minmax(0,1fr) 68px auto; cursor:pointer; gap:18px; align-items:center; padding:14px 20px; border-top:1px solid var(--line); }
   .mm-row:first-child{ border-top:none; }
   .mm-id{ display:flex; flex-direction:column; gap:2px; } .mm-id a{ font-weight:800; font-size:15px; cursor:pointer; color:var(--text); } .mm-id a:hover{ color:var(--gold); }
   .mm-id span{ font-family:var(--mono); font-size:11px; color:var(--text-dim); }
@@ -1521,9 +1521,9 @@
   .mm-act{ justify-content:center; font-family:var(--mono); letter-spacing:.04em; }
   .mm-act.buy{ background:var(--gain); color:#fff; } .mm-act.hold{ background:var(--gold-dim); color:var(--gold); } .mm-act.sell{ background:var(--loss-dim); color:var(--loss); }
   .mm-act.strong{ background:var(--gain-dim); color:var(--gain); font-family:var(--disp); } .mm-act.mid{ background:var(--panel-2); color:var(--text-dim); font-family:var(--disp); }
-  .mm-nums{ display:grid; grid-template-columns:1fr auto; gap:12px; }
+  .mm-nums{ display:grid; grid-template-columns:minmax(92px,max-content) minmax(100px,max-content); gap:14px; }
   .mm-nums div{ display:flex; flex-direction:column; gap:1px; } .mm-nums span{ font-size:11px; color:var(--text-dim); } .mm-nums b{ font-family:var(--mono); font-size:14px; } .mm-nums small{ font-family:var(--mono); font-size:10.5px; color:var(--text-dim); }
-  @media (min-width:761px){ .mm-nums div:last-child{ align-items:flex-end; text-align:right; } }   /* last column flush right so the right margin equals the left one */
+  @media (min-width:761px){ .mm-nums div:last-child{ align-items:flex-end; text-align:right; } }   /* pill + two number blocks form one tight right-hand group, columns right-aligned */
   .mm-foot{ font-size:12px; color:var(--text-dim); margin:-6px 2px 0; }
   @media (max-width:760px){ .mm-row{ grid-template-columns:70px minmax(0,1fr) auto; gap:10px 12px; padding:12px 14px; } .mm-why{ grid-column:2 / -1; } .mm-nums{ grid-column:1 / -1; } }
 
@@ -1674,6 +1674,44 @@
   .rd-tbl th.num, .rd-tbl td.num{ text-align:right; } .rd-tbl th .term{ border-bottom-style:dotted; }
   .rd-tbl td.num{ font-size:12.5px; }
   .rd-tbl thead th:nth-child(n+3):nth-child(-n+9){ text-align:right; }
+
+  /* ---------- inputs: one look everywhere ----------
+     white fill, hairline border, darker border on hover, evergreen border on focus, no glow ring */
+  .field input, .field select, .field textarea, .modal-card input, .modal-card select, .modal-card textarea,
+  .fx-row input, .import-paste, .pos-num, .note-body textarea, .sk-in, .sel-sm, .cv-pick input.sk-in, .f-in, .goal-input{
+    background-color:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:none; outline:none;
+  }
+  .field input, .field select{ height:var(--ctl); padding-top:0; padding-bottom:0; padding-left:12px; font-size:13px; }
+  .field input:hover, .field select:hover, .field textarea:hover, .modal-card input:hover, .modal-card select:hover, .modal-card textarea:hover,
+  .fx-row input:hover, .import-paste:hover, .pos-num:hover, .note-body textarea:hover, .sk-in:hover, .sel-sm:hover, .f-in:hover, .goal-input:hover{ border-color:var(--line-strong); }
+  .field input:focus, .field select:focus, .field textarea:focus, .modal-card input:focus, .modal-card select:focus, .modal-card textarea:focus,
+  .fx-row input:focus, .import-paste:focus, .pos-num:focus, .note-body textarea:focus, .sk-in:focus, .sel-sm:focus, .cv-pick input.sk-in:focus,
+  .f-in:focus-within, .goal-input:focus-within{ border-color:var(--gold); background-color:var(--panel); box-shadow:none; outline:none; }
+  .f-in input, .goal-input input{ background:transparent; border:none; box-shadow:none; border-radius:0; }
+  .f-in input:hover, .f-in input:focus, .goal-input input:hover, .goal-input input:focus{ border:none; box-shadow:none; background:transparent; }
+  /* keyboard focus on buttons / links: a plain outline, not a glow */
+  button:focus-visible, a:focus-visible, summary:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; box-shadow:none; }
+
+  /* plan form: title left, Save + ✕ right; the optional step 3 reads as a control */
+  .f2-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:nowrap; margin-bottom:16px; }
+  .f2-head .f-btns{ margin-left:auto; }
+  .f2-more{ border-top:none; padding-top:0; margin-top:6px; }
+  .f2-more > summary{ border:1px solid var(--line); border-radius:10px; padding:11px 14px; background:var(--panel); transition:border-color .12s ease, background .12s ease; }
+  .f2-more > summary:hover{ border-color:var(--line-strong); background:#FAF8F3; }
+  .f2-more[open] > summary{ border-color:var(--line-strong); margin-bottom:4px; }
+  .f2-more > summary::after{ content:''; width:16px; height:16px; margin-left:auto; flex:0 0 auto; transform:none; transition:transform .15s ease;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23847F71' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center/16px no-repeat; }
+  .f2-more:not([open]) > summary::after{ transform:rotate(-90deg); }
+
+  /* plan form: every input box is the same width */
+  .plan-form{ --fw:220px; }
+  .plan-form .f-in{ width:var(--fw); max-width:100%; }
+  .plan-form .w-sym{ max-width:none; }
+  .plan-form .f2-row2, .plan-form .f2-row3{ display:flex; flex-wrap:wrap; align-items:flex-start; gap:0 12px; }
+  .plan-form .f2-row2 .span2{ flex:1 1 100%; }
+  .plan-form .f2-row2 .span2 .f-pair, .plan-form .f-pair{ max-width:none; }
+  .plan-form .f-pair .f-in{ flex:0 0 auto; }
+  @media (max-width:560px){ .plan-form{ --fw:100%; } .plan-form .f-pair{ flex-wrap:wrap; } }
 </style>
 </head>
 <body>
