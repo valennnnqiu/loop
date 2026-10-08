@@ -2028,15 +2028,13 @@ function presetTest(key, sym){
     why.push(L(`市值 $${fmt(m.mcap/1000,1)}B`, `mcap $${fmt(m.mcap/1000,1)}B`), L(`营收 +${fmt(m.rg,0)}%`, `rev +${fmt(m.rg,0)}%`), L(`毛利率 ${fmt(m.gm,0)}%`, `GM ${fmt(m.gm,0)}%`));
   } else if(key === 'high'){
     if(!I || !(I.distHi52 >= -5 && I.rsi < 70 && I.vsMa20 < 10)) return false;
-    why.push(L(`距 52 周高 ${fmt(-I.distHi52,1)}%`, `${fmt(-I.distHi52,1)}% off high`), `RSI ${fmt(I.rsi,0)}`);
+    // off-high and RSI are already columns — nothing to add here
   } else if(key === 'beat'){
     const e = fh.eps[sym] && fh.eps[sym].d; if(!e) return null;
     const last4 = e.slice(0, 4); if(last4.length < 4 || !last4.every(x => x.act != null && x.est != null && x.act > x.est)) return false;
     why.push(L('连续 4 季超预期','4 straight beats'), L(`平均 ${sg(last4.reduce((s,x) => s + (x.sp || 0), 0) / 4, 0)}`, `avg ${sg(last4.reduce((s,x) => s + (x.sp || 0), 0) / 4, 0)}`));
   }
   const b = betaOf(sym); if(b > 2) risk.push(L(`高波动 Beta ${fmt(b,1)}`, `high beta ${fmt(b,1)}`));
-  if(I && I.rsi > 70) risk.push(`RSI ${fmt(I.rsi,0)}`);
-  const er = earningsBetween(sym, todayISO(), addDays(todayISO(), 7))[0]; if(er) risk.push(L(`${md(er)} 财报`, `ER ${md(er)}`));
   if(isLev(sym)) risk.push(L('杠杆 ETF','leveraged'));
   return { why, risk };
 }
@@ -2120,13 +2118,17 @@ function renderRadar(){
     : r.role === 'plan' ? `<span class="my plan">◐ ${esc(planCalc(r.plan, holdingsNow()).label || '')}</span>`
     : r.role === 'watch' ? `<span class="my watch">☆</span>` : `<a class="my none" aria-label="${L('加入观察','watch it')}" onclick="event.stopPropagation(); addWatchSym('${r.sym}')">—</a>`;
   // flags as plain grey text separated by dots (no coloured pills); hover for detail
-  const tags = r => [
-    r.flow != null && r.flow >= 2 ? `<span title="${L('今日期权成交 / 平均','today option volume / average')}">${L('期权异动','Option flow')} ${fmt(r.flow,1)}×</span>` : '',
-    r.insAlert ? `<span title="${esc(r.insAlert.map(a => a.t).join('\n'))}">${L('内部人','Insider')}</span>` : '',
-    isLev(r.sym) ? `<span>${L('杠杆','Leveraged')}</span>` : '',
-    ...(r.why || []).map(w => `<span>${esc(capEn(w))}</span>`),
-    ...(r.risk || []).map(w => `<span>${esc(capEn(w))}</span>`)
-  ].filter(Boolean).join('<i> · </i>');
+  const tagList = r => [
+    r.flow != null && r.flow >= 2 ? `${L('期权异动','Option flow')} ${fmt(r.flow,1)}×` : '',
+    r.insAlert ? L('内部人','Insider') : '',
+    isLev(r.sym) ? L('杠杆','Leveraged') : '',
+    ...(r.why || []).map(w => capEn(w)),
+    ...(r.risk || []).map(w => capEn(w))
+  ].filter(Boolean);
+  // flags as plain grey text, one per line (max 2; the rest sit behind "+N", hover lists them all)
+  const tags = r => { const t = tagList(r); if(!t.length) return '';
+    const more = t.length > 2 ? ` <span class="more" data-tip="${esc(t.slice(2).join('\n'))}">+${t.length - 2}</span>` : '';
+    return t.slice(0, 2).map((x, i) => `<div><span>${esc(x)}</span>${i === 1 ? more : ''}</div>`).join(''); };
   const anyTags = rows.some(r => tags(r) !== '');   // the Tags column only exists when something has a tag
   const rowHtml = r => { const I = r.I; const cls = [r.inZone ? 'hl-zone' : '', r.erD != null && r.erD <= 7 ? 'hl-er' : '', I && I.vsMa50 < 0 ? 'hl-weak' : '', st.open === r.sym ? 'open' : ''].join(' ');
     return `<tr class="${cls}" onclick="openStock('${r.sym}')">
