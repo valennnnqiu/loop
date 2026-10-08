@@ -218,7 +218,6 @@ function nextActionText(p, c){
 function planCardHtml(p, H){
   const c = planCalc(p, H);
   const hot = c.state === 'inZone', alarm = ['stopHit','expired'].includes(c.state);
-  const edited = p.orig && (p.orig.lo !== p.lo || p.orig.hi !== p.hi || p.orig.stop !== p.stop || p.orig.target !== p.target);
   const daysLeft = daysBetween(todayISO(), p.expiry);
   const rrCls = v => v == null ? '' : v >= 2 ? 'gain-t' : v < 1 ? 'loss-t' : '';
   const prog = c.shares ? Math.min(100, c.bought / c.shares * 100) : 0;
@@ -241,7 +240,11 @@ function planCardHtml(p, H){
       <a class="sym" onclick="openStock('${esc(p.sym)}')" title="${L('打开个股页','open stock page')}">${esc(p.sym)}</a>
       <span class="px">${c.price != null ? '$'+fmt(c.price) : '—'}</span>
       <span class="pill ${c.cls}">${c.label}</span>
-      <span class="grow"><span class="sec-tag">${esc(secName(sectorOf(p.sym)))}</span></span>
+      <span class="grow"><span class="sec-tag">${esc(secName(sectorOf(p.sym)))}</span>
+        ${p.closedAt
+          ? `<button class="btn-ghost btn-small" onclick="reopenPlan('${p.id}')">${L('重新打开','Reopen')}</button><button class="btn-ghost btn-small" onclick="deletePlan('${p.id}')">${L('删除','Delete')}</button>`
+          : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button><button class="btn-ghost btn-small" onclick="closePlan('${p.id}')">${L('结束','Close')}</button>`}
+      </span>
     </div>
     ${!p.closedAt ? `<div class="pc-next">${nextActionText(p, c)}</div>` : ''}
     ${rulerHtml(p, c, !p.closedAt)}
@@ -256,15 +259,6 @@ function planCardHtml(p, H){
     ${warns.length ? `<div class="pc-alert">${warns.map(w => `<div class="${w.c}">${w.t}</div>`).join('')}</div>` : ''}
     ${infos.map(w => `<div class="pc-info">${w.t}</div>`).join('')}
     ${p.note ? `<div class="pc-note">${esc(p.note)}</div>` : ''}
-    <div class="pc-foot">
-      <span>${L('建于','Created')} ${md(p.createdAt)}${p.createdPrice != null ? ' @ $'+fmt(p.createdPrice) : ''}${edited ? L(' · 价位改过（原 ',' · edited (was ') + `${fmt(p.orig.lo)}–${fmt(p.orig.hi)} / ${fmt(p.orig.stop)} / ${fmt(p.orig.target)})` : ''}</span>
-      <span class="grow">
-        ${p.closedAt
-          ? `<button class="btn-ghost btn-small" onclick="reopenPlan('${p.id}')">${L('重新打开','Reopen')}</button><button class="btn-ghost btn-small" onclick="deletePlan('${p.id}')">${L('删除','Delete')}</button>`
-          : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button>
-             <select onchange="closePlan('${p.id}', this.value); this.value='';"><option value="">${L('结束…','Close…')}</option><option value="target">${L('达标','Target hit')}</option><option value="stop">${L('止损 / 止损','Stopped out')}</option><option value="expired">${L('过期','Expired')}</option><option value="manual">${L('手动结束','Manual')}</option></select>`}
-      </span>
-    </div>
   </div>`;
 }
 
@@ -380,8 +374,9 @@ function savePlan(){
   if(getPrice(f.sym) == null && /\S/.test(finnhubKey)) refreshAllPrices(true);
 }
 function closePlan(id, reason){
-  if(!reason) return;
   const p = plans.find(x => x.id === id); if(!p) return;
+  // no menu: stopped / target / expired are read off where the plan stands right now
+  if(!reason) reason = { stopHit:'stop', targetHit:'target', expired:'expired' }[planCalc(p, holdingsNow()).state] || 'manual';
   p.closedAt = todayISO(); p.closeReason = reason;
   savePlans(); renderLoop2();
 }
