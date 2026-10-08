@@ -1946,6 +1946,10 @@
   .sz-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .sz-row .sz{ flex:1; min-width:120px; max-width:200px; }
   .f2-sizeline{ margin-top:8px; font-size:12px; color:var(--text-dim); line-height:1.5; }
+
+  /* statement import result: title on the left, Import / Reset buttons top right */
+  .imp-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+  .imp-head .import-actions{ margin-top:0; }
 </style>
 </head>
 <body>
@@ -3640,17 +3644,17 @@ function handleCsvText(text){
   const p = document.getElementById('importPreview');
   p.style.display = 'block';
   p.innerHTML = `
-    <div class="big">${res.period || ''}${res.accountId ? ' · '+L('账户','Account')+' '+res.accountId : ''}</div>
+    <div class="imp-head"><div class="big">${res.period || ''}${res.accountId ? ' · '+L('账户','Account')+' '+res.accountId : ''}</div>
+      <div class="import-actions">
+        ${(added.length || stale.length) ? `<button class="btn-primary btn-small" onclick="confirmImport()">${added.length ? L(`确认导入 ${added.length} 笔`,`Import ${added.length}`) : L('按对账单更新持仓','Apply statement to positions')}</button>` : ''}
+        <button class="btn-ghost btn-small" onclick="resetImport()">${L('重来','Reset')}</button>
+      </div></div>
     ${L(`共解析 ${res.trades.length} 笔成交。`,`Parsed ${res.trades.length} trades.`)}<br>
     ${L(`本次<b>新增 ${added.length} 笔</b>`,`<b>${added.length} new</b>`)}${duplicates ? L(`，跳过 ${duplicates} 笔已导入的`,`, ${duplicates} already imported`) : ''}${added.length ? L(`，涉及 ${syms.length} 只股票：${syms.join(' ')}`,` · ${syms.length} tickers: ${syms.join(' ')}`) : ''}
     ${similar.length ? `<br><span class="dup">${L(`⚠ 其中 ${similar.length} 笔与现有记录高度相似，可能是同一笔交易的两份来源。如果要用对账单作为唯一数据源，建议先清空现有交易。`,`⚠ ${similar.length} of these look very similar to existing rows — likely the same trade from two sources. If the statement is your only source, clear existing trades first.`)}</span>` : ''}
     ${stale.length ? `<br>${L(`以对账单为准：这些代码手动填的持仓会被对账单算出来的替换 — ${stale.join(' ')}`,`Statement wins: hand-entered positions for ${stale.join(' ')} will be replaced by what the statement works out.`)}` : ''}
     ${res.warnings.length ? `<br><span class="dup">${res.warnings.join('<br>')}</span>` : ''}
-    <ul>${added.slice(0,12).map(t=>`<li>${t.day} ${t.side==='SELL'?L('卖','sell'):L('买','buy')} ${fmt(t.qty,0)} ${t.sym} @ ${fmt(t.price)}</li>`).join('')}${added.length>12?`<li>${L(`… 还有 ${added.length-12} 笔`,`… ${added.length-12} more`)}</li>`:''}</ul>
-    <div class="import-actions">
-      ${(added.length || stale.length) ? `<button class="btn-primary btn-small" onclick="confirmImport()">${added.length ? L(`确认导入 ${added.length} 笔`,`Import ${added.length}`) : L('按对账单更新持仓','Apply statement to positions')}</button>` : ''}
-      <button class="btn-ghost btn-small" onclick="resetImport()">${L('重来','Reset')}</button>
-    </div>`;
+    <ul>${added.slice(0,12).map(t=>`<li>${t.day} ${t.side==='SELL'?L('卖','sell'):L('买','buy')} ${fmt(t.qty,0)} ${t.sym} @ ${fmt(t.price)}</li>`).join('')}${added.length>12?`<li>${L(`… 还有 ${added.length-12} 笔`,`… ${added.length-12} more`)}</li>`:''}</ul>`;
 }
 
 function parseImportPaste(){
