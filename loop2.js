@@ -2389,9 +2389,8 @@ renderCalendar = function(){
     macro.filter(e => e.date === key).sort((a,b) => (b.stars||0) - (a.stars||0)).forEach(e => chips.push(`<div class="cal-event macro" title="${esc(`${e.time || ''} ${e.event} · ${L('预期','fcst')} ${e.forecast ?? '—'} · ${L('前值','prior')} ${e.prior ?? '—'}${e.actual != null ? ' · ' + L('实际','actual') + ' ' + e.actual : ''}`)}">${esc(e.event)}</div>`));
     events.forEach(ev => {
       const sym = String(ev.text || '').toUpperCase().split(/\s/)[0];
-      const held = ev.category === 'earnings' && H.map[sym];
       const label = ev.category === 'earnings' ? `${sym} ${L('财报','ER')}${/pre/.test(ev.text) ? L(' · 盘前',' pre') : /post/.test(ev.text) ? L(' · 盘后',' post') : ''}` : esc(ev.text);
-      chips.push(`<div class="cal-event ${ev.category} ${ev.plan ? 'has-plan' : ''} ${held ? 'held' : ''}" onclick="event.stopPropagation(); openEventModal('${key}','${ev.id}')" title="${esc(ev.text + (ev.plan ? ' — ' + ev.plan : ''))}">${label}</div>`);
+      chips.push(`<div class="cal-event ${ev.category} ${ev.plan ? 'has-plan' : ''}" onclick="event.stopPropagation(); openEventModal('${key}','${ev.id}')" title="${esc(ev.text + (ev.plan ? ' — ' + ev.plan : ''))}">${label}</div>`);
     });
     (newsDays[key] || []).forEach(({it, idx}) => chips.push(`<div class="cal-event news" onclick="event.stopPropagation(); openNews(${idx})" title="${escHtml(it.headline)}">${escHtml(it.headline)}</div>`));
     const extra = chips.length > 4 ? chips.length - 3 : 0;
