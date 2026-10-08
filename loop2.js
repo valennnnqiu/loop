@@ -612,8 +612,8 @@ function renderToday(){
   const stats = `<div class="pc-stats big-stats">
     <div class="pc-stat"><div class="k pc-per-k">${L('已实现盈亏','Realized')}<span class="pc-per">${[['7d', L('7 天','7d')], ['month', L('本月','Month')], ['ytd', L('今年','YTD')]].map(([k2, t]) => `<button type="button" class="${per === k2 ? 'on' : ''}" onclick="setTodayPeriod('${k2}')">${t}</button>`).join('')}</span></div><div class="v ${pr.pnl>=0?'gain-t':'loss-t'}">${money(pr.pnl)}</div>
       ${pg ? `<div class="mini"><i style="width:${pgPct}%; background:var(--gain)"></i></div><div class="s">${L('目标','target')} $${fmt(pg.min,0)}${pg.max!==pg.min?'–'+fmt(pg.max,0):''} · ${fmt(pr.pnl/pg.min*100,0)}%</div>` : `<div class="s">${L(`${pr.n} 笔已平仓`, `${pr.n} closed trade${pr.n === 1 ? '' : 's'}`)}</div>`}</div>
-    <div class="pc-stat"><div class="k">${L('待处理','To do')}</div><div class="v">${items.length}</div><div class="s">${urgent ? L(`其中 ${urgent} 项和价格有关`, `${urgent} price-triggered`) : L('没有紧急的','nothing urgent')}</div></div>
-    <div class="pc-stat"><div class="k">${L('进行中的计划','Active plans')}</div><div class="v">${act.length}</div><div class="s">${inZoneN ? L(`${inZoneN} 只在关注区`, `${inZoneN} in zone`) : L('都还没到价位','none at their levels')}</div></div>
+    <div class="pc-stat"><div class="k">${L('提醒','Reminders')}</div><div class="v">${items.length}</div><div class="s">${urgent ? L(`其中 ${urgent} 项和价格有关`, `${urgent} price-triggered`) : L('没有紧急的','nothing urgent')}</div></div>
+    <div class="pc-stat"><div class="k">${L('计划','Plans')}</div><div class="v">${act.length}</div><div class="s">${inZoneN ? L(`${inZoneN} 只在关注区`, `${inZoneN} in zone`) : L('都还没到价位','none at their levels')}</div></div>
     <div class="pc-stat"><div class="k">${L('股价时点','Prices as of')}</div><div class="v ${stale?'loss-t':''}">${quotes.at ? new Date(quotes.at).toTimeString().slice(0,5) : '—'}</div><div class="s">${ageMin == null ? L('还没刷新过','never refreshed') : ageMin < 60 ? ageMin + L(' 分钟前',' min ago') : Math.round(ageMin/60) + L(' 小时前','h ago')} · <a class="lnk" data-refresh onclick="refreshAllPrices()">${L('刷新','refresh')}</a></div></div>
   </div>`;
   const groups = [
