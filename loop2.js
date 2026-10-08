@@ -1885,7 +1885,6 @@ function renderStock(){
         <span class="sk-sec-tag">${esc(secName(sectorOf(sym)))}${isLev(sym) ? ` · ${L('杠杆 ETF','Leveraged')}` : ''}</span></div>
       <div class="sk-acts">
         ${!plan ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${sym}'})">${L('设计划','Set plan')}</button>` : ''}
-        ${!watchlist.some(w => w.sym === sym) && !h && !plan ? `<button class="btn-ghost btn-small" onclick="addWatchSym('${sym}')">☆ ${L('观察','Watch')}</button>` : ''}
         ${liveOn() ? `<button class="btn-ghost btn-small" aria-label="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">${L('刷新','Refresh')}</button>` : ''}
       </div>
     </div>`;
