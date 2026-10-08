@@ -5435,7 +5435,7 @@ function onboardHtml(){
   const lead = `${idx + 1}/${req.length}`;
   const btns = (isDemoMode() ? ecBtn(L('清空示例，用自己的数据','Clear demo data'), 'exitDemo()') : (!trades.length ? ecBtn(L('先看看示例数据','Try demo data'), 'loadDemoData()') : ''))
     + (cur ? ecBtn(cur.btn, cur.go) : '')
-    + `<button type="button" class="icon-btn pc-x" aria-label="${L('隐藏','Hide')}" onclick="hideOnboard()">✕</button>`;
+    + (cur ? '' : `<button type="button" class="icon-btn pc-x" aria-label="${L('隐藏','Hide')}" onclick="hideOnboard()">✕</button>`);   // can only be dismissed once every step is done
   return emptyCard(cur ? cur.t : L('已完成','All set'), btns, lead);
 }
 function hideOnboard(){ cfg.onboardHidden = true; saveCfg(); renderToday(); }
