@@ -205,6 +205,7 @@ function planCalc(p, H){
 function rulerHtml(p, c, showNow){
   const price = showNow ? c.price : null;
   const fills = c.fills;   // every buy since the plan started: in-plan ones solid, off-plan ones hollow
+  const seenIds = new Set(fills.map(f => f.t.id));
   const vals = [p.stop, p.lo, p.hi, p.target].concat(price != null ? [price] : [], fills.map(f => f.t.price));
   let lo = Math.min(...vals), hi = Math.max(...vals);
   const pad = (hi - lo) * 0.04 || hi * 0.02;
@@ -212,6 +213,9 @@ function rulerHtml(p, c, showNow){
   const X = v => (v - lo) / (hi - lo) * 100;
   const x = v => X(v).toFixed(2) + '%';
   const w = (a, b) => (X(b) - X(a)).toFixed(2) + '%';
+  // buys of this stock from before the plan started: also shown (hollow), as long as they fall on the bar
+  const earlier = p.sym ? AT().filter(t => t.side === 'BUY' && t.sym === p.sym && !seenIds.has(t.id) && t.price >= lo && t.price <= hi).map(t => ({ t, inPlan:false, pre:true })) : [];
+  const marks = [...earlier, ...fills];
   const riskTxt = c.shares != null ? `−$${fmt(c.shares * (c.mid - p.stop), 0)}` : `−$${fmt(c.mid - p.stop)}/${L('股','sh')}`;
   const rewTxt  = c.shares != null ? `+$${fmt(c.shares * (p.target - c.mid), 0)}` : `+$${fmt(p.target - c.mid)}/${L('股','sh')}`;
   return `<div class="pt">
@@ -219,7 +223,7 @@ function rulerHtml(p, c, showNow){
     <div class="pt-risk" style="left:${x(p.stop)}; width:${w(p.stop, c.mid)}"><span>${L('风险','risk')} ${riskTxt}</span></div>
     <div class="pt-reward" style="left:${x(c.mid)}; width:${w(c.mid, p.target)}"><span>${rewTxt} ${L('收益','reward')}</span></div>
     <div class="pt-zone" style="left:${x(p.lo)}; width:${w(p.lo, p.hi)}"></div>
-    ${fills.map(f => `<div class="pt-fill ${f.inPlan ? '' : 'off'}" style="left:${x(f.t.price)}" title="${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}${f.inPlan ? '' : ' · ' + L('计划外','off plan')}"><svg viewBox="0 0 12 10" width="12" height="10"><path d="M6 .5 L11 9.5 H1 Z" ${f.inPlan ? 'fill="var(--gain)" stroke="var(--panel)"' : 'fill="var(--panel)" stroke="var(--gain)"'} stroke-width="1.5" stroke-linejoin="round"/></svg></div>`).join('')}
+    ${marks.map(f => `<div class="pt-fill ${f.inPlan ? '' : 'off'}" style="left:${x(f.t.price)}" title="${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}${f.inPlan ? '' : ' · ' + (f.pre ? L('计划之前','before the plan') : L('计划外','off plan'))}"><svg viewBox="0 0 12 10" width="12" height="10"><path d="M6 .5 L11 9.5 H1 Z" ${f.inPlan ? 'fill="var(--gain)" stroke="var(--panel)"' : 'fill="var(--panel)" stroke="var(--gain)"'} stroke-width="1.5" stroke-linejoin="round"/></svg></div>`).join('')}
     ${price != null ? `<div class="pt-now" style="left:${x(price)}"></div><div class="pt-nowlab" style="left:${x(price)}">${fmt(price)}</div>` : ''}
     <div class="pt-lab stop" style="left:${x(p.stop)}">${term('stop', L('止损','Stop'))} <b>${fmt(p.stop)}</b></div>
     <div class="pt-lab zone" style="left:${x((p.lo + p.hi) / 2)}">${L('关注区','Zone')} <b>${fmt(p.lo)}–${fmt(p.hi)}</b></div>
