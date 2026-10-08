@@ -1903,7 +1903,7 @@ function renderStock(){
   const stats = '';
   const O = optionsHtml(sym), V = volumeHtml(sym), D = driverHtml(sym), E = earningsHtml(sym), N = insiderHtml(sym);
   el.innerHTML = stockPickerHtml() + liveStatusHtml() + head + verdictHtml + mineHtml + chart
-    + `<div class="sk-block"><div class="sk-bh">${L('关键价位','Key levels')}<span class="sk-bh-r">${ladderPlanBtn(sym)}<button class="btn-ghost btn-small" onclick="cfg.ladderAll=!cfg.ladderAll; saveCfg(); renderStock()">${cfg.ladderAll ? L('只看最重要的','Key ones only') : L('看全部','Show all')}</button></span></div>${ladderHtml(sym, cfg.ladderAll)}</div>`
+    + `<div class="sk-block"><div class="sk-bh">${L('关键价位','Key levels')}<button class="btn-ghost btn-small" onclick="cfg.ladderAll=!cfg.ladderAll; saveCfg(); renderStock()">${cfg.ladderAll ? L('只看最重要的','Key ones only') : L('看全部','Show all')}</button><span class="sk-bh-r">${ladderPlanBtn(sym)}</span></div>${ladderHtml(sym, cfg.ladderAll)}</div>`
     + (() => {
       const A = stockAlerts(sym, E, N);
       const secs = [['opt', L('期权墙','Option walls'), O, '🧲'], ['vol', L('量能','Volume'), V, '📊'], ['drv', L('驱动新闻','News drivers'), D, '📰'], ['er', L('财报','Earnings'), E, '📅'], ['ins', L('内部人','Insiders'), N, '🕴️']];

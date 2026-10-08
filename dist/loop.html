@@ -1250,7 +1250,7 @@
   .kchart .ch-last{ font-family:var(--mono); font-size:10.5px; fill:var(--panel); font-weight:700; }
   .kchart .lv-band.click{ cursor:pointer; } .kchart .lv-band.click:hover rect{ opacity:.32; }
   .sk-block{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:12px; }
-  .sk-bh{ font-size:13px; font-weight:700; display:flex; align-items:baseline; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .sk-bh{ font-size:13px; font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
   .sk-bh .lnk{ margin-left:auto; font-size:12px; font-weight:500; }
   .sc-list{ display:flex; flex-direction:column; gap:6px; }
   .sc-row{ display:grid; grid-template-columns:22px 52px minmax(0,1.1fr) minmax(0,1.4fr); gap:10px; align-items:center; font-size:13px; padding:8px 10px; background:var(--ink); border-radius:9px; }
@@ -6144,7 +6144,7 @@ function renderStock(){
   const stats = '';
   const O = optionsHtml(sym), V = volumeHtml(sym), D = driverHtml(sym), E = earningsHtml(sym), N = insiderHtml(sym);
   el.innerHTML = stockPickerHtml() + liveStatusHtml() + head + verdictHtml + mineHtml + chart
-    + `<div class="sk-block"><div class="sk-bh">${L('关键价位','Key levels')}<span class="sk-bh-r">${ladderPlanBtn(sym)}<button class="btn-ghost btn-small" onclick="cfg.ladderAll=!cfg.ladderAll; saveCfg(); renderStock()">${cfg.ladderAll ? L('只看最重要的','Key ones only') : L('看全部','Show all')}</button></span></div>${ladderHtml(sym, cfg.ladderAll)}</div>`
+    + `<div class="sk-block"><div class="sk-bh">${L('关键价位','Key levels')}<button class="btn-ghost btn-small" onclick="cfg.ladderAll=!cfg.ladderAll; saveCfg(); renderStock()">${cfg.ladderAll ? L('只看最重要的','Key ones only') : L('看全部','Show all')}</button><span class="sk-bh-r">${ladderPlanBtn(sym)}</span></div>${ladderHtml(sym, cfg.ladderAll)}</div>`
     + (() => {
       const A = stockAlerts(sym, E, N);
       const secs = [['opt', L('期权墙','Option walls'), O, '🧲'], ['vol', L('量能','Volume'), V, '📊'], ['drv', L('驱动新闻','News drivers'), D, '📰'], ['er', L('财报','Earnings'), E, '📅'], ['ins', L('内部人','Insiders'), N, '🕴️']];
