@@ -1834,6 +1834,10 @@
   /* radar: the ✕ column is wide enough that the icon is never clipped by the table edge */
   .rd-tbl td.rd-my{ text-align:center; padding-left:4px; padding-right:12px; }
   .rd-del{ padding:2px 4px; }
+
+  /* trades on big-move days: the verdict is a tag, not a ✓ / ✕ */
+  .ab-res{ display:flex; align-items:center; justify-content:flex-end; gap:10px; white-space:nowrap; }
+  .ab-res .tag{ min-width:84px; font-style:normal; }
 </style>
 </head>
 <body>
@@ -6840,7 +6844,7 @@ function renderEventReview(){
         <span class="ab-d">${md(x.t.date)}</span><a class="lnk" onclick="openStock('${x.t.sym}')"><b>${x.t.sym}</b></a>
         <span class="ab-c ${x.chg > 0 ? 'gain-t' : 'loss-t'}">${L('当天','day')} ${sg(x.chg)}</span>
         <span>${kindTxt(x.kind)} · ${x.t.side === 'BUY' ? L('买','B') : L('卖','S')} ${fmt(x.t.qty,0)} @ $${fmt(x.t.price)}</span>
-        <span class="${x.good === true ? 'gain-t' : x.good === false ? 'loss-t' : 'muted'}">${x.after == null ? L('还没走完','too recent') : L(`之后 ${x.days} 天 ${sg(x.after)}`, `next ${x.days}d ${sg(x.after)}`) + (x.good === true ? ' ✓' : x.good === false ? (x.kind === 'chase' ? L(' · 追高了',' · chased') : x.kind === 'panic' ? L(' · 卖在低点',' · sold the low') : ' ✕') : '')}</span></div>`).join('')}</div></div>` : ''}
+        <span class="ab-res">${x.after == null ? `<span class="muted">${L('还没走完','too recent')}</span>` : `<span class="muted">${L(`之后 ${x.days} 天 ${sg(x.after)}`, `next ${x.days}d ${sg(x.after)}`)}</span>${x.good === true ? `<em class="tag green">${L('对了','Right')}</em>` : x.good === false ? `<em class="tag red">${x.kind === 'chase' ? L('追高了','Chased') : x.kind === 'panic' ? L('卖在低点','Sold the low') : L('错了','Wrong')}</em>` : ''}`}</span></div>`).join('')}</div></div>` : ''}
     ${log.length ? `<div class="sk-block"><div class="sk-bh">${L('今日提醒的处理记录','Reminders you handled')}</div>${log.map(x => `<div class="lg-row"><span class="muted">${md(x.date)}</span><span>${esc(x.title)}</span><em class="tag green">${L('已处理','done')}</em></div>`).join('')}</div>` : ''}`;
 }
 
