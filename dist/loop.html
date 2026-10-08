@@ -6350,9 +6350,9 @@ function renderRadar(){
   el.innerHTML = head + `
     ${secHeadline(secs)}
     <div class="sec-cards">${secs.map(s => { const up = s.withI ? Math.round(s.above / 100 * s.withI) : 0;
-      return `<button class="sc-card ${st.sector === s.s ? 'on' : ''}" onclick="radarState.sector = radarState.sector === '${esc(s.s)}' ? null : '${esc(s.s)}'; renderRadar()" title="${L('点击只看这个板块','click to show only this sector')}">
+      return `<button class="sc-card ${st.sector === s.s ? 'on' : ''}" onclick="radarState.sector = radarState.sector === '${esc(s.s)}' ? null : '${esc(s.s)}'; renderRadar()">
         <div class="scc-top"><b>${esc(secName(s.s))}</b><span class="scc-ret ${Math.abs(s.avg1m) < 0.5 ? '' : s.avg1m > 0 ? 'gain-t' : 'loss-t'}">${s.avg1m != null ? sg(s.avg1m, 0) : '—'}</span></div>
-        <div class="scc-dots" title="${L(`${s.withI} 只里 ${up} 只在 50 日线上方`, `${up} of ${s.withI} above MA50`)}">${'<i class="on"></i>'.repeat(up)}${'<i></i>'.repeat(Math.max(0, s.withI - up))}<span>${L(`${up}/${s.withI} 趋势向上`, `${up}/${s.withI} uptrend`)}</span></div>
+        <div class="scc-dots">${'<i class="on"></i>'.repeat(up)}${'<i></i>'.repeat(Math.max(0, s.withI - up))}<span>${L(`${up}/${s.withI} 趋势向上`, `${up}/${s.withI} uptrend`)}</span></div>
         ${s.my ? `<div class="scc-my ${s.my > cfg.maxSector ? 'loss-t' : ''}">${L('我的仓位','My weight')} ${fmt(s.my,0)}%</div>` : ''}</button>`; }).join('')}</div>
     <div class="rd-bar"><div class="seg">${segF.map(([k,t]) => `<button class="${st.filter === k ? 'on' : ''}" onclick="radarState.filter='${k}'; renderRadar()">${t}</button>`).join('')}</div>
       <div class="seg ps-seg"><span class="muted sm">${L('预设','Presets')}</span>${Object.entries(P).map(([k, p]) => `<button class="${st.preset === k ? 'on' : ''}" title="${esc(p.d)}" onclick="radarState.preset = radarState.preset === '${k}' ? null : '${k}'; renderRadar()">${p.t}</button>`).join('')}</div>
