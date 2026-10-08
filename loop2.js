@@ -1945,6 +1945,7 @@ const MOMO_GROUPS = () => [
   { g:'news',  t:L('新闻','News'), d:L('近 5 天新闻方向和走势一致','last 5 days of news agree with price') },
 ];
 // plain-language reasons: what is working and what is missing
+const capEn = x => lang === 'en' ? String(x).charAt(0).toUpperCase() + String(x).slice(1) : String(x);   // English tags start with a capital
 function momoWhy(m){
   const c = g => m.crit.filter(x => x.g === g), I = m.I;
   const t = c('trend'), r = c('rs'), v = c('vol')[0], p = c('pos')[0], n = c('news')[0];
@@ -1956,7 +1957,7 @@ function momoWhy(m){
   if(p && p.ok) pros.push(I.distHi20 >= -3 ? L('贴近 20 日高点','near the 20-day high') : L('回踩 20 日线守住','held MA20')); else cons.push(L(`离 20 日高点还有 ${fmt(-I.distHi20,0)}%`, `${fmt(-I.distHi20,0)}% off the 20-day high`));
   if(n && n.ok) pros.push(L('新闻同向','news agrees')); else if(n && !n.na) cons.push(L('新闻和走势相反','news disagrees'));
   m.neg.forEach(x => cons.push(x));
-  return { pros, cons };
+  return { pros: pros.map(capEn), cons: cons.map(capEn) };
 }
 function holdAction(m, H){
   const posOk = (m.crit.find(c => c.g === 'pos') || {}).ok;
@@ -1986,13 +1987,13 @@ function renderMomo(){
   const held = all.filter(m => H.map[m.sym] && H.map[m.sym].qty > 0), cand = all.filter(m => !(H.map[m.sym] && H.map[m.sym].qty > 0));
   const strongC = cand.filter(m => m.grade !== 'lo'), weakC = cand.filter(m => m.grade === 'lo');
   // one short line: up to 3 strengths, everything else in the tooltip
-  const reason = m => { const w = momoWhy(m); const tip = esc([...w.pros.map(x => '✓ ' + x), ...w.cons.map(x => '✗ ' + x), ...m.flags.map(x => '! ' + x)].join('\n'));
-    const main = w.pros.length ? w.pros.slice(0, 3).join(' · ') : L('条件都不满足','no condition met');
-    const sub = m.flags.length ? `${m.flags[0]}` : w.cons.length ? L('差：','Missing: ') + w.cons.slice(0, 2).join('、') : '';
+  const reason = m => { const w = momoWhy(m); const tip = esc([...w.pros.map(x => '✓ ' + x), ...w.cons.map(x => '✗ ' + x), ...m.flags.map(x => '! ' + capEn(x))].join('\n'));
+    const main = w.pros.length ? w.pros.slice(0, 3).join(' · ') : L('条件都不满足','No condition met');
+    const sub = m.flags.length ? capEn(m.flags[0]) : w.cons.length ? L('差：','Missing: ') + w.cons.slice(0, 2).join(L('、',' · ')) : '';
     return `<div class="mm-why" title="${tip}"><div class="mm-main">${main}</div>${sub ? `<div class="mm-sub ${m.flags.length ? 'dot-warn' : ''}">${sub}</div>` : ''}</div>`; };
   const nums = list => `<div class="mm-nums">${list.map(([k, v, c, x]) => `<div><span>${k}</span><b class="${c}">${v}</b>${x ? `<small>${x}</small>` : ''}</div>`).join('')}</div>`;
   const id = m => `<div class="mm-id"><a>${m.sym}</a><span>${m.score}/7</span></div>`;
-  const heldRow = m => { const A = holdAction(m, H); return `<div class="mm-row" onclick="openStock('${m.sym}')">${id(m)}${A.note ? `<div class="mm-why"><div class="mm-main">${momoWhy(m).pros.slice(0, 3).join(' · ') || L('条件都不满足','no condition met')}</div><div class="mm-sub dot-warn">${A.note}</div></div>` : reason(m)}
+  const heldRow = m => { const A = holdAction(m, H); return `<div class="mm-row" onclick="openStock('${m.sym}')">${id(m)}${A.note ? `<div class="mm-why"><div class="mm-main">${momoWhy(m).pros.slice(0, 3).join(' · ') || L('条件都不满足','No condition met')}</div><div class="mm-sub dot-warn">${capEn(A.note)}</div></div>` : reason(m)}
       <div class="mm-actw"><span class="pill mm-act ${A.act}">${{ buy:'BUY', hold:'HOLD', sell:'SELL' }[A.act]}</span></div>${nums(A.nums.map(n => [n[0], n[1], n[2]]))}
       </div>`; };
   const candRow = m => `<div class="mm-row" onclick="openStock('${m.sym}')">${id(m)}${reason(m)}
