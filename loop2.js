@@ -223,7 +223,7 @@ function planCardHtml(p, H){
       <span class="grow"><span class="sec-tag">${esc(secName(sectorOf(p.sym)))}</span>
         ${p.closedAt
           ? `<button class="btn-ghost btn-small" onclick="reopenPlan('${p.id}')">${L('重新打开','Reopen')}</button><button class="btn-ghost btn-small" onclick="deletePlan('${p.id}')">${L('删除','Delete')}</button>`
-          : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button><button class="btn-ghost btn-small" onclick="closePlan('${p.id}')">${L('结束','Close')}</button>`}
+          : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button><button class="icon-btn pc-x" title="${L('结束这个计划','Close this plan')}" aria-label="${L('结束','Close')}" onclick="closePlan('${p.id}')">✕</button>`}
       </span>
     </div>
     ${rulerHtml(p, c, !p.closedAt)}
