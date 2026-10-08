@@ -247,7 +247,7 @@ function planCardHtml(p, H){
     const fr = q ? got / q : 0;
     const cls = fr >= 1 - 1e-9 ? 'done' : fr > 0 ? 'part' : '';
     return `<div class="tr ${cls}" style="${cls==='part' ? `--fr:${(fr*100).toFixed(0)}%` : ''}">
-      <div class="tr-n">${L('第','#')}${i+1}${L(' 批','')} · ${L('建议买 ','buy ')}${trPct[i]}%${cls==='done' ? ' ✓' : cls==='part' ? ` · ${fmt(got,0)}/${fmt(q,0)}` : ''}${c.trW && (c.mode === 'pct' || c.baseHeld > 0) ? ` · <span data-tip="${L('这一批买完后，这只股票占账户的比例','this stock\'s share of the account after this buy')}">→ ${fmt(c.trW[i],0)}%</span>` : ''}</div>
+      <div class="tr-n">${L('第','#')}${i+1}${L(' 批','')} · ${L('建议买 ','buy ')}${trPct[i]}%</div>
       <div class="tr-v">${fmt(px)}${q != null ? `<span> × ${fmt(q,0)}</span>` : ''}</div></div>`;
   }).join('');
   const off = c.fills.filter(f => !f.inPlan);
