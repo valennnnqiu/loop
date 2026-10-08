@@ -4667,7 +4667,7 @@ function planCalc(p, H){
   else if(price == null){ state='noprice'; cls='wait'; label=L('等待 · 无报价','Waiting · no quote'); }
   else if(price <= p.stop){ state='stopHit'; cls='stop'; label=L('触及止损价','Stop hit'); }
   else if(price >= p.target){ state='targetHit'; cls='target'; label=L('到达目标','Target hit'); }
-  else if(bought > 0){ state='exec'; cls='exec'; label = L('执行中','In progress') + (shares ? ` · ${fmt(bought,0)}/${fmt(shares,0)}` : ` · ${fmt(bought,0)}${L(' 股',' sh')}`); }
+  else if(bought > 0){ state='exec'; cls='exec'; label = L('执行中','In progress') + (mode === 'pct' && targetShares != null ? ` · ${fmt(heldNow,0)}/${fmt(targetShares,0)}` : shares ? ` · ${fmt(bought,0)}/${fmt(shares,0)}` : ` · ${fmt(bought,0)}${L(' 股',' sh')}`); }
   else if(inZone(p, price)){ state='inZone'; cls='zone'; label=L('进区','In zone'); }
   else if(price > p.hi){ state='waiting'; cls='wait'; label=L('等待','Waiting'); }
   else { state='below'; cls='wait'; label=L('低于区间','Below zone'); }
@@ -4703,7 +4703,7 @@ function planCalc(p, H){
       if(sw > cfg.maxSector) warns.push({c:'', t:L(`执行完后「${sec}」板块约占 ${fmt(sw,0)}%，超过板块上限 ${cfg.maxSector}%`, `After execution the ${secName(sec)} sector ≈ ${fmt(sw,0)}%, above the ${cfg.maxSector}% sector limit`)});
     }
   }
-  return { price, mid, riskAmt, rps, shares, mode, targetShares, baseHeld, trW, trPx, trQty, rrMid, rrNow, fills, bought, state, label, cls, dist, warns };
+  return { price, mid, riskAmt, rps, shares, mode, targetShares, baseHeld, heldNow, trW, trPx, trQty, rrMid, rrNow, fills, bought, state, label, cls, dist, warns };
 }
 
 // ---------- plans: UI ----------
@@ -4737,7 +4737,9 @@ function planCardHtml(p, H){
   const c = planCalc(p, H);
   const hot = c.state === 'inZone', alarm = ['stopHit','expired'].includes(c.state);
   const rrCls = v => v == null ? '' : v >= 2 ? 'gain-t' : v < 1 ? 'loss-t' : '';
-  const prog = c.shares ? Math.min(100, c.bought / c.shares * 100) : 0;
+  // % mode shows the whole position (what you hold vs the target), not just this plan's own slice
+  const whole = c.mode === 'pct' && c.targetShares != null && c.targetShares > 0;
+  const prog = whole ? Math.min(100, c.heldNow / c.targetShares * 100) : c.shares ? Math.min(100, c.bought / c.shares * 100) : 0;
   // tranche ladder, filled in order by in-plan buys
   let cum = 0;
   // suggested split of the position across the levels: an even split (the last level takes the rounding),
@@ -4771,8 +4773,8 @@ function planCardHtml(p, H){
     ${rulerHtml(p, c, !p.closedAt)}
     <div class="pc-stats">
       <div class="pc-stat"><div class="k">${term('rr')}</div><div class="v ${rrCls(c.rrMid)}">${c.rrMid != null ? fmt(c.rrMid,2) : '—'}</div></div>
-      <div class="pc-stat"><div class="k">${L('计划仓位','Size')}</div><div class="v">${c.shares != null ? fmt(c.shares,0) + L(' 股',' sh') : '—'}</div></div>
-      <div class="pc-stat"><div class="k">${L('已执行','Filled')}</div><div class="v">${fmt(c.bought,0)}${c.shares ? `<span class="muted"> / ${fmt(c.shares,0)}</span>` : ''}</div><div class="mini"><i style="width:${prog}%"></i></div></div>
+      <div class="pc-stat"><div class="k">${L('计划仓位','Size')}</div><div class="v">${whole ? fmt(c.targetShares,0) + L(' 股',' sh') + `<span class="muted"> · ${fmt(num(p.sizeVal),0)}%</span>` : c.shares != null ? fmt(c.shares,0) + L(' 股',' sh') : '—'}</div>${whole ? `<div class="s">${c.heldNow >= c.targetShares ? L('已达到目标','target reached') : L(`还要买 ${fmt(c.targetShares - c.heldNow,0)} 股`, `${fmt(c.targetShares - c.heldNow,0)} sh left to buy`)}</div>` : ''}</div>
+      <div class="pc-stat"><div class="k">${L('已执行','Filled')}</div><div class="v">${fmt(whole ? c.heldNow : c.bought,0)}${whole ? `<span class="muted"> / ${fmt(c.targetShares,0)}</span>` : c.shares ? `<span class="muted"> / ${fmt(c.shares,0)}</span>` : ''}</div><div class="mini"><i style="width:${prog}%"></i></div></div>
       <div class="pc-stat"><div class="k">${p.closedAt ? L('结束于','Closed') : L('有效期','Valid to')}</div><div class="v">${md(p.closedAt || p.expiry)}</div></div>
     </div>
     <div class="tr-steps">${steps}</div>
