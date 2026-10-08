@@ -1640,7 +1640,7 @@ let cmp = { a:null, b:null, months:3, spy:true };
 function openStock(sym){
   sym = String(sym || '').toUpperCase().trim(); if(!sym) return;
   stockSym = sym; stockMode = 'stock';
-  cfg.recentStocks = [sym, ...(cfg.recentStocks || []).filter(s => s !== sym)].slice(0, 6); saveCfg();
+  if(pack || liveOn()){ cfg.recentStocks = [sym, ...(cfg.recentStocks || []).filter(s => s !== sym)].slice(0, 6); saveCfg(); }   // not while browsing the sample
   switchTab('stock'); renderStock(); loadStockExtras(sym);
   ensureBars([sym, 'SPY'], { first:true });
 }
@@ -1833,6 +1833,7 @@ function ladderHtml(sym, all){
 }
 // the nearest support below price — what the header "Plan" button builds a plan from
 function ladderPlanBtn(sym){
+  if(isExample()) return '';
   const lv = levelsFor(sym, Math.max(120, stockDays)), p = lastPx(sym); if(!lv.length || p == null) return '';
   const sup = lv.filter(l => l.hi < p).sort((a,b) => b.mid - a.mid); const S1 = sup.find(l => l.score >= 2) || sup[0];
   return S1 ? `<button class="btn-ghost btn-small" onclick="planFromLevel('${sym}', ${lv.indexOf(S1)})">${L('设计划','Set plan')}</button>` : '';
@@ -2010,7 +2011,7 @@ function renderStock(){
       <div class="sk-title"><div class="sk-l1"><b class="sk-sym">${sym}</b><div class="sk-px"><b>${p != null ? '$' + fmt(p) : '—'}</b>${chg != null ? `<span class="${chg >= 0 ? 'gain-t' : 'loss-t'}">${sg(chg)}</span>` : ''}</div></div>
         <span class="sk-sec-tag">${esc(secName(sectorOf(sym)))}${isLev(sym) ? ` · ${L('杠杆 ETF','Leveraged')}` : ''}</span></div>
       <div class="sk-acts">
-        ${!plan ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${sym}'})">${L('设计划','Set plan')}</button>` : ''}
+        ${!plan && !isExample() ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${sym}'})">${L('设计划','Set plan')}</button>` : ''}
         ${liveOn() ? `<button class="btn-ghost btn-small" aria-label="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">${L('刷新','Refresh')}</button>` : ''}
       </div>
     </div>`;
@@ -2280,7 +2281,7 @@ function renderRadar(){
       <td class="num ${I && (I.rsi > 70 || I.rsi < 30) ? 'warn-t' : ''}">${I ? fmt(I.rsi, 0) : '—'}</td>
       <td class="num ${r.erD != null && r.erD <= 7 ? 'warn-t' : ''}">${r.er ? md(r.er) : '—'}</td>
       <td>${anyTags ? `<div class="rd-tags">${tags(r)}</div>` : ''}</td>
-      <td class="rd-my">${r.role === 'none' ? `<a class="rd-del" aria-label="${L('从雷达移除','remove from radar')}" onclick="event.stopPropagation(); radarDel('${r.sym}')">✕</a>` : ''}</td></tr>`; };
+      <td class="rd-my">${r.role === 'none' && !isExample() ? `<a class="rd-del" aria-label="${L('从雷达移除','remove from radar')}" onclick="event.stopPropagation(); radarDel('${r.sym}')">✕</a>` : ''}</td></tr>`; };
   el.innerHTML = head + `
     ${secHeadline(secs)}
     <div class="sec-cards">${secs.map(s => { const up = s.withI ? Math.round(s.above / 100 * s.withI) : 0;
@@ -2305,7 +2306,7 @@ function radarCard(r){
     <div class="rd-cb"><div>${I ? statusLine(r.sym) : L('还没有 K 线数据','no bars yet')}</div>
       ${nl ? `<div class="muted sm">${nl.sup[0] ? L(`支撑 ${px(nl.sup[0].lo)}–${px(nl.sup[0].hi)} ${dots(nl.sup[0].score)}`, `support ${px(nl.sup[0].lo)}–${px(nl.sup[0].hi)} ${dots(nl.sup[0].score)}`) : ''}${nl.res[0] ? ' · ' + L(`压力 ${px(nl.res[0].lo)}–${px(nl.res[0].hi)} ${dots(nl.res[0].score)}`, `resistance ${px(nl.res[0].lo)}–${px(nl.res[0].hi)} ${dots(nl.res[0].score)}`) : ''}${m ? ` · ${L('动能','momentum')} <span class="mo-badge ${m.grade}">${gradeTxt(m.grade)} ${m.score}</span>` : ''}</div>` : ''}
       ${r.insAlert ? `<div class="dot-warn sm">${r.insAlert.map(a => a.t).join('；')}</div>` : ''}</div>
-    <div class="rd-ca"><button class="btn-ghost btn-small" onclick="openStock('${r.sym}')">${L('个股页','Open')} →</button>${!r.plan ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${r.sym}'})">${L('设计划','Set plan')}</button>` : ''}${r.role === 'none' ? `<button class="btn-ghost btn-small" onclick="radarDel('${r.sym}')">${L('从雷达移除','remove')}</button>` : ''}</div></div>`;
+    <div class="rd-ca"><button class="btn-ghost btn-small" onclick="openStock('${r.sym}')">${L('个股页','Open')}</button>${!r.plan && !isExample() ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${r.sym}'})">${L('设计划','Set plan')}</button>` : ''}${r.role === 'none' && !isExample() ? `<button class="btn-ghost btn-small" onclick="radarDel('${r.sym}')">${L('从雷达移除','remove')}</button>` : ''}</div></div>`;
 }
 
 /* ---------- same-chain compare + swap simulation ---------- */
@@ -2680,7 +2681,7 @@ const _toggleLang3 = toggleLang; toggleLang = async function(){ clearIndCache();
 const _switchTab3 = switchTab;
 switchTab = function(name){
   _switchTab3(name);
-  if(name === 'stock'){ renderStock(); if(!stockSym){ loadStockExtras(EXAMPLE_STOCK); ensureBars([EXAMPLE_STOCK, 'SPY'], { first:true }); } }
+  if(name === 'stock'){ renderStock(); if(!stockSym && (pack || liveOn())){ loadStockExtras(EXAMPLE_STOCK); ensureBars([EXAMPLE_STOCK, 'SPY'], { first:true }); } }
   if(name === 'compare'){ renderCompare(); cmpDefaults(); [cmp.a, cmp.b].forEach(x => loadMetric(x).then(() => { if(document.getElementById('tab-compare').classList.contains('active')) renderCompare(); }).catch(() => {})); const sb = document.querySelector('header.top .tab-btn[data-tab="stock"]'); if(sb) sb.classList.add('active'); }
   document.querySelectorAll('.nav-fly-item').forEach(b => b.classList.toggle('active', b.dataset.fly === name));
   const fly = document.getElementById('navFly'); if(fly) fly.classList.remove('show');
@@ -2755,6 +2756,37 @@ function demoExtras(){
   const k = addDays(todayISO(), 9);
   (calendarEvents[k] = calendarEvents[k] || []).push({ id:'demo-ev-3', text:'NVDA earnings · post', category:'earnings', source:'auto-demo' });
 }
+// ---------- example mode: no Twelve Data key and no data pack → Stock / Compare / Screener show a built-in sample ----------
+// The sample pack is only swapped in while one of those four views renders, then taken away again, so it never reaches
+// Today / Positions / Risk, is never saved, and disappears the moment a real key or pack exists.
+let _examplePack = null;
+const isExample = () => !!(pack && pack.example);
+function withExample(fn){
+  if(pack || liveOn()) return fn();
+  if(!_examplePack){ _examplePack = demoPack(); _examplePack.demo = false; _examplePack.example = true; }
+  pack = _examplePack; clearIndCache();
+  try{ return fn(); } finally { pack = null; clearIndCache(); }
+}
+const exampleBanner = () => isExample() ? emptyCard(L('这是示例数据，填 Twelve Data key 就换成你自己的股票','Example data — add a Twelve Data key to see your own stocks'), ecBtn(L('填写 key','Add key'), 'openKeySetting()'), L('示例','Example')) : '';
+(() => {
+  const wrap = (name, hostId, banner) => {
+    const orig = window[name];
+    window[name] = function(){
+      let shown = false;
+      withExample(() => {
+        orig();
+        shown = isExample();
+        const el = document.getElementById(hostId);
+        if(shown && banner && el) el.insertAdjacentHTML('afterbegin', exampleBanner());
+      });
+    };
+  };
+  wrap('renderStock', 'stockView', true);
+  wrap('renderCompare', 'cmpSec', true);
+  wrap('renderMomo', 'momoSec', true);
+  wrap('renderRadar', 'radarSec', false);
+})();
+
 const _loadDemoData3 = loadDemoData;
 loadDemoData = async function(){
   pack = demoPack(); clearIndCache(); await savePack();
