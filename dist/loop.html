@@ -1902,6 +1902,25 @@
     body.nav-collapsed header.top .side-import{ margin:0 0 14px; }
     header.top .brand{ padding-bottom:18px; }
   }
+
+  /* Stock menu item: a chevron, and on hover a small panel with Stock and Compare two */
+  .nav-group{ display:contents; }
+  .nav-chev{ display:none; }
+  .nav-fly{ display:none; }
+  @media (min-width:900px){
+    .nav-group{ display:block; position:relative; }
+    header.top .tab-btn .nav-chev{ display:block; width:15px; height:15px; margin-left:auto; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; opacity:.55; }
+    body.nav-collapsed header.top .tab-btn .nav-chev{ display:none; }
+    .nav-fly{ display:none; position:fixed; z-index:60; }
+    .nav-fly.show{ display:block; }
+    .nav-fly-card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:8px; box-shadow:0 10px 30px rgba(0,0,0,.12); min-width:200px; }
+    .nav-fly-item{ display:flex; align-items:center; gap:11px; width:100%; height:40px; padding:0 12px; border-radius:10px; background:none; border:none; font:inherit; font-size:14px; color:var(--text-dim); cursor:pointer; text-align:left; }
+    .nav-fly-item svg.i{ width:17px; height:17px; }
+    .nav-fly-item.active{ background:var(--gold-dim); color:var(--gold); }
+  }
+  @media (max-width:899px){ .nav-group{ display:contents; } }
+  .stock-compare{ display:none; }
+  @media (max-width:899px){ .stock-compare{ display:inline-flex; } }
 </style>
 </head>
 <body>
@@ -1924,9 +1943,15 @@
       <button class="tab-btn" data-tab="screener" onclick="switchTab('screener')">
         <svg class="i" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg><span data-i18n="tabScreener">筛选</span>
       </button>
-      <button class="tab-btn" data-tab="stock" onclick="switchTab('stock')">
-        <svg class="i" viewBox="0 0 24 24"><path d="M4 19V9M9 19V5M14 19v-7M19 19V8"/><path d="M3 21h18"/></svg><span data-i18n="tabStock">个股</span>
-      </button>
+      <div class="nav-group" id="navStockGroup">
+        <button class="tab-btn" data-tab="stock" onclick="switchTab('stock')">
+          <svg class="i" viewBox="0 0 24 24"><path d="M4 19V9M9 19V5M14 19v-7M19 19V8"/><path d="M3 21h18"/></svg><span data-i18n="tabStock">个股</span><svg class="nav-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <div class="nav-fly" id="navFly"><div class="nav-fly-card">
+          <button type="button" class="nav-fly-item" data-fly="stock" onclick="switchTab('stock')"><svg class="i" viewBox="0 0 24 24"><path d="M4 19V9M9 19V5M14 19v-7M19 19V8"/><path d="M3 21h18"/></svg><span data-i18n="flyStock">个股</span></button>
+          <button type="button" class="nav-fly-item" data-fly="compare" onclick="switchTab('compare')"><svg class="i" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg><span data-i18n="flyCompare">两只对比</span></button>
+        </div></div>
+      </div>
       <button class="tab-btn" data-tab="positions" onclick="switchTab('positions')">
         <svg class="i" viewBox="0 0 24 24"><path d="M21.2 15.9A10 10 0 1 1 8.1 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg><span data-i18n="tabPositions">持仓</span>
       </button>
@@ -2011,6 +2036,10 @@
       </div>
       <div id="targetsView"></div>
     </section>
+
+  </div>
+
+  <div id="tab-compare" class="tab-panel">
 
     <section id="cmpSec"></section>
 
@@ -2820,7 +2849,7 @@ const SEED_CALENDAR = {};
 
 const I18N = {
   zh: {
-    subtitle: 'LIFO 逐批结算 · 持仓 · 自选', tabLedger: '交易盈亏', tabPositions: '持仓', tabWatchlist: '自选', tabScreener: '筛选', tabReport: '周报',
+    subtitle: 'LIFO 逐批结算 · 持仓 · 自选', tabLedger: '交易盈亏', tabPositions: '持仓', tabWatchlist: '自选', tabScreener: '筛选', flyStock: '个股', flyCompare: '两只对比', tabReport: '周报',
     notesTitle: '笔记目录', btnAddNote: '+ 添加笔记', noteTitleLabel: '标题', noteTitlePh: '为什么卖早了',
     noteTickerLabel: '代码 (可选)', noteDateLabel: '日期', btnAdd: '添加', noteBodyLabel: '内容', noteBodyPh: '写点什么…',
     weeklyChartTitle: '每周已实现盈亏', monthlyChartTitle: '每月已实现盈亏', reviewTitle: '操作评价', btnGenReview: '生成评价', goalLabel: '每月目标',
@@ -2846,7 +2875,7 @@ const I18N = {
     tgBuy: '买入', tgSell: '卖出', tgWatch: '关注', tgLevelPh: '150-160 / 175 / 190', tgNotePh: '看图 · ER 前',
   },
   en: {
-    subtitle: 'LIFO lot matching · Positions · Watchlist', tabLedger: 'Trades', tabPositions: 'Positions', tabWatchlist: 'Watchlist', tabScreener: 'Screener', tabReport: 'Report',
+    subtitle: 'LIFO lot matching · Positions · Watchlist', tabLedger: 'Trades', tabPositions: 'Positions', tabWatchlist: 'Watchlist', tabScreener: 'Screener', flyStock: 'Stock', flyCompare: 'Compare two', tabReport: 'Report',
     notesTitle: 'Notes Directory', btnAddNote: '+ Add Note', noteTitleLabel: 'Title', noteTitlePh: 'Why I sold too early',
     noteTickerLabel: 'Ticker (optional)', noteDateLabel: 'Date', btnAdd: 'Add', noteBodyLabel: 'Body', noteBodyPh: 'Write something…',
     weeklyChartTitle: 'Weekly Realized P&L', monthlyChartTitle: 'Monthly Realized P&L', reviewTitle: 'Trading Review', btnGenReview: 'Generate Review', goalLabel: 'Monthly goal',
@@ -5286,9 +5315,9 @@ renderWelcome = function(){
   el.innerHTML = `<div class="modal-title">${L('LOOP 怎么用','How LOOP works')}</div>
     <div class="w-grid">
       ${it(L('今日','Today'), '每天先看这页。只列需要你动手的事：计划到价、财报临近、仓位超上限、重要宏观数据。处理完点 <b>✕</b>。', 'Start here every day. Only what needs action: plans at their levels, earnings, limit breaches, major macro. Tick it off with <b>✕</b>.')}
-      ${it(L('自选','Watchlist'), '你的<b>交易计划</b>和价格目标。想买哪只，点<b>设计划</b>写好买入区间、止损和目标。页面下面还有两只股票的对比。', 'Your <b>trade plans</b> and price targets. To buy one, hit <b>Set plan</b> and fill in zone, stop and target. Below: compare two stocks.')}
+      ${it(L('自选','Watchlist'), '你的<b>交易计划</b>和价格目标。想买哪只，点<b>设计划</b>写好买入区间、止损和目标。', 'Your <b>trade plans</b> and price targets. To buy one, hit <b>Set plan</b> and fill in zone, stop and target.')}
       ${it(L('筛选','Screener'), '<b>短线动能榜</b>和 AI 链<b>雷达</b>：给一批股票排名，可按预设筛选，勾两只去对比，粘贴一串代码批量加进雷达。', 'The <b>momentum board</b> and the AI-chain <b>radar</b>: rank a batch of stocks, filter by preset, tick two to compare, paste a list of symbols to add many at once.')}
-      ${it(L('个股','Stock'), '一页看完一只股票：K 线、<b>关键价位</b>、期权墙、量能、新闻、财报、内部人。联网拉行情要在设置里填 <b>Twelve Data key</b>。', 'One page per stock: chart, <b>key levels</b>, option walls, volume, news, earnings, insiders. Live bars need a <b>Twelve Data key</b> in Settings.')}
+      ${it(L('个股','Stock'), '一页看完一只股票：K 线、<b>关键价位</b>、期权墙、量能、新闻、财报、内部人。联网拉行情要在设置里填 <b>Twelve Data key</b>。把鼠标放到「个股」上，还能进<b>两只对比</b>。', 'One page per stock: chart, <b>key levels</b>, option walls, volume, news, earnings, insiders. Live bars need a <b>Twelve Data key</b> in Settings. Hover Stock in the menu for <b>Compare two</b>.')}
       ${it(L('持仓','Positions'), '持仓从交易记录<b>自动算出</b>。看单票和板块集中度、全部打到止损价会亏多少、走势几乎一样的持仓。', 'Computed <b>from your trades</b>. Concentration, loss if every stop is hit, and holdings that move together.')}
       ${it(L('日历','Calendar'), '财报日、宏观事件和可能影响大盘的新闻。填 Finnhub key 后自动同步；也可以点某天的 + 自己加。', 'Earnings, macro dates and market-moving news. Syncs automatically with a Finnhub key; or add your own with +.')}
       ${it(L('复盘','Review'), '顶部是<b>近 7 天 / 本月 / 今年</b>的已实现盈亏。往下是每周和每月盈亏、计划对账；<b>交易明细</b>在这里导入 IBKR 对账单，按 LIFO 逐批结算。', 'Top: realized P&L for the <b>last 7 days, this month and this year</b>. Below: weekly and monthly P&L and plan check; <b>Trades</b> is where you import IBKR statements, settled lot by lot (LIFO).')}
@@ -5470,6 +5499,24 @@ function toggleNav(){
   let c = false; try{ c = localStorage.getItem('loop_nav_collapsed') === '1'; localStorage.setItem('loop_nav_collapsed', c ? '0' : '1'); }catch(e){ document.body.classList.toggle('nav-collapsed'); return; }
   applyNav();
 }
+
+// Stock menu: hover (or focus) shows the Stock / Compare two panel to the right of the sidebar
+(function(){
+  let timer = null;
+  const grp = () => document.getElementById('navStockGroup'), fly = () => document.getElementById('navFly');
+  function show(){
+    const g = grp(), f = fly(); if(!g || !f || window.innerWidth < 900) return;
+    clearTimeout(timer);
+    const b = g.querySelector('.tab-btn').getBoundingClientRect(), h = document.querySelector('header.top').getBoundingClientRect();
+    f.style.top = (b.top - 8) + 'px'; f.style.left = b.right + 'px'; f.style.paddingLeft = (h.right - b.right + 8) + 'px';
+    f.classList.add('show');
+  }
+  function hide(){ clearTimeout(timer); timer = setTimeout(() => { const f = fly(); if(f) f.classList.remove('show'); }, 160); }
+  document.addEventListener('mouseover', e => { const g = grp(); if(g && g.contains(e.target)) show(); });
+  document.addEventListener('mouseout', e => { const g = grp(); if(g && g.contains(e.target) && !g.contains(e.relatedTarget)) hide(); });
+  document.addEventListener('focusin', e => { const g = grp(); if(g && g.contains(e.target)) show(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape'){ const f = fly(); if(f) f.classList.remove('show'); } });
+})();
 // jump to Review → trades with the statement import open (the sidebar / Today buttons)
 function importStatement(){ switchTab('ledger'); openImport(); setTimeout(() => { const c = document.getElementById('importCard'); if(c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 60); }
 function openAddTrades(){
@@ -6338,6 +6385,7 @@ function stockPickerHtml(){
   return `<div class="sk-pick">
     <input id="skSearch" class="sk-in" placeholder="${L('输入代码，回车','Symbol, then Enter')}" list="skList" onkeydown="stockSearch(event)" autocomplete="off" style="text-transform:uppercase">
     <datalist id="skList">${all.map(s => `<option value="${s}">`).join('')}</datalist>
+    <button type="button" class="btn-ghost btn-small stock-compare" onclick="switchTab('compare')">${L('两只对比','Compare two')}</button>
     ${chips.length ? `<div class="sk-chips"><span class="sk-recent">${L('最近看过','Recent')}</span>${chips.map(s => `<button class="chip ${s === stockSym ? 'on' : ''}" onclick="openStock('${s}')">${s}</button>`).join('')}</div>` : ''}
   </div>`;
 }
@@ -6659,8 +6707,7 @@ function radarCard(r){
 /* ---------- same-chain compare + swap simulation ---------- */
 function openCompare(a, b){
   cmp.a = a; cmp.b = b;
-  switchTab('watchlist'); renderCompare();
-  setTimeout(() => { const s = document.getElementById('cmpSec'); if(s) s.scrollIntoView({ behavior:'smooth', block:'start' }); }, 40);
+  switchTab('compare'); renderCompare();
   [a, b].forEach(s => loadMetric(s).then(() => renderCompare()));
 }
 function cmpSet(which, v){ v = String(v || '').toUpperCase().trim(); if(!v) return; cmp[which] = v; renderCompare(); loadMetric(v).then(() => renderCompare()); }
@@ -7032,6 +7079,9 @@ const _switchTab3 = switchTab;
 switchTab = function(name){
   _switchTab3(name);
   if(name === 'stock') renderStock();
+  if(name === 'compare'){ renderCompare(); const sb = document.querySelector('header.top .tab-btn[data-tab="stock"]'); if(sb) sb.classList.add('active'); }
+  document.querySelectorAll('.nav-fly-item').forEach(b => b.classList.toggle('active', b.dataset.fly === name));
+  const fly = document.getElementById('navFly'); if(fly) fly.classList.remove('show');
   if(name === 'calendar') renderMacroSec();
   if((name === 'watchlist' || name === 'screener') && liveOn()) ensureBars(BENCH_SYMS.concat(momoUniverse().syms), { relaxed:true });
 };
