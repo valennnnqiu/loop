@@ -779,8 +779,11 @@ const PAGE_HELP = () => ({
   review:[L('把买入分成「计划内」（在计划区间里买的）和「计划外」（没计划或追价买的）。','Buys are split into in-plan (inside a plan zone) and off-plan (no plan, or chased).'), L('比较两边的盈亏和胜率，看按计划交易是不是更赚钱。','Compare P&L and win rate to see whether trading the plan pays.'), L('标错了点一下标签就能改。','Tap a tag to fix a mislabel.')],
 });
 function pageHelp(key){
+  // same hover tooltip as every other info icon (dark box, white text); numbered lines, no click needed
   const items = PAGE_HELP()[key] || [];
-  return `<details class="phelp"><summary title="${L('这页怎么用','How this page works')}">i</summary><div class="phelp-pop">${items.map((t,i) => `<div><b>${i+1}</b>${t}</div>`).join('')}</div></details>`;
+  const plain = h => String(h).replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
+  const tip = items.map((t, i) => `${i + 1}. ${plain(t)}`).join('\n');
+  return `<span class="phelp"><span class="f-tip" tabindex="0" data-tip="${esc(tip)}">i</span></span>`;
 }
 
 function stepsCard(title, steps, actions){
