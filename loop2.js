@@ -1698,7 +1698,13 @@ function ladderHtml(sym, all){
         <span class="lr-p">${pr(l.lo)}–${pr(l.hi)}<small>${sg(((isS ? l.hi : l.lo) / p - 1) * 100)}</small></span>
         <span class="lr-s s${l.score}">${l.score >= 3 ? L('强','Strong') : l.score === 2 ? L('中','Medium') : L('弱','Weak')}</span>
         <span class="lr-w">${why(l)}</span>
-        ${isS ? `<a class="lnk" onclick="planFromLevel('${sym}', ${lv.indexOf(l)})">${L('建计划','Plan')}</a>` : '<span></span>'}</div>`; }).join('')}</div>`;
+        </div>`; }).join('')}</div>`;
+}
+// the nearest support below price — what the header "Plan" button builds a plan from
+function ladderPlanBtn(sym){
+  const lv = levelsFor(sym, Math.max(120, stockDays)), p = lastPx(sym); if(!lv.length || p == null) return '';
+  const sup = lv.filter(l => l.hi < p).sort((a,b) => b.mid - a.mid); const S1 = sup.find(l => l.score >= 2) || sup[0];
+  return S1 ? `<button class="btn-ghost btn-small" onclick="planFromLevel('${sym}', ${lv.indexOf(S1)})">${L('建计划','Plan')}</button>` : '';
 }
 
 function optionsHtml(sym){
@@ -1897,7 +1903,7 @@ function renderStock(){
   const stats = '';
   const O = optionsHtml(sym), V = volumeHtml(sym), D = driverHtml(sym), E = earningsHtml(sym), N = insiderHtml(sym);
   el.innerHTML = stockPickerHtml() + liveStatusHtml() + head + verdictHtml + mineHtml + chart
-    + `<div class="sk-block"><div class="sk-bh">${L('关键价位','Key levels')}<a class="lnk" onclick="cfg.ladderAll=!cfg.ladderAll; saveCfg(); renderStock()">${cfg.ladderAll ? L('只看最重要的','key ones only') : L('看全部','show all')}</a></div>${ladderHtml(sym, cfg.ladderAll)}</div>`
+    + `<div class="sk-block"><div class="sk-bh">${L('关键价位','Key levels')}<span class="sk-bh-r">${ladderPlanBtn(sym)}<button class="btn-ghost btn-small" onclick="cfg.ladderAll=!cfg.ladderAll; saveCfg(); renderStock()">${cfg.ladderAll ? L('只看最重要的','Key ones only') : L('看全部','Show all')}</button></span></div>${ladderHtml(sym, cfg.ladderAll)}</div>`
     + (() => {
       const A = stockAlerts(sym, E, N);
       const secs = [['opt', L('期权墙','Option walls'), O, '🧲'], ['vol', L('量能','Volume'), V, '📊'], ['drv', L('驱动新闻','News drivers'), D, '📰'], ['er', L('财报','Earnings'), E, '📅'], ['ins', L('内部人','Insiders'), N, '🕴️']];

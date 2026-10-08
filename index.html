@@ -1539,13 +1539,13 @@
   .lr-act{ font-size:13px; margin-top:8px; display:flex; gap:12px; align-items:baseline; } .lr-act b{ font-family:var(--mono); color:var(--gain); }
 
   .lr-rows{ margin-top:6px; border-top:1px solid var(--line); }
-  .lr-row{ display:grid; grid-template-columns:72px 150px 44px minmax(0,1fr) 52px; gap:12px; align-items:baseline; padding:10px 2px; border-bottom:1px solid var(--line); font-size:13px; }
+  .lr-row{ display:grid; grid-template-columns:72px 150px 44px minmax(0,1fr); gap:12px; align-items:baseline; padding:10px 2px; border-bottom:1px solid var(--line); font-size:13px; }
   .lr-row:last-child{ border-bottom:none; }
   .lr-k{ font-weight:700; font-size:12px; } .lr-row.sup .lr-k{ color:var(--gain); } .lr-row.res .lr-k{ color:var(--loss); }
   .lr-p{ font-family:var(--mono); font-weight:600; } .lr-p small{ font-weight:400; color:var(--text-dim); margin-left:6px; font-size:11px; }
   .lr-s{ font-size:11px; font-weight:700; text-align:center; padding:1px 0; border-radius:999px; } .lr-s.s3{ background:var(--text); color:var(--panel); } .lr-s.s2{ background:var(--panel-2); color:var(--text); } .lr-s.s1{ color:var(--text-dim); }
   .lr-w{ color:var(--text-dim); font-size:12.5px; } .lr-row .lnk{ text-align:right; font-size:12.5px; }
-  @media (max-width:640px){ .lr-row{ grid-template-columns:auto 1fr auto; } .lr-w{ grid-column:1 / -1; } .lr-row .lnk{ grid-column:3; grid-row:1; } .lr-s{ display:none; } }
+  @media (max-width:640px){ .lr-row{ grid-template-columns:auto 1fr auto; } .lr-w{ grid-column:1 / -1; } .lr-s{ display:none; } }
   /* FOMC card in the page's normal card style */
   .fomc-card{ background:var(--panel); color:var(--text); border:1px solid var(--line); }
   .fc-k{ background:#1F1E1B; color:#EDEAE0; } .fc-l .muted{ color:var(--text-dim); }
@@ -1734,6 +1734,8 @@
   .sk-id{ flex-direction:column; align-items:flex-start; gap:0; }
   .sk-sym{ line-height:30px; }
   .sk-sec-tag{ background:none; padding:0; border-radius:0; font-size:12px; line-height:16px; color:var(--text-dim); }
+
+  .sk-bh-r{ margin-left:auto; display:flex; gap:8px; }
 </style>
 </head>
 <body>
