@@ -1849,6 +1849,26 @@
   .today-import{ display:none; margin-left:auto; }
   @media (min-width:900px){ header.top .side-import{ display:flex; align-items:center; justify-content:center; margin:0 8px 14px; height:36px; font-size:13px; font-weight:600; } }
   @media (max-width:899px){ .today-import{ display:inline-flex; } .today-date{ flex-wrap:wrap; row-gap:10px; } .today-date .today-import{ margin-left:0; flex-basis:auto; } }
+
+  /* collapsible sidebar (desktop): expanded = labels, collapsed = a narrow icon rail; remembered in this browser */
+  .nav-toggle{ display:none; }
+  @media (min-width:900px){
+    body{ transition:padding-left .18s ease; }
+    header.top{ transition:width .18s ease; overflow:hidden; }
+    .nav-toggle{ display:inline-flex; align-items:center; justify-content:center; margin-left:auto; width:28px; height:28px; padding:0; border-radius:999px; background:none; border:1px solid transparent; color:var(--text-dim); cursor:pointer; }
+    .nav-toggle svg.i{ width:16px; height:16px; }
+    body.nav-collapsed{ padding-left:88px; }
+    body.nav-collapsed header.top{ width:64px; padding:20px 12px; }
+    body.nav-collapsed header.top .brand{ flex-direction:column; align-items:center; gap:10px; padding:0 0 22px; }
+    body.nav-collapsed header.top .brand h1{ display:none; }
+    body.nav-collapsed .nav-toggle{ margin-left:0; transform:rotate(180deg); }
+    body.nav-collapsed header.top .tab-btn{ justify-content:center; padding:10px 0; position:relative; }
+    body.nav-collapsed header.top .tab-btn span:not(.nav-badge){ display:none; }
+    body.nav-collapsed header.top .tab-btn .nav-badge{ position:absolute; top:3px; right:2px; margin:0; height:16px; min-width:16px; font-size:9.5px; }
+    body.nav-collapsed header.top .side-import{ font-size:0; width:36px; padding:0; margin:0 auto 14px; }
+    body.nav-collapsed header.top .side-import::before{ content:'+'; font-size:18px; font-weight:500; }
+    body.nav-collapsed header.top .head-right{ flex-direction:column; align-items:center; gap:8px; padding:14px 0 0; }
+  }
 </style>
 </head>
 <body>
@@ -1858,6 +1878,7 @@
     <div class="brand">
       <span class="brand-logo">♾️</span>
       <h1>LOOP</h1>
+      <button type="button" class="nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="Collapse menu"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
     </div>
   <nav class="tabs">
       <button class="tab-btn active" data-tab="today" onclick="switchTab('today')">
@@ -5390,6 +5411,18 @@ function openAddPanel(){
   if(document.getElementById('importCard').style.display === 'none') openImport();
   if(document.getElementById('addTradeForm').style.display === 'none') openAddTrade();
 }
+
+// sidebar collapse (desktop): remembered per browser
+function applyNav(){
+  let c = false; try{ c = localStorage.getItem('loop_nav_collapsed') === '1'; }catch(e){}
+  document.body.classList.toggle('nav-collapsed', c);
+  const t = document.getElementById('navToggle'); if(t) t.setAttribute('aria-label', c ? 'Expand menu' : 'Collapse menu');
+  document.querySelectorAll('header.top .tab-btn').forEach(b => { const sp = b.querySelector('span:not(.nav-badge)'); if(sp) b.setAttribute('aria-label', sp.textContent.trim()); });
+}
+function toggleNav(){
+  let c = false; try{ c = localStorage.getItem('loop_nav_collapsed') === '1'; localStorage.setItem('loop_nav_collapsed', c ? '0' : '1'); }catch(e){ document.body.classList.toggle('nav-collapsed'); return; }
+  applyNav();
+}
 // jump to Review → trades with the statement import open (the sidebar / Today buttons)
 function importStatement(){ switchTab('ledger'); openImport(); setTimeout(() => { const c = document.getElementById('importCard'); if(c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 60); }
 function openAddTrades(){
@@ -7086,6 +7119,7 @@ loadAll = async function(){
 };
 
 initImportUI();
+applyNav();
 loadAll();
 
 </script>

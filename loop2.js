@@ -1039,6 +1039,18 @@ function openAddPanel(){
   if(document.getElementById('importCard').style.display === 'none') openImport();
   if(document.getElementById('addTradeForm').style.display === 'none') openAddTrade();
 }
+
+// sidebar collapse (desktop): remembered per browser
+function applyNav(){
+  let c = false; try{ c = localStorage.getItem('loop_nav_collapsed') === '1'; }catch(e){}
+  document.body.classList.toggle('nav-collapsed', c);
+  const t = document.getElementById('navToggle'); if(t) t.setAttribute('aria-label', c ? 'Expand menu' : 'Collapse menu');
+  document.querySelectorAll('header.top .tab-btn').forEach(b => { const sp = b.querySelector('span:not(.nav-badge)'); if(sp) b.setAttribute('aria-label', sp.textContent.trim()); });
+}
+function toggleNav(){
+  let c = false; try{ c = localStorage.getItem('loop_nav_collapsed') === '1'; localStorage.setItem('loop_nav_collapsed', c ? '0' : '1'); }catch(e){ document.body.classList.toggle('nav-collapsed'); return; }
+  applyNav();
+}
 // jump to Review → trades with the statement import open (the sidebar / Today buttons)
 function importStatement(){ switchTab('ledger'); openImport(); setTimeout(() => { const c = document.getElementById('importCard'); if(c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 60); }
 function openAddTrades(){
@@ -2735,4 +2747,5 @@ loadAll = async function(){
 };
 
 initImportUI();
+applyNav();
 loadAll();
