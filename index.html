@@ -1190,7 +1190,7 @@
   .ps-seg{ align-items:center; } .ps-seg > span{ padding:0 6px 0 8px; }
   .ps-note{ background:var(--gold-dim); border-radius:10px; padding:9px 13px; font-size:12.5px; margin-bottom:10px; line-height:1.6; }
   .rd-wrap{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto; }
-  .rd-tbl{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:720px; }
+  .rd-tbl{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:1040px; table-layout:fixed; }   /* fixed columns: the same widths whether or not any row has tags */
   .rd-tbl th{ text-align:left; font-size:11px; font-weight:600; color:var(--text-dim); padding:10px 8px; border-bottom:1px solid var(--line); white-space:nowrap; position:sticky; top:0; background:var(--panel); }
   .rd-tbl th.srt{ cursor:pointer; } .rd-tbl th.srt:hover{ color:var(--text); }
   .rd-tbl th.asc::after{ content:' ↑'; } .rd-tbl th.desc::after{ content:' ↓'; }
@@ -1200,7 +1200,7 @@
   .rd-tbl td.num{ font-family:var(--mono); white-space:nowrap; }
   .rd-tbl td.num span{ display:block; font-size:11px; }
   .rd-sym{ display:inline; font-size:13.5px; } .rd-sec{ display:inline; margin-left:8px; font-size:11.5px; color:var(--text-dim); }
-  .rd-tags{ display:flex; flex-wrap:wrap; gap:4px; max-width:260px; }
+  .rd-tags{ font-size:12px; line-height:1.5; color:var(--text-dim); } .rd-tags i{ font-style:normal; opacity:.6; }
   .rd-tbl tr.hl-zone td:first-child{ box-shadow:inset 3px 0 0 var(--gain); } .rd-tbl tr.hl-zone td{ background:#F1F9F4; }
   .rd-tbl tr.hl-er td:first-child{ box-shadow:inset 3px 0 0 #D89A2B; }
   .rd-tbl tr.hl-weak .rd-sym{ color:var(--loss); }
@@ -1746,8 +1746,8 @@
       </button>
     </nav>
     <div class="head-right">
-      <button class="lang-toggle" id="settingsBtn" onclick="openSettings()" title="Settings" aria-label="Settings"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
-      <button class="lang-toggle" id="helpBtn" onclick="openWelcome()" title="How LOOP works" aria-label="Help">i</button>
+      <button class="lang-toggle" id="settingsBtn" onclick="openSettings()" aria-label="Settings" aria-label="Settings"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
+      <button class="lang-toggle" id="helpBtn" onclick="openWelcome()" aria-label="How LOOP works" aria-label="Help">i</button>
       <button class="lang-toggle" id="langToggle" onclick="toggleLang()">EN</button>
     </div>
   </header>
@@ -1776,7 +1776,7 @@
         <div class="field"><label data-i18n="pAvg">均价</label><input type="number" id="p-avg" placeholder="150.00" step="any"></div>
         <div class="field"><label data-i18n="pCur">现价</label><input type="number" id="p-cur" placeholder="155.00" step="any"></div>
       </div>
-        <div class="f-btns"><button class="btn-primary" onclick="addPosition()" data-i18n="fAdd">添加</button><button type="button" class="icon-btn f-x" title="Close" aria-label="Close" onclick="openAddPosition()">✕</button></div>
+        <div class="f-btns"><button class="btn-primary" onclick="addPosition()" data-i18n="fAdd">添加</button><button type="button" class="icon-btn f-x" aria-label="Close" aria-label="Close" onclick="openAddPosition()">✕</button></div>
       </div>
       <div id="p-note" style="margin-top:9px; font-family:var(--mono); font-size:11.5px; color:var(--gold);"></div>
     </div>
@@ -1814,7 +1814,7 @@
           <div class="field"><label data-i18n="tgLevel">价位</label><input id="tg-level" type="text" placeholder="150-160 / 175 / 190" data-i18n-ph="tgLevelPh"></div>
           <div class="field"><label data-i18n="tgNote">备注 (可选)</label><input id="tg-note" type="text" placeholder="看图 · ER 前" data-i18n-ph="tgNotePh"></div>
         </div>
-          <div class="f-btns"><button class="btn-primary" onclick="addTarget()" data-i18n="btnAdd">添加</button><button type="button" class="icon-btn f-x" title="Close" aria-label="Close" onclick="openAddTarget()">✕</button></div>
+          <div class="f-btns"><button class="btn-primary" onclick="addTarget()" data-i18n="btnAdd">添加</button><button type="button" class="icon-btn f-x" aria-label="Close" aria-label="Close" onclick="openAddTarget()">✕</button></div>
         </div>
       </div>
       <div id="targetsView"></div>
@@ -1973,7 +1973,7 @@
           </div>
           <div class="field"><label data-i18n="fComm">佣金 (可选)</label><input type="number" id="f-commission" placeholder="0.83" step="any"></div>
         </div>
-          <div class="f-btns"><button class="btn-primary" onclick="addTrade()" data-i18n="fAdd">添加</button><button type="button" class="icon-btn f-x" title="Close" aria-label="Close" onclick="openAddTrades()">✕</button></div>
+          <div class="f-btns"><button class="btn-primary" onclick="addTrade()" data-i18n="fAdd">添加</button><button type="button" class="icon-btn f-x" aria-label="Close" aria-label="Close" onclick="openAddTrades()">✕</button></div>
         </div>
         <div class="field" id="f-lot-field" style="display:none; margin-top:10px;">
           <label data-i18n="fLotLabel">选择批次 (可选 — 不选就自动 LIFO 配对)</label>
@@ -2789,7 +2789,7 @@ function renderPositions(){
         <div class="pl-num">${num(pxv2(h.last), `setPosMeta('${h.sym}','price',this.value)`, false)}</div>
         <div class="pl-val">$${fmt(h.mv,0)}</div>
         <div class="pl-pnl ${h.priced ? (h.pnl>=0?'gain':'loss') : ''}">${h.priced ? fmtSigned(h.pnl,0) : '—'}</div>
-        <button class="pl-del" title="${L('删除这个持仓','delete this holding')}" onclick="event.stopPropagation(); deletePos('${h.sym}')">✕</button>
+        <button class="pl-del" aria-label="${L('删除这个持仓','delete this holding')}" onclick="event.stopPropagation(); deletePos('${h.sym}')">✕</button>
       </div>
       <div class="pl-detail ${open?'show':''}" onclick="event.stopPropagation()">
         <div class="lot-row"><span class="k">${L('成本','Cost basis')}</span><span>$${fmt(h.costBasis,2)} · C$${fmt(h.costBasis*fx,2)}</span></div>
@@ -2939,7 +2939,7 @@ function renderTargets(){
       <span class="tg-badge ${w.action.toLowerCase()}">${actLabel(w.action)}</span>
       <input class="tg-in tg-level" value="${(w.level||'').replace(/"/g,'&quot;')}" placeholder="—" onchange="updateTarget('${w.id}','level',this.value)">
       <input class="tg-in tg-note" value="${(w.note||'').replace(/"/g,'&quot;')}" placeholder="${L('备注','note')}" onchange="updateTarget('${w.id}','note',this.value)">
-      <button class="tg-del" title="${L('删除','delete')}" onclick="deleteTarget('${w.id}')">✕</button>
+      <button class="tg-del" aria-label="${L('删除','delete')}" onclick="deleteTarget('${w.id}')">✕</button>
     </div>`).join('') + `</div>`;
 }
 
@@ -3343,7 +3343,7 @@ function renderReconciliation(){
   if(issues.length===0){ box.className = 'warn'; box.innerHTML = ''; return; }
   const hasErr = issues.some(i=>i.level==='err');
   box.className = 'warn show' + (hasErr ? ' err' : '');
-  box.innerHTML = `<button class="warn-x" onclick="dismissRecon()" title="${L('知道了，别再提示','dismiss')}">✕</button>`
+  box.innerHTML = `<button class="warn-x" onclick="dismissRecon()" aria-label="${L('知道了，别再提示','dismiss')}">✕</button>`
     + `<b>${hasErr ? L('账目对不上：','Books do not balance: ') : L('注意：','Note: ')}</b>`
     + issues.map(i=>`<div class="recline">· ${i.msg}</div>`).join('');
 }

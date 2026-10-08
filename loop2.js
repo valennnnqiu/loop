@@ -222,13 +222,13 @@ function planCardHtml(p, H){
   return `<div class="plan-card ${hot?'hot':''} ${alarm?'alarm':''} ${p.closedAt?'closed':''}">
     <div class="pc-head">
       <div class="pc-id">
-        <div class="pc-l1"><a class="sym" onclick="openStock('${esc(p.sym)}')" title="${L('打开个股页','open stock page')}">${esc(p.sym)}</a><span class="px">${c.price != null ? '$'+fmt(c.price) : '—'}</span></div>
+        <div class="pc-l1"><a class="sym" onclick="openStock('${esc(p.sym)}')">${esc(p.sym)}</a><span class="px">${c.price != null ? '$'+fmt(c.price) : '—'}</span></div>
         <div class="pc-l2"><span>${esc(secName(sectorOf(p.sym)))}</span><i>·</i><span class="pc-st ${c.cls}">${c.label}</span></div>
       </div>
       <span class="grow">
         ${p.closedAt
           ? `<button class="btn-ghost btn-small" onclick="reopenPlan('${p.id}')">${L('重新打开','Reopen')}</button><button class="btn-ghost btn-small" onclick="deletePlan('${p.id}')">${L('删除','Delete')}</button>`
-          : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button><button class="icon-btn pc-x" title="${L('结束这个计划','Close this plan')}" aria-label="${L('结束','Close')}" onclick="closePlan('${p.id}')">✕</button>`}
+          : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button><button class="icon-btn pc-x" aria-label="${L('结束这个计划','Close this plan')}" aria-label="${L('结束','Close')}" onclick="closePlan('${p.id}')">✕</button>`}
       </span>
     </div>
     ${rulerHtml(p, c, !p.closedAt)}
@@ -239,7 +239,7 @@ function planCardHtml(p, H){
       <div class="pc-stat"><div class="k">${p.closedAt ? L('结束于','Closed') : L('有效期','Valid to')}</div><div class="v">${md(p.closedAt || p.expiry)}</div></div>
     </div>
     <div class="tr-steps">${steps}</div>
-    ${off.length ? `<div class="pc-fills"><span class="muted">${L('计划外成交','Off-plan fills')}</span>${off.map(f => `<span class="fill-chip out" title="${L('点一下改成计划内','click to mark in-plan')}" onclick="toggleFillTag('${f.t.id}', false)">${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}</span>`).join('')}</div>` : ''}
+    ${off.length ? `<div class="pc-fills"><span class="muted">${L('计划外成交','Off-plan fills')}</span>${off.map(f => `<span class="fill-chip out" aria-label="${L('点一下改成计划内','click to mark in-plan')}" onclick="toggleFillTag('${f.t.id}', false)">${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}</span>`).join('')}</div>` : ''}
     ${warns.length ? `<div class="pc-alert">${warns.map(w => `<div class="${w.c}">${w.t}</div>`).join('')}</div>` : ''}
     ${p.note ? `<div class="pc-note">${esc(p.note)}</div>` : ''}
   </div>`;
@@ -265,7 +265,7 @@ function planFormHtml(){
   const n = v('tranches', 3);
   return `<div class="form-card plan-form f2">
     <div class="f2-head"><b>${p ? L(`编辑 ${p.sym} 的计划`, `Edit ${p.sym} plan`) : L('新交易计划','New trade plan')}</b>
-      <div class="f-btns"><button class="btn-primary btn-small" onclick="savePlan()">${L('保存','Save')}</button><button type="button" class="icon-btn f-x" title="${L('取消','Cancel')}" aria-label="${L('取消','Cancel')}" onclick="closePlanForm()">✕</button></div></div>
+      <div class="f-btns"><button class="btn-primary btn-small" onclick="savePlan()">${L('保存','Save')}</button><button type="button" class="icon-btn f-x" aria-label="${L('取消','Cancel')}" aria-label="${L('取消','Cancel')}" onclick="closePlanForm()">✕</button></div></div>
     <div class="f2-grid">
       <div class="f2-main">
         <div class="f2-sec"><div class="f2-sec-t"><span>1</span>${L('股票','Stock')}</div>
@@ -863,7 +863,7 @@ renderTargets = function(){
       <span class="w-px">${px != null ? '$'+fmt(px) : ''}</span>
       <input class="tg-in tg-note w-note" value="${esc(w.note||'')}" placeholder="${L('一句原因','why')}" onchange="updateTarget('${w.id}','note',this.value)">
       ${w.action !== 'SELL' ? `<button class="btn-ghost btn-small" onclick="planFromTarget('${w.id}')">${L('建计划','Plan it')}</button>` : '<span></span>'}
-      <button class="tg-del" title="${L('删除','delete')}" onclick="deleteTarget('${w.id}')">✕</button>
+      <button class="tg-del" aria-label="${L('删除','delete')}" onclick="deleteTarget('${w.id}')">✕</button>
     </div>`; }).join('')}</div>`;
 };
 function planFromTarget(id){
@@ -1126,7 +1126,7 @@ function packChip(){
   if(!pack) return `<button class="pk-chip none" onclick="pickPackFile()">📦 ${L('导入数据包','Import data pack')}</button>`;
   const a = packAge();
   const cls = a == null ? '' : a <= 1 ? 'ok' : 'old';
-  return `<button class="pk-chip ${cls}" onclick="pickPackFile()" title="${L('点击导入新的 loop-data.json','click to import a newer loop-data.json')}">📦 ${L('数据','Data')} ${md(pack.asOf)} ${L('收盘','close')}${a > 1 ? ' · ' + L(`晚了 ${a} 个交易日`, `${a} sessions old`) : ''}</button>`;
+  return `<button class="pk-chip ${cls}" onclick="pickPackFile()" aria-label="${L('点击导入新的 loop-data.json','click to import a newer loop-data.json')}">📦 ${L('数据','Data')} ${md(pack.asOf)} ${L('收盘','close')}${a > 1 ? ' · ' + L(`晚了 ${a} 个交易日`, `${a} sessions old`) : ''}</button>`;
 }
 
 // ---------- live daily bars (Twelve Data, fetched straight from the browser) ----------
@@ -1811,7 +1811,7 @@ function peersHtml(sym){
   const sec = sectorOf(sym), me = ind(sym); if(!me) return '';
   const ps = Object.keys((pack && pack.bars) || {}).filter(s => s !== sym && sectorOf(s) === sec && !isLev(s) && ind(s)).slice(0, 6);
   if(!ps.length) return '';
-  const cell = (s, I, self) => `<a class="pr-c ${self ? 'me' : ''}" ${self ? '' : `onclick="openCompare('${sym}','${s}')" title="${L(`和 ${sym} 对比`, `compare with ${sym}`)}"`}><b>${s}</b><span class="${I.ret1m >= 0 ? 'gain-t' : 'loss-t'}">${sg(I.ret1m, 0)}</span></a>`;
+  const cell = (s, I, self) => `<a class="pr-c ${self ? 'me' : ''}" ${self ? '' : `onclick="openCompare('${sym}','${s}')" aria-label="${L(`和 ${sym} 对比`, `compare with ${sym}`)}"`}><b>${s}</b><span class="${I.ret1m >= 0 ? 'gain-t' : 'loss-t'}">${sg(I.ret1m, 0)}</span></a>`;
   return `<div class="peers"><span class="pr-h">${L(`同板块 · 近 1 月`, `Same sector · 1 month`)}</span>${cell(sym, me, true)}${ps.map(s => cell(s, ind(s), false)).join('')}<span class="pr-tip">${L('点一只和它对比','click one to compare')}</span></div>`;
 }
 function peerOf(sym){
@@ -1877,7 +1877,7 @@ function renderStock(){
   const peer = peerOf(sym);
   const head = `<div class="sk-head">
       <div class="sk-id"><b class="sk-sym">${sym}</b><span class="sk-sec-tag">${esc(secName(sectorOf(sym)))}</span>${isLev(sym) ? `<span class="tag amber">${L('杠杆 ETF','leveraged')}</span>` : ''}</div>
-      <div class="sk-px"><b>${p != null ? '$' + fmt(p) : '—'}</b>${chg != null ? `<span class="${chg >= 0 ? 'gain-t' : 'loss-t'}">${sg(chg)}</span>` : ''}${liveOn() ? `<button class="btn-ghost btn-small" title="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">⟳</button>` : ''}</div>
+      <div class="sk-px"><b>${p != null ? '$' + fmt(p) : '—'}</b>${chg != null ? `<span class="${chg >= 0 ? 'gain-t' : 'loss-t'}">${sg(chg)}</span>` : ''}${liveOn() ? `<button class="btn-ghost btn-small" aria-label="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">⟳</button>` : ''}</div>
       <div class="sk-acts">
         ${!plan ? `<button class="btn-primary btn-small" onclick="prefillPlan({sym:'${sym}'})">${L('+ 建计划','+ Plan')}</button>` : ''}
         ${!watchlist.some(w => w.sym === sym) && !h ? `<button class="btn-ghost btn-small" onclick="addWatchSym('${sym}')">☆ ${L('观察','Watch')}</button>` : ''}
@@ -1998,7 +1998,7 @@ function renderMomo(){
   const reason = m => { const w = momoWhy(m); const tip = esc([...w.pros.map(x => '✓ ' + x), ...w.cons.map(x => '✗ ' + x), ...m.flags.map(x => '! ' + capEn(x))].join('\n'));
     const main = w.pros.length ? w.pros.slice(0, 5).join(' · ') : L('条件都不满足','No condition met');
     const sub = m.flags.length ? capEn(m.flags[0]) : w.cons.length ? L('差：','Missing: ') + w.cons.slice(0, 2).join(L('、',' · ')) : '';
-    return `<div class="mm-why" title="${tip}"><div class="mm-main">${main}</div>${sub ? `<div class="mm-sub ${m.flags.length ? 'dot-warn' : ''}">${sub}</div>` : ''}</div>`; };
+    return `<div class="mm-why" data-tip="${tip}"><div class="mm-main">${main}</div>${sub ? `<div class="mm-sub ${m.flags.length ? 'dot-warn' : ''}">${sub}</div>` : ''}</div>`; };
   const nums = list => `<div class="mm-nums">${list.map(([k, v, c, x]) => `<div><span>${k}</span><b class="${c}">${v}</b>${x ? `<small>${x}</small>` : ''}</div>`).join('')}</div>`;
   const id = m => `<div class="mm-id"><a>${m.sym}</a><span>${m.score}/7</span></div>`;
   const heldRow = m => { const A = holdAction(m, H); return `<div class="mm-row" onclick="openStock('${m.sym}')">${id(m)}${A.note ? `<div class="mm-why"><div class="mm-main">${momoWhy(m).pros.slice(0, 5).join(' · ') || L('条件都不满足','No condition met')}</div><div class="mm-sub dot-warn">${capEn(A.note)}</div></div>` : reason(m)}
@@ -2118,11 +2118,18 @@ function renderRadar(){
   const th = (k, t) => `<th class="srt ${st.sort === k ? (st.dir > 0 ? 'asc' : 'desc') : ''}" onclick="radarSort('${k}')">${t}</th>`;
   const myCell = r => r.role === 'hold' ? `<span class="my hold" title="${L('持仓','held')}">● ${r.h.avg ? sg((r.p / r.h.avg - 1) * 100, 0) : ''}</span>`
     : r.role === 'plan' ? `<span class="my plan">◐ ${esc(planCalc(r.plan, holdingsNow()).label || '')}</span>`
-    : r.role === 'watch' ? `<span class="my watch">☆</span>` : `<a class="my none" title="${L('加入观察','watch it')}" onclick="event.stopPropagation(); addWatchSym('${r.sym}')">—</a>`;
-  const tags = r => [r.flow != null && r.flow >= 2 ? `<em class="tag violet" title="${L('今日期权成交 / 平均','today option volume / average')}">${L('期权异动','opt flow')} ${fmt(r.flow,1)}×</em>` : '', r.insAlert ? `<em class="tag red" title="${esc(r.insAlert.map(a => a.t).join('\n'))}">${L('内部人','insider')}</em>` : '', isLev(r.sym) ? `<em class="tag amber">${L('杠杆','lev')}</em>` : '', ...(r.why || []).map(w => `<em class="tag green">${w}</em>`), ...(r.risk || []).map(w => `<em class="tag amber">${w}</em>`)].join('');
+    : r.role === 'watch' ? `<span class="my watch">☆</span>` : `<a class="my none" aria-label="${L('加入观察','watch it')}" onclick="event.stopPropagation(); addWatchSym('${r.sym}')">—</a>`;
+  // flags as plain grey text separated by dots (no coloured pills); hover for detail
+  const tags = r => [
+    r.flow != null && r.flow >= 2 ? `<span title="${L('今日期权成交 / 平均','today option volume / average')}">${L('期权异动','Option flow')} ${fmt(r.flow,1)}×</span>` : '',
+    r.insAlert ? `<span title="${esc(r.insAlert.map(a => a.t).join('\n'))}">${L('内部人','Insider')}</span>` : '',
+    isLev(r.sym) ? `<span>${L('杠杆','Leveraged')}</span>` : '',
+    ...(r.why || []).map(w => `<span>${esc(capEn(w))}</span>`),
+    ...(r.risk || []).map(w => `<span>${esc(capEn(w))}</span>`)
+  ].filter(Boolean).join('<i> · </i>');
   const anyTags = rows.some(r => tags(r) !== '');   // the Tags column only exists when something has a tag
   const rowHtml = r => { const I = r.I; const cls = [r.inZone ? 'hl-zone' : '', r.erD != null && r.erD <= 7 ? 'hl-er' : '', I && I.vsMa50 < 0 ? 'hl-weak' : '', st.open === r.sym ? 'open' : ''].join(' ');
-    return `<tr class="${cls}" onclick="openStock('${r.sym}')" title="${L('打开个股页','open stock page')}">
+    return `<tr class="${cls}" onclick="openStock('${r.sym}')">
       <td onclick="event.stopPropagation()"><input type="checkbox" ${st.picked.includes(r.sym) ? 'checked' : ''} onchange="radarPick('${r.sym}', this.checked)"></td>
       <td><b class="rd-sym">${r.sym}</b><span class="rd-sec">${esc(secName(r.sec))}</span></td>
       <td class="num">${r.p != null ? fmt(r.p, r.p >= 100 ? 1 : 2) : '—'}</td>
@@ -2132,8 +2139,8 @@ function renderRadar(){
       <td class="num ${I && I.vsMa50 >= 0 ? 'gain-t' : 'loss-t'}">${I && I.vsMa50 != null ? sg(I.vsMa50, 0) : '—'}</td>
       <td class="num ${I && (I.rsi > 70 || I.rsi < 30) ? 'warn-t' : ''}">${I ? fmt(I.rsi, 0) : '—'}</td>
       <td class="num ${r.erD != null && r.erD <= 7 ? 'warn-t' : ''}">${r.er ? md(r.er) : '—'}</td>
-      ${anyTags ? `<td><div class="rd-tags">${tags(r)}</div></td>` : ''}
-      <td class="rd-my">${r.role === 'none' ? `<a class="rd-del" title="${L('从雷达移除','remove from radar')}" onclick="event.stopPropagation(); radarDel('${r.sym}')">✕</a>` : ''}</td></tr>`; };
+      <td>${anyTags ? `<div class="rd-tags">${tags(r)}</div>` : ''}</td>
+      <td class="rd-my">${r.role === 'none' ? `<a class="rd-del" aria-label="${L('从雷达移除','remove from radar')}" onclick="event.stopPropagation(); radarDel('${r.sym}')">✕</a>` : ''}</td></tr>`; };
   el.innerHTML = head + `
     ${secHeadline(secs)}
     <div class="sec-cards">${secs.map(s => { const up = s.withI ? Math.round(s.above / 100 * s.withI) : 0;
@@ -2145,11 +2152,11 @@ function renderRadar(){
       <div class="seg ps-seg"><span class="muted sm">${L('预设','Presets')}</span>${Object.entries(P).map(([k, p]) => `<button class="${st.preset === k ? 'on' : ''}" title="${esc(p.d)}" onclick="radarState.preset = radarState.preset === '${k}' ? null : '${k}'; renderRadar()">${p.t}</button>`).join('')}</div>
       ${st.sector ? `<span class="chip on" onclick="radarState.sector=null; renderRadar()">${esc(secName(st.sector))} ✕</span>` : ''}</div>
     ${presetNote}
-    <div class="rd-wrap"><table class="rd-tbl"><thead><tr><th></th>${th('sym', L('代码 · 板块','Symbol'))}<th class="num">${L('现价','Price')}</th>${th('chg1', `<span class="term" data-tip="${L('今天涨跌','change today')}">${L('今日','Today')}</span>`)}${th('ret1m', `<span class="term" data-tip="${L('近 1 个月涨跌','1-month change')}">${L('1 个月','1 month')}</span>`)}${th('distHi52', `<span class="term" data-tip="${L('离过去一年最高价还差多少；0% = 在新高','how far below the 52-week high; 0% = at the high')}">${L('距一年高点','Off 52w high')}</span>`)}${th('vsMa50', `<span class="term" data-tip="${L('比 50 日均线高（+）还是低（−）多少；正数 = 中期趋势向上','how far above (+) or below (−) the 50-day average; positive = medium-term uptrend')}">${L('比 50 日线','vs 50-day')}</span>`)}${th('rsi','RSI')}${th('er', L('财报','ER'))}${anyTags ? `<th>${L('标签','Tags')}</th>` : ''}<th></th></tr></thead>
+    <div class="rd-wrap"><table class="rd-tbl"><colgroup><col style="width:38px"><col style="width:190px"><col style="width:84px"><col style="width:84px"><col style="width:92px"><col style="width:112px"><col style="width:96px"><col style="width:56px"><col style="width:84px"><col><col style="width:36px"></colgroup><thead><tr><th></th>${th('sym', L('代码 · 板块','Symbol'))}<th class="num">${L('现价','Price')}</th>${th('chg1', `<span class="term" data-tip="${L('今天涨跌','change today')}">${L('今日','Today')}</span>`)}${th('ret1m', `<span class="term" data-tip="${L('近 1 个月涨跌','1-month change')}">${L('1 个月','1 month')}</span>`)}${th('distHi52', `<span class="term" data-tip="${L('离过去一年最高价还差多少；0% = 在新高','how far below the 52-week high; 0% = at the high')}">${L('距一年高点','Off 52w high')}</span>`)}${th('vsMa50', `<span class="term" data-tip="${L('比 50 日均线高（+）还是低（−）多少；正数 = 中期趋势向上','how far above (+) or below (−) the 50-day average; positive = medium-term uptrend')}">${L('比 50 日线','vs 50-day')}</span>`)}${th('rsi','RSI')}${th('er', L('财报','ER'))}<th>${anyTags ? L('标签','Tags') : ''}</th><th></th></tr></thead>
       <tbody>${rows.slice(0, st.all || st.preset || st.sector || st.filter !== 'all' ? 999 : 20).map(rowHtml).join('') || `<tr><td colspan="11" class="muted" style="padding:18px">${L('没有符合条件的股票','nothing matches')}</td></tr>`}</tbody></table></div>
     ${rows.length > 20 && !(st.all || st.preset || st.sector || st.filter !== 'all') ? `<a class="lnk mo-more" onclick="radarState.all=true; renderRadar()">${L(`看全部 ${rows.length} 只`, `show all ${rows.length}`)}</a>` : ''}
     <div class="rd-legend"><span class="hl-zone">${L('进了计划区间','in plan zone')}</span><span class="hl-er">${L('7 天内财报','earnings ≤7d')}</span><span class="hl-weak">${L('跌破 50 日线','below MA50')}</span>${(cfg.universeDel || []).length ? `<a class="lnk" onclick="radarRestore()">${L(`已移除 ${cfg.universeDel.length} 只 · 恢复`, `${cfg.universeDel.length} removed · restore`)}</a>` : ''}</div>
-    ${st.picked.length ? `<div class="cmp-float"><span class="cf-k">${L('对比','Compare')}</span><span class="cf-slot">${st.picked[0]}</span><span class="cf-vs">vs</span><span class="cf-slot ${st.picked[1] ? '' : 'empty'}">${st.picked[1] || L('再勾一只','pick one')}</span><button class="btn-primary btn-small" ${st.picked.length === 2 ? `onclick="openCompare('${st.picked[0]}','${st.picked[1]}')"` : 'disabled'}>${L('开始对比','Compare')}</button><button class="icon-btn cf-x" title="${L('取消','clear')}" onclick="radarState.picked=[]; renderRadar()">✕</button></div>` : ''}`;
+    ${st.picked.length ? `<div class="cmp-float"><span class="cf-k">${L('对比','Compare')}</span><span class="cf-slot">${st.picked[0]}</span><span class="cf-vs">vs</span><span class="cf-slot ${st.picked[1] ? '' : 'empty'}">${st.picked[1] || L('再勾一只','pick one')}</span><button class="btn-primary btn-small" ${st.picked.length === 2 ? `onclick="openCompare('${st.picked[0]}','${st.picked[1]}')"` : 'disabled'}>${L('开始对比','Compare')}</button><button class="icon-btn cf-x" aria-label="${L('取消','clear')}" onclick="radarState.picked=[]; renderRadar()">✕</button></div>` : ''}`;
 }
 function radarCard(r){
   const I = r.I, m = I ? momentum(r.sym) : null, nl = I ? nearestLevels(r.sym) : null;
