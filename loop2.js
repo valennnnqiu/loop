@@ -128,14 +128,14 @@ function planCalc(p, H){
   const rps = mid - p.stop;
   const fills = buysFor(p);
   const bought = fills.filter(f => f.inPlan).reduce((s,f) => s + f.t.qty, 0);
-  // how the position is sized: by risk (default), by an exact share count, or by a target % of the account
-  // ('pct' is the TOTAL weight you want, so what you already hold counts toward it)
+  // how the position is sized: by risk (default), by the share count you want to end up with, or by a target % of the account
+  // ('shares' and 'pct' are both the TOTAL position you want, so what you already hold counts toward it)
   const mode = p.sizeMode || 'risk';
   const HH = H || holdingsNow();
   const heldNow = (HH.map[p.sym] && HH.map[p.sym].qty) || 0;
   const baseHeld = Math.max(0, heldNow - bought);          // held before this plan started buying
   let shares = null, targetShares = null;
-  if(mode === 'shares'){ const q = num(p.sizeVal); shares = q != null && q > 0 ? Math.floor(q) : null; }
+  if(mode === 'shares'){ const q = num(p.sizeVal); if(q != null && q > 0){ targetShares = Math.floor(q); shares = Math.max(0, targetShares - baseHeld); } }
   else if(mode === 'pct'){
     const pc = num(p.sizeVal);
     if(pc != null && pc > 0 && HH.total > 0 && mid > 0){ targetShares = Math.floor(HH.total * pc / 100 / mid); shares = Math.max(0, targetShares - baseHeld); }
@@ -161,7 +161,7 @@ function planCalc(p, H){
   else if(price == null){ state='noprice'; cls='wait'; label=L('等待 · 无报价','Waiting · no quote'); }
   else if(price <= p.stop){ state='stopHit'; cls='stop'; label=L('触及止损价','Stop hit'); }
   else if(price >= p.target){ state='targetHit'; cls='target'; label=L('到达目标','Target hit'); }
-  else if(bought > 0){ state='exec'; cls='exec'; label = L('执行中','In progress') + (mode === 'pct' && targetShares != null ? ` · ${fmt(heldNow,0)}/${fmt(targetShares,0)}` : shares ? ` · ${fmt(bought,0)}/${fmt(shares,0)}` : ` · ${fmt(bought,0)}${L(' 股',' sh')}`); }
+  else if(bought > 0){ state='exec'; cls='exec'; label = L('执行中','In progress') + (mode !== 'risk' && targetShares != null ? ` · ${fmt(heldNow,0)}/${fmt(targetShares,0)}` : shares ? ` · ${fmt(bought,0)}/${fmt(shares,0)}` : ` · ${fmt(bought,0)}${L(' 股',' sh')}`); }
   else if(inZone(p, price)){ state='inZone'; cls='zone'; label=L('进区','In zone'); }
   else if(price > p.hi){ state='waiting'; cls='wait'; label=L('等待','Waiting'); }
   else { state='below'; cls='wait'; label=L('低于区间','Below zone'); }
@@ -179,7 +179,7 @@ function planCalc(p, H){
     warns.push({c:'err', t:L('价位顺序不对：需要 止损价 < 区间下沿 ≤ 上沿 < 目标','Levels out of order: need stop < zone low ≤ zone high < target')});
   else if(rrMid != null && rrMid < 1)
     warns.push({c:'', t:L(`区间中点的盈亏比只有 ${fmt(rrMid,2)}，不到 1`, `Reward/risk at zone mid is only ${fmt(rrMid,2)} (< 1)`)});
-  if(mode === 'pct' && targetShares != null && shares === 0 && !p.closedAt)
+  if(mode !== 'risk' && targetShares != null && shares === 0 && !p.closedAt)
     warns.push({c:'', t:L(`已经持有 ${fmt(baseHeld,0)} 股，超过目标仓位（约 ${fmt(targetShares,0)} 股），没有要买的了`, `You already hold ${fmt(baseHeld,0)} sh, above the target (≈ ${fmt(targetShares,0)} sh) — nothing left to buy`)});
   if(!p.closedAt){
     const er = earningsBetween(p.sym, today, d10(p.expiry));
@@ -232,7 +232,7 @@ function planCardHtml(p, H){
   const hot = c.state === 'inZone', alarm = ['stopHit','expired'].includes(c.state);
   const rrCls = v => v == null ? '' : v >= 2 ? 'gain-t' : v < 1 ? 'loss-t' : '';
   // % mode shows the whole position (what you hold vs the target), not just this plan's own slice
-  const whole = c.mode === 'pct' && c.targetShares != null && c.targetShares > 0;
+  const whole = c.mode !== 'risk' && c.targetShares != null && c.targetShares > 0;
   const prog = whole ? Math.min(100, c.heldNow / c.targetShares * 100) : c.shares ? Math.min(100, c.bought / c.shares * 100) : 0;
   // tranche ladder, filled in order by in-plan buys
   let cum = 0;
@@ -267,7 +267,7 @@ function planCardHtml(p, H){
     ${rulerHtml(p, c, !p.closedAt)}
     <div class="pc-stats">
       <div class="pc-stat"><div class="k">${term('rr')}</div><div class="v ${rrCls(c.rrMid)}">${c.rrMid != null ? fmt(c.rrMid,2) : '—'}</div></div>
-      <div class="pc-stat"><div class="k">${L('计划仓位','Size')}</div><div class="v">${whole ? fmt(c.targetShares,0) + L(' 股',' sh') + `<span class="muted"> · ${fmt(num(p.sizeVal),0)}%</span>` : c.shares != null ? fmt(c.shares,0) + L(' 股',' sh') : '—'}</div>${whole ? `<div class="s">${c.heldNow >= c.targetShares ? L('已达到目标','target reached') : L(`还要买 ${fmt(c.targetShares - c.heldNow,0)} 股`, `${fmt(c.targetShares - c.heldNow,0)} sh left to buy`)}</div>` : ''}</div>
+      <div class="pc-stat"><div class="k">${L('计划仓位','Size')}</div><div class="v">${whole ? fmt(c.targetShares,0) + L(' 股',' sh') + (c.mode === 'pct' ? `<span class="muted"> · ${fmt(num(p.sizeVal),0)}%</span>` : '') : c.shares != null ? fmt(c.shares,0) + L(' 股',' sh') : '—'}</div>${whole ? `<div class="s">${c.heldNow >= c.targetShares ? L('已达到目标','target reached') : L(`还要买 ${fmt(c.targetShares - c.heldNow,0)} 股`, `${fmt(c.targetShares - c.heldNow,0)} sh left to buy`)}</div>` : ''}</div>
       <div class="pc-stat"><div class="k">${L('已执行','Filled')}</div><div class="v">${fmt(whole ? c.heldNow : c.bought,0)}${whole ? `<span class="muted"> / ${fmt(c.targetShares,0)}</span>` : c.shares ? `<span class="muted"> / ${fmt(c.shares,0)}</span>` : ''}</div><div class="mini"><i style="width:${prog}%"></i></div></div>
       <div class="pc-stat"><div class="k">${p.closedAt ? L('结束于','Closed') : L('有效期','Valid to')}</div><div class="v">${md(p.closedAt || p.expiry)}</div></div>
     </div>
@@ -316,7 +316,7 @@ function planFormHtml(){
         <details class="f2-more" ${p && (p.risk || p.sizeMode) ? 'open' : ''}>
           <summary><span class="f2-sec-t" style="margin:0;"><span>3</span>${L('仓位与有效期','Size & timing')}</span><em id="pfMoreSum"></em></summary>
           <div class="f2-row3" style="margin-top:12px;">
-            ${fld({ label:L('仓位','Size'), cls:'span2', tip:L('三种定法，选一种：按风险（打到止损最多亏多少）、按占比（这只股票最终占账户百分之几，已经持有的也算进去）、按股数（你明确知道买多少）。其他数字系统会算出来给你看。','Pick how to size it: by risk (the most you lose at the stop), by % of the account (the final weight you want, what you already hold counts), or by exact shares. The other numbers are worked out for you.'),
+            ${fld({ label:L('仓位','Size'), cls:'span2', tip:L('三种定法，选一种：按风险（打到止损最多亏多少）、按占比（这只股票最终占账户百分之几，已经持有的也算进去）、按股数（你想最终持有多少股，已经持有的也算进去）。其他数字系统会算出来给你看。','Pick how to size it: by risk (the most you lose at the stop), by % of the account (the final weight you want, what you already hold counts), or by shares (how many you want to end up holding, what you already hold counts). The other numbers are worked out for you.'),
                 body:`<input type="hidden" id="pf-mode" value="${mode}">
                   <div class="sz-row"><div class="seg">${[['risk', L('风险','Risk')], ['pct', L('占比','% of account')], ['shares', L('股数','Shares')]].map(([k, t]) => `<button type="button" data-mode="${k}" class="${k === mode ? 'on' : ''}" onclick="setPlanMode('${k}')">${t}</button>`).join('')}</div>
                     <div class="f-in sz sz-risk"><span class="f-ad">$</span><input id="pf-risk" type="number" step="any" placeholder="${r != null ? L('默认 ', 'default ') + fmt(r,0) : eg('500')}" value="${esc(v('risk'))}" oninput="planPreview()"></div>
@@ -378,7 +378,7 @@ function planPreview(){
       <div><span>${L('建议股数','Shares')}</span><b>${c.shares != null ? fmt(c.shares,0) : '—'}</b></div>
       <div><span>${L('约需资金','Capital')}</span><b>${c.shares != null ? '$'+fmt(c.shares*c.mid,0) : '—'}</b></div>
     </div>
-    ${c.mode === 'pct' && c.targetShares != null ? `<div class="f2-sizeline">${L(`目标 ${fmt(num(p.sizeVal),0)}% ≈ ${fmt(c.targetShares,0)} 股 · 已有 ${fmt(c.baseHeld,0)} 股 · 还要买 ${fmt(c.shares,0)} 股`, `Target ${fmt(num(p.sizeVal),0)}% ≈ ${fmt(c.targetShares,0)} sh · you hold ${fmt(c.baseHeld,0)} · buy ${fmt(c.shares,0)} more`)}</div>` : ''}
+    ${c.mode !== 'risk' && c.targetShares != null ? `<div class="f2-sizeline">${c.mode === 'pct' ? L(`目标 ${fmt(num(p.sizeVal),0)}% ≈ ${fmt(c.targetShares,0)} 股`, `Target ${fmt(num(p.sizeVal),0)}% ≈ ${fmt(c.targetShares,0)} sh`) : L(`目标 ${fmt(c.targetShares,0)} 股`, `Target ${fmt(c.targetShares,0)} sh`)} · ${L(`已有 ${fmt(c.baseHeld,0)} 股 · 还要买 ${fmt(c.shares,0)} 股`, `you hold ${fmt(c.baseHeld,0)} · buy ${fmt(c.shares,0)} more`)}</div>` : ''}
     ${c.shares != null && c.rps > 0 ? `<div class="f2-sizeline">${L(`打到止损价会亏 $${fmt(c.shares * c.rps, 0)}`, `Loss at the stop: $${fmt(c.shares * c.rps, 0)}`)}${HHtotalPct(c)}</div>` : ''}
     ${c.warns.filter(w => w.c !== 'info').length ? `<div class="pc-alert" style="margin-top:10px;">${c.warns.filter(w => w.c !== 'info').map(w => `<div class="${w.c}">${w.t}</div>`).join('')}</div>` : ''}`;
 }
