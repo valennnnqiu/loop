@@ -480,7 +480,7 @@ function renderRisk(){
   ];
   const stress = [5, 10, 20].map(x => ({ x, v: -M.H.total * M.beta * x / 100 }));
   top.innerHTML = `
-    <div class="pc-stats big-stats today-3">
+    <div class="pc-stats big-stats">
       <div class="pc-stat"><div class="k">${L('总资产','Account')}</div><div class="v">$${fmt(M.H.total,0)}</div><div class="s">${L('现金','cash')} ${pct(cashPct)} · $${fmt(M.H.cashUSD,0)}</div></div>
       <div class="pc-stat"><div class="k">${L('最大单票','Largest')}</div><div class="v ${big.w > cfg.maxSingle ? 'loss-t' : ''}">${big.sym} ${pct(big.w,0)}</div>
         <div class="limbar"><i class="${big.w > cfg.maxSingle ? 'over' : ''}" style="width:${Math.min(100, big.w)}%"></i><b style="left:${cfg.maxSingle}%"></b></div><div class="s">${L('上限','limit')} ${cfg.maxSingle}%</div></div>
@@ -612,7 +612,7 @@ function renderToday(){
   const urgent = items.filter(i => i.pr <= 2).length;
   const ageMin = quotes.at ? Math.round((Date.now() - quotes.at) / 60000) : null;
   const stale = ageMin == null || ageMin > 24*60;
-  const stats = `<div class="pc-stats big-stats">
+  const stats = `<div class="pc-stats big-stats today-3">
     <div class="pc-stat"><div class="k">${L('提醒','Reminders')}</div><div class="v">${items.length}</div><div class="s">${urgent ? L(`其中 ${urgent} 项和价格有关`, `${urgent} price-triggered`) : L('没有紧急的','nothing urgent')}</div></div>
     <div class="pc-stat"><div class="k">${L('计划','Plans')}</div><div class="v">${act.length}</div><div class="s">${inZoneN ? L(`${inZoneN} 只在关注区`, `${inZoneN} in zone`) : L('都还没到价位','none at their levels')}</div></div>
     <div class="pc-stat"><div class="k">${L('股价时点','Prices as of')}</div><div class="v ${stale?'loss-t':''}">${quotes.at ? new Date(quotes.at).toTimeString().slice(0,5) : '—'}</div><div class="s">${ageMin == null ? L('还没刷新过','never refreshed') : ageMin < 60 ? ageMin + L(' 分钟前',' min ago') : Math.round(ageMin/60) + L(' 小时前','h ago')} · <a class="lnk" data-refresh onclick="refreshAllPrices()">${L('刷新','refresh')}</a></div></div>
