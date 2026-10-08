@@ -942,7 +942,7 @@ applyStaticI18n = function(){ _applyStaticI18n(); const tip = document.getElemen
 renderTargets = function(){
   const el = document.getElementById('targetsView'); if(!el) return;
   if(!watchlist.length){
-    el.innerHTML = `<div class="watch-empty">${L('只想盯一个价位、还没想好怎么买？记在这里，到价时再点「设计划」。','Just watching a price and not ready to plan? Note it here, then turn it into a plan when it gets close.')}</div>`;
+    el.innerHTML = `${emptyCard(L('还没有价格目标','No price targets yet'), ecBtn(L('+ 添加','+ Add'), 'openAddTarget()'))}`;
     return;
   }
   const act = a => a==='BUY' ? L('买入','Buy') : a==='SELL' ? L('卖出','Sell') : L('关注','Watch');
@@ -1043,7 +1043,7 @@ function renderMyNews(){
         ${/\S/.test(finnhubKey) && syms.length ? `<button class="btn-ghost btn-small" onclick="refreshMyNews(true)" ${myNewsBusy?'disabled':''}>${myNewsBusy ? L('更新中…','Updating…') : L('刷新','Refresh')}</button>` : ''}
       </div></div>`;
   if(!syms.length){
-    el.innerHTML = head + `<div class="watch-empty">${L('有了持仓、计划或观察的股票后，这里会汇总它们的新闻和接下来的财报。','Once you have holdings, plans or watched stocks, their news and upcoming earnings collect here.')}</div>`;
+    el.innerHTML = head + `${emptyCard(L('还没有要跟踪的股票','No stocks to follow yet'))}`;
     return;
   }
   const evs = myEvents(roles).filter(e => pass(e.sym));
@@ -2117,12 +2117,12 @@ function renderMomo(){
   const el = document.getElementById('momoSec'); if(!el) return;
   const head = (extra='') => `<div class="sec-head"><span class="badge">🚀</span><h2>${L('短线动能榜','Momentum board')}</h2><span class="muted sm" style="margin-left:4px">1–2 ${L('周','wk')}</span>${pageHelp('momo')}<div class="grow">${extra}</div></div>${liveStatusHtml()}`;
   if(liveOn()) livePack();
-  if(!pack){ el.innerHTML = head() + `<div class="watch-empty">${L('在设置里填 Twelve Data key（或导入数据包）后，这里按 K 线 + 新闻把你的自选排出强中弱。','Import a data pack to rank your watchlist by chart + news strength.')} <a class="lnk" onclick="pickPackFile()">${L('导入数据包','Import data pack')}</a></div>`; return; }
+  if(!pack){ el.innerHTML = head() + `${NEED_KEY()}`; return; }
   const U = momoUniverse();
   const sel = `<select class="sel-sm" onchange="cfg.momoSrc=this.value; saveCfg(); renderMomo()">${momoSources().map(s => `<option value="${esc(s.k)}" ${s.k === U.k ? 'selected' : ''}>${esc(s.t)}</option>`).join('')}</select>`;
   const H = holdingsNow();
   const all = U.syms.map(momentum).filter(Boolean).sort((a,b) => b.score - a.score || (b.I.ret20 - a.I.ret20));
-  if(!all.length){ el.innerHTML = head(sel) + `<div class="watch-empty">${L('这个列表里的股票还没有 K 线数据。','No bars yet for this list.')}</div>`; return; }
+  if(!all.length){ el.innerHTML = head(sel) + `${emptyCard(L('这个列表还没有行情数据','No price data for this list yet'))}`; return; }
   const held = all.filter(m => H.map[m.sym] && H.map[m.sym].qty > 0), cand = all.filter(m => !(H.map[m.sym] && H.map[m.sym].qty > 0));
   const strongC = cand.filter(m => m.grade !== 'lo'), weakC = cand.filter(m => m.grade === 'lo');
   // up to 5 strengths (wraps to a second line if needed), everything else in the tooltip
@@ -2234,7 +2234,7 @@ function renderRadar(){
   const head = `<div class="sec-head"><span class="badge"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 12 19 7"/><circle cx="12" cy="12" r="4"/></svg></span><h2>${L('AI 产业链雷达','AI-chain radar')}</h2>${pageHelp('radar')}
     <div class="grow"><input id="radarAdd" class="sk-in sm" placeholder="${L('+ 加入代码，可粘贴一串','+ add symbols — paste a list')}" onkeydown="if(event.key==='Enter') radarAddSym()" style="text-transform:uppercase">${packChipIfNeeded()}${liveBtn()}</div></div>${liveStatusHtml()}`;
   if(liveOn()) livePack();
-  if(!pack){ el.innerHTML = head + `<div class="watch-empty">${L('约 50 只 AI 产业链股票的趋势、RSI、财报和你的持仓状态都在一张表。需要先在设置里填 Twelve Data key（或导入数据包）。','Trend, RSI, earnings and your status for ~50 AI-chain names in one table. Add a Twelve Data key in Settings (or import a data pack) first.')}</div>`; return; }
+  if(!pack){ el.innerHTML = head + `${NEED_KEY()}`; return; }
   let rows = radarRows();
   const secs = sectorSummary(rows);
   const P = PRESETS();
@@ -2364,7 +2364,7 @@ function renderCompare(){
     <div class="seg">${[1,3,6,12].map(m => `<button class="${cmp.months === m ? 'on' : ''}" onclick="cmp.months=${m}; renderCompare()">${m}${L(' 个月','m')}</button>`).join('')}</div></div>`;
   const days = Math.round(cmp.months * 21);
   const ser = a && b ? cmpSeries([a, b, 'SPY'], days) : null;
-  if(!ser || ser.dates.length < 10){ el.innerHTML = head + top + liveStatusHtml() + `<div class="watch-empty">${L('这两只里有一只还没有 K 线数据。','One of these has no bars yet.')}</div>`; return; }
+  if(!ser || ser.dates.length < 10){ el.innerHTML = head + top + liveStatusHtml() + `${emptyCard(L('这两只里有一只还没有行情数据','One of these has no price data yet'))}`; return; }
   const n = ser.dates.length;
   const norm = ser.cols.map(c => c.map(v => (v / c[0] - 1) * 100));
   const W = 860, Hh = 220, pl = 8, pr = 70, tp = 10, bt = 20;
