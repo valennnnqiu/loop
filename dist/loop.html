@@ -1819,6 +1819,11 @@
   #settingsModal .set2 .f2-sec{ padding:0; }
   #settingsModal .set2 .f2-sec-t{ margin-bottom:6px; }
   #settingsModal .f-hint{ margin-top:4px; line-height:1.4; }
+
+  /* settings grows with its content: the overlay scrolls if the window is really too short, the card never does */
+  #settingsModal{ overflow-y:auto; }
+  #settingsModal .modal-card{ max-height:none !important; overflow:visible !important; margin:auto; }
+  #st-risk-prev{ display:block; min-height:17px; }
 </style>
 </head>
 <body>
