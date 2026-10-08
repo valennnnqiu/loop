@@ -2108,11 +2108,20 @@ function radarRows(){
 function radarSort(k){ if(radarState.sort === k) radarState.dir *= -1; else { radarState.sort = k; radarState.dir = k === 'sym' || k === 'er' ? 1 : -1; } renderRadar(); }
 function radarToggle(sym){ radarState.open = radarState.open === sym ? null : sym; renderRadar(); }
 function radarPick(sym, on){ const p = radarState.picked.filter(s => s !== sym); if(on) p.push(sym); radarState.picked = p.slice(-2); renderRadar(); }
+// add one or many symbols: "NBIS", or a pasted list "NBIS, RKLB  IONQ\nLUNR" (spaces, commas, semicolons, new lines)
+function parseSyms(text){ return [...new Set(String(text || '').toUpperCase().split(/[\s,;，；]+/).filter(Boolean))]; }
 function radarAddSym(){
-  const i = document.getElementById('radarAdd'); const s = (i.value || '').toUpperCase().trim(); if(!s) return;
-  cfg.universeAdd = [...new Set([...(cfg.universeAdd || []), s])]; cfg.universeDel = (cfg.universeDel || []).filter(x => x !== s); saveCfg(); i.value = ''; renderRadar();
-  if(!S(s)) toast(L(`已加入 ${s}，下次盘后简报会拉它的 K 线`, `Added ${s}; its bars arrive with the next post-market run`));
+  const i = document.getElementById('radarAdd'); const all = parseSyms(i.value); if(!all.length) return;
+  const ok = all.filter(x => /^[A-Z][A-Z0-9.\-]{0,9}$/.test(x)), bad = all.length - ok.length;
+  const have = new Set(radarUniverse()), fresh = ok.filter(x => !have.has(x));
+  cfg.universeAdd = [...new Set([...(cfg.universeAdd || []), ...ok])]; cfg.universeDel = (cfg.universeDel || []).filter(x => !ok.includes(x)); saveCfg(); i.value = ''; renderRadar();
+  const parts = [L(`加入 ${fresh.length} 只`, `Added ${fresh.length}`)];
+  if(ok.length - fresh.length) parts.push(L(`${ok.length - fresh.length} 只已在雷达里`, `${ok.length - fresh.length} already there`));
+  if(bad) parts.push(L(`${bad} 个不像代码，已跳过`, `${bad} skipped (not a symbol)`));
+  toast(parts.join(' · '));
 }
+// pasting a list into the box keeps the separators instead of the browser gluing lines together
+document.addEventListener('paste', e => { const t = e.target; if(t && t.id === 'radarAdd'){ e.preventDefault(); const txt = (e.clipboardData || window.clipboardData).getData('text'); t.value = (t.value + ' ' + parseSyms(txt).join(' ')).trim(); } });
 function radarDel(sym){ cfg.universeDel = [...new Set([...(cfg.universeDel || []), sym])]; cfg.universeAdd = (cfg.universeAdd || []).filter(x => x !== sym); radarState.open = null; saveCfg(); renderRadar(); }
 function radarRestore(){ cfg.universeDel = []; saveCfg(); renderRadar(); }
 
@@ -2136,7 +2145,7 @@ function renderRadar(){
   const el = document.getElementById('radarSec'); if(!el) return;
   const st = radarState;
   const head = `<div class="sec-head"><span class="badge"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 12 19 7"/><circle cx="12" cy="12" r="4"/></svg></span><h2>${L('AI 产业链雷达','AI-chain radar')}</h2>${pageHelp('radar')}
-    <div class="grow"><input id="radarAdd" class="sk-in sm" placeholder="${L('+ 加入代码','+ add symbol')}" onkeydown="if(event.key==='Enter') radarAddSym()" style="text-transform:uppercase">${packChipIfNeeded()}${liveBtn()}</div></div>${liveStatusHtml()}`;
+    <div class="grow"><input id="radarAdd" class="sk-in sm" placeholder="${L('+ 加入代码，可粘贴一串','+ add symbols — paste a list')}" onkeydown="if(event.key==='Enter') radarAddSym()" style="text-transform:uppercase">${packChipIfNeeded()}${liveBtn()}</div></div>${liveStatusHtml()}`;
   if(liveOn()) livePack();
   if(!pack){ el.innerHTML = head + `<div class="watch-empty">${L('约 50 只 AI 产业链股票的趋势、RSI、财报和你的持仓状态都在一张表。需要先在设置里填 Twelve Data key（或导入数据包）。','Trend, RSI, earnings and your status for ~50 AI-chain names in one table. Add a Twelve Data key in Settings (or import a data pack) first.')}</div>`; return; }
   let rows = radarRows();
