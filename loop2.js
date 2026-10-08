@@ -1875,11 +1875,12 @@ function renderStock(){
   const chg = quotes.q[sym] && quotes.q[sym].pc ? (quotes.q[sym].p / quotes.q[sym].pc - 1) * 100 : I ? I.chg1 : null;
   const peer = peerOf(sym);
   const head = `<div class="sk-head">
-      <div class="sk-id"><b class="sk-sym">${sym}</b><span class="sk-sec-tag">${esc(secName(sectorOf(sym)))}</span>${isLev(sym) ? `<span class="tag amber">${L('杠杆 ETF','leveraged')}</span>` : ''}</div>
-      <div class="sk-px"><b>${p != null ? '$' + fmt(p) : '—'}</b>${chg != null ? `<span class="${chg >= 0 ? 'gain-t' : 'loss-t'}">${sg(chg)}</span>` : ''}${liveOn() ? `<button class="btn-ghost btn-small" aria-label="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">${L('刷新','Refresh')}</button>` : ''}</div>
+      <div class="sk-id"><b class="sk-sym">${sym}</b><span class="sk-sec-tag">${esc(secName(sectorOf(sym)))}${isLev(sym) ? ` · ${L('杠杆 ETF','Leveraged')}` : ''}</span></div>
+      <div class="sk-px"><b>${p != null ? '$' + fmt(p) : '—'}</b>${chg != null ? `<span class="${chg >= 0 ? 'gain-t' : 'loss-t'}">${sg(chg)}</span>` : ''}</div>
       <div class="sk-acts">
         ${!plan ? `<button class="btn-primary btn-small" onclick="prefillPlan({sym:'${sym}'})">${L('+ 建计划','+ Plan')}</button>` : ''}
         ${!watchlist.some(w => w.sym === sym) && !h ? `<button class="btn-ghost btn-small" onclick="addWatchSym('${sym}')">☆ ${L('观察','Watch')}</button>` : ''}
+        ${liveOn() ? `<button class="btn-ghost btn-small" aria-label="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">${L('刷新','Refresh')}</button>` : ''}
       </div>
     </div>`;
   if(!I){ el.innerHTML = stockPickerHtml() + head + (liveOn() ? liveStatusHtml() + liveMissingHtml(sym)

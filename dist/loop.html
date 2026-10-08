@@ -1729,6 +1729,11 @@
   /* compare bar: same two colours as the compare chart (A evergreen, B blue) */
   .cf-slot.b{ background:rgba(90,111,208,.14); color:#5A6FD0; }
   .cf-slot.empty{ background:transparent; color:var(--text-dim); }
+
+  /* stock page header: sector sits under the ticker, plain grey text like the plan cards */
+  .sk-id{ flex-direction:column; align-items:flex-start; gap:0; }
+  .sk-sym{ line-height:30px; }
+  .sk-sec-tag{ background:none; padding:0; border-radius:0; font-size:12px; line-height:16px; color:var(--text-dim); }
 </style>
 </head>
 <body>
@@ -6108,11 +6113,12 @@ function renderStock(){
   const chg = quotes.q[sym] && quotes.q[sym].pc ? (quotes.q[sym].p / quotes.q[sym].pc - 1) * 100 : I ? I.chg1 : null;
   const peer = peerOf(sym);
   const head = `<div class="sk-head">
-      <div class="sk-id"><b class="sk-sym">${sym}</b><span class="sk-sec-tag">${esc(secName(sectorOf(sym)))}</span>${isLev(sym) ? `<span class="tag amber">${L('杠杆 ETF','leveraged')}</span>` : ''}</div>
-      <div class="sk-px"><b>${p != null ? '$' + fmt(p) : '—'}</b>${chg != null ? `<span class="${chg >= 0 ? 'gain-t' : 'loss-t'}">${sg(chg)}</span>` : ''}${liveOn() ? `<button class="btn-ghost btn-small" aria-label="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">${L('刷新','Refresh')}</button>` : ''}</div>
+      <div class="sk-id"><b class="sk-sym">${sym}</b><span class="sk-sec-tag">${esc(secName(sectorOf(sym)))}${isLev(sym) ? ` · ${L('杠杆 ETF','Leveraged')}` : ''}</span></div>
+      <div class="sk-px"><b>${p != null ? '$' + fmt(p) : '—'}</b>${chg != null ? `<span class="${chg >= 0 ? 'gain-t' : 'loss-t'}">${sg(chg)}</span>` : ''}</div>
       <div class="sk-acts">
         ${!plan ? `<button class="btn-primary btn-small" onclick="prefillPlan({sym:'${sym}'})">${L('+ 建计划','+ Plan')}</button>` : ''}
         ${!watchlist.some(w => w.sym === sym) && !h ? `<button class="btn-ghost btn-small" onclick="addWatchSym('${sym}')">☆ ${L('观察','Watch')}</button>` : ''}
+        ${liveOn() ? `<button class="btn-ghost btn-small" aria-label="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">${L('刷新','Refresh')}</button>` : ''}
       </div>
     </div>`;
   if(!I){ el.innerHTML = stockPickerHtml() + head + (liveOn() ? liveStatusHtml() + liveMissingHtml(sym)
