@@ -1763,6 +1763,20 @@
   .rk2-erc b{ font-family:var(--mono); font-size:15px; font-weight:600; color:var(--text); }
   .rk2-erc b.soon{ color:var(--loss); }
   @media (max-width:760px){ .rk2{ grid-template-columns:1fr auto; } .rk2-erc{ grid-column:1 / -1; flex-direction:row; align-items:baseline; gap:8px; } .rk2-erc:empty{ display:none; } }
+
+  /* risk rows: every column is the same two 24px lines, so labels, values and baselines line up across the row */
+  .rk2{ align-items:start; }
+  .rk2-id, .rk2-mid, .rk2-erc, .rk2-loss{ display:grid; grid-template-rows:24px 24px; row-gap:8px; align-content:start; }
+  .rk2-id{ align-items:stretch; justify-items:start; }
+  .rk2-id > *, .rk2-erc > *, .rk2-loss > *{ display:flex; align-items:center; line-height:1; margin:0; }
+  .rk2-id b{ font-size:16px; line-height:1; }
+  .rk2-sec{ font-size:12px; }
+  .rk2-line{ min-height:24px; }
+  .rk2-erc span, .rk2-loss span{ font-size:11px; color:var(--text-dim); }
+  .rk2-erc b, .rk2-loss b{ font-family:var(--mono); font-size:16px; font-weight:600; }
+  .rk2-erc b{ color:var(--text); } .rk2-erc b.soon{ color:var(--loss); }
+  .rk2-loss{ justify-items:end; } .rk2-loss > *{ justify-content:flex-end; }
+  @media (max-width:760px){ .rk2-erc{ grid-template-rows:none; grid-auto-flow:column; justify-content:start; column-gap:8px; } }
 </style>
 </head>
 <body>
