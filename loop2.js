@@ -2610,6 +2610,29 @@ loadDemoData = async function(){
   demoExtras(); saveFh(); await saveCalendar(); render();
 };
 
+// ---------- tooltips: one floating box on <body> for every [data-tip] ----------
+// (the old ::after popups were cut off by any card with overflow:hidden and by the window edge)
+(function(){
+  let tip = null;
+  const show = el => {
+    const text = el.getAttribute('data-tip'); if(!text) return;
+    if(!tip){ tip = document.createElement('div'); tip.className = 'tip-pop'; document.body.appendChild(tip); }
+    tip.textContent = text; tip.style.display = 'block';
+    const tw = Math.min(260, window.innerWidth - 16); tip.style.width = tw + 'px';
+    const r = el.getBoundingClientRect(), th = tip.offsetHeight;
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), window.innerWidth - tw - 8);
+    let top = r.bottom + 8; if(top + th > window.innerHeight - 8) top = Math.max(8, r.top - th - 8);
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+  };
+  const hide = () => { if(tip) tip.style.display = 'none'; };
+  const tipOf = e => e.target && e.target.closest ? e.target.closest('[data-tip]') : null;
+  document.addEventListener('mouseover', e => { const el = tipOf(e); if(el) show(el); else hide(); });
+  document.addEventListener('focusin', e => { const el = tipOf(e); if(el) show(el); });
+  document.addEventListener('focusout', hide);
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') hide(); });
+  window.addEventListener('scroll', hide, true);
+})();
+
 // ---------- startup ----------
 const _loadAll3 = loadAll;
 loadAll = async function(){
