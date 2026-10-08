@@ -1202,7 +1202,7 @@ function liveStatusHtml(){
   if(live.bad) return `<div class="live-status bad">${L('Twelve Data 报错：','Twelve Data: ')}${esc(live.bad)} <a class="lnk" onclick="openSettings()">${L('检查 key','check the key')}</a></div>`;
   if(live.queue.length || live.running){
     const w = live.waitUntil ? Math.max(1, Math.ceil((live.waitUntil - Date.now()) / 1000)) : 0;
-    return `<div class="live-status">⟳ ${L('正在联网获取 K 线','Loading live bars')} ${live.done}/${live.total}${w ? ' · ' + L(`限速，${w} 秒后继续`, `rate limit, resuming in ${w}s`) : ''}</div>`;
+    return `<div class="live-status">${L('正在联网获取 K 线','Loading live bars')} ${live.done}/${live.total}${w ? ' · ' + L(`限速，${w} 秒后继续`, `rate limit, resuming in ${w}s`) : ''}</div>`;
   }
   return '';
 }
@@ -1228,7 +1228,7 @@ function liveMissingHtml(sym){
 }
 function liveBtn(rows){
   if(!liveOn() || live.bad) return '';
-  return `<button class="btn-ghost btn-small" onclick="radarRefresh()">⟳ ${L('刷新','Refresh')}</button>`;
+  return `<button class="btn-ghost btn-small" onclick="radarRefresh()">${L('刷新','Refresh')}</button>`;
 }
 function radarRefresh(){
   const need = BENCH_SYMS.concat(radarUniverse()).filter(s => !liveFresh(s, false));
@@ -1876,7 +1876,7 @@ function renderStock(){
   const peer = peerOf(sym);
   const head = `<div class="sk-head">
       <div class="sk-id"><b class="sk-sym">${sym}</b><span class="sk-sec-tag">${esc(secName(sectorOf(sym)))}</span>${isLev(sym) ? `<span class="tag amber">${L('杠杆 ETF','leveraged')}</span>` : ''}</div>
-      <div class="sk-px"><b>${p != null ? '$' + fmt(p) : '—'}</b>${chg != null ? `<span class="${chg >= 0 ? 'gain-t' : 'loss-t'}">${sg(chg)}</span>` : ''}${liveOn() ? `<button class="btn-ghost btn-small" aria-label="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">⟳</button>` : ''}</div>
+      <div class="sk-px"><b>${p != null ? '$' + fmt(p) : '—'}</b>${chg != null ? `<span class="${chg >= 0 ? 'gain-t' : 'loss-t'}">${sg(chg)}</span>` : ''}${liveOn() ? `<button class="btn-ghost btn-small" aria-label="${L('刷新 K 线','Refresh bars')}" onclick="ensureBars(['${sym}','SPY'], {force:true, first:true})">${L('刷新','Refresh')}</button>` : ''}</div>
       <div class="sk-acts">
         ${!plan ? `<button class="btn-primary btn-small" onclick="prefillPlan({sym:'${sym}'})">${L('+ 建计划','+ Plan')}</button>` : ''}
         ${!watchlist.some(w => w.sym === sym) && !h ? `<button class="btn-ghost btn-small" onclick="addWatchSym('${sym}')">☆ ${L('观察','Watch')}</button>` : ''}
