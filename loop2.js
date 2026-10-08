@@ -828,17 +828,19 @@ function onboardHtml(){
 }
 function hideOnboard(){ cfg.onboardHidden = true; saveCfg(); renderToday(); }
 
-// help modal (header "?") rewritten for the 5 pages
+// help modal (header "i")
 renderWelcome = function(){
   const el = document.getElementById('welcomeBody'); if(!el) return;
   const it = (h, zh, en) => `<div class="w-item"><div class="w-h">${h}</div><p>${L(zh, en)}</p></div>`;
   el.innerHTML = `<div class="modal-title">${L('LOOP 怎么用','How LOOP works')}</div>
     <div class="w-grid">
-      ${it(L('今日','Today'), '每天先看这页。只列需要你动手的事：计划到价、财报临近、仓位超上限、重要宏观数据。', 'Start here every day. Only what needs action: plans at their levels, earnings, limit breaches, major macro.')}
-      ${it(L('自选 · 交易计划','Watchlist · Plans'), '买之前写好<b>关注区、止损价、目标</b>。LOOP 按你的每笔风险算股数和分批，并显示<b>盈亏比</b>。', 'Before buying, set the <b>zone, stop and target</b>. LOOP sizes it from your risk per trade and shows <b>reward/risk</b>.')}
-      ${it(L('持仓 · 风险','Positions · Risk'), '持仓从交易记录<b>自动算出</b>。看单票和板块集中度、全部打到止损价会亏多少、大盘下跌时的影响。', 'Computed <b>from your trades</b>. Concentration, loss if every stop is hit, and what a market drop would cost.')}
-      ${it(L('日历','Calendar'), '财报日和宏观事件。填 Finnhub key 后自动同步；也可以点某天的 + 自己加。', 'Earnings and macro dates. Syncs automatically with a Finnhub key; or add your own with +.')}
-      ${it(L('复盘','Review'), '<b>周报</b>看每周盈亏和目标进度；<b>计划对账</b>比较计划内和计划外；<b>交易明细</b>在这里导入 IBKR 对账单，按 LIFO 逐批结算。', '<b>Weekly</b> P&L vs target; <b>Plan check</b> compares in-plan vs off-plan; <b>Trades</b> is where you import IBKR statements, settled lot by lot (LIFO).')}
+      ${it(L('今日','Today'), '每天先看这页。只列需要你动手的事：计划到价、财报临近、仓位超上限、重要宏观数据。处理完点 <b>✕</b>。', 'Start here every day. Only what needs action: plans at their levels, earnings, limit breaches, major macro. Tick it off with <b>✕</b>.')}
+      ${it(L('自选','Watchlist'), '你的股票新闻、<b>短线动能榜</b>和 AI 链<b>雷达</b>（可按预设筛选、勾两只对比）。想买哪只，点<b>设计划</b>写好买入区间、止损和目标。', 'News on your stocks, the <b>momentum board</b> and the AI-chain <b>radar</b> (filter by preset, tick two to compare). To buy one, hit <b>Set plan</b> and fill in zone, stop and target.')}
+      ${it(L('个股','Stock'), '一页看完一只股票：K 线、<b>关键价位</b>、期权墙、量能、新闻、财报、内部人。联网拉行情要在设置里填 <b>Twelve Data key</b>。', 'One page per stock: chart, <b>key levels</b>, option walls, volume, news, earnings, insiders. Live bars need a <b>Twelve Data key</b> in Settings.')}
+      ${it(L('持仓','Positions'), '持仓从交易记录<b>自动算出</b>。看单票和板块集中度、全部打到止损价会亏多少、走势几乎一样的持仓。', 'Computed <b>from your trades</b>. Concentration, loss if every stop is hit, and holdings that move together.')}
+      ${it(L('日历','Calendar'), '财报日、宏观事件和可能影响大盘的新闻。填 Finnhub key 后自动同步；也可以点某天的 + 自己加。', 'Earnings, macro dates and market-moving news. Syncs automatically with a Finnhub key; or add your own with +.')}
+      ${it(L('复盘','Review'), '顶部是<b>近 7 天 / 本月 / 今年</b>的已实现盈亏。往下是每周和每月盈亏、计划对账；<b>交易明细</b>在这里导入 IBKR 对账单，按 LIFO 逐批结算。', 'Top: realized P&L for the <b>last 7 days, this month and this year</b>. Below: weekly and monthly P&L and plan check; <b>Trades</b> is where you import IBKR statements, settled lot by lot (LIFO).')}
+      ${it(L('设置和 key','Settings & keys'), '右上角齿轮。<b>Twelve Data</b>（行情）、<b>Finnhub</b>（新闻、财报）、<b>Anthropic</b>（AI 复盘，默认关）都是你自己的 key，只存在这个浏览器里。', 'The gear, top right. <b>Twelve Data</b> (prices), <b>Finnhub</b> (news, earnings) and <b>Anthropic</b> (AI review, off by default) are your own keys, kept only in this browser.')}
       ${it(L('你的数据','Your data'), '只存在这个浏览器，不上传。换电脑或清缓存前先<b>导出备份</b>。', 'Lives only in this browser. <b>Export a backup</b> before switching computers or clearing site data.')}
     </div>
     <div class="w-actions">${!trades.length ? `<button class="btn-ghost btn-small" onclick="loadDemoData()" style="margin-right:8px;">${L('加载示例数据','Load demo data')}</button>` : ''}<button class="btn-ghost btn-small" onclick="cfg.onboardHidden=false; saveCfg(); closeWelcome(); switchTab('today'); renderToday();">${L('重新显示新手清单','Show the setup checklist again')}</button></div>`;
