@@ -14,6 +14,7 @@
     --ink:#F4F2EC;          /* page background */
     --panel:#FFFFFF;        /* card surface */
     --panel-2:#EFEDE4;      /* inset (inputs) */
+    --hover:#F6F4ED;        /* hover tile for menu items and buttons: lighter than --panel-2 */
     --line:#E7E2D6;         /* hairline */
     --line-strong:#D6CFBF;  /* stronger hairline */
     --paper:#F0EDE3;        /* stub */
@@ -1924,7 +1925,7 @@
 
   /* menu hover: a soft grey tile on the item under the pointer (sidebar and the Stock panel); the current page keeps its green tile */
   @media (min-width:900px){
-    header.top .tab-btn:not(.active):hover, .nav-fly-item:not(.active):hover{ background:var(--panel-2); color:var(--text); }
+    header.top .tab-btn:not(.active):hover, .nav-fly-item:not(.active):hover{ background:var(--hover); color:var(--text); }
   }
 
   /* import statement: bottom of the sidebar (above settings / help / language) and the top-right of the Today page */
@@ -1934,6 +1935,12 @@
     .today-import{ display:inline-flex; }
     .today-date .today-import{ margin-left:auto; }
   }
+
+  /* every button gets the same light hover tile (black primary buttons and the current / selected state keep their own look) */
+  button:not(.btn-primary):not(.on):not(.active):not(:disabled):hover{ background:var(--hover); }
+  .nav-toggle:hover{ background:var(--hover); }
+  body.nav-collapsed .nav-toggle:hover{ background:var(--hover); }
+  .nav-toggle{ transition:background .12s ease; }
 </style>
 </head>
 <body>
