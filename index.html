@@ -1730,9 +1730,10 @@
   .cf-slot.b{ background:rgba(90,111,208,.14); color:#5A6FD0; }
   .cf-slot.empty{ background:transparent; color:var(--text-dim); }
 
-  /* stock page header: sector sits under the ticker, plain grey text like the plan cards */
-  .sk-id{ flex-direction:column; align-items:flex-start; gap:0; }
-  .sk-sym{ line-height:30px; }
+  /* stock page header: ticker + price on one line, sector under them (same as the plan cards) */
+  .sk-title{ display:flex; flex-direction:column; gap:0; }
+  .sk-l1{ display:flex; align-items:baseline; gap:14px; }
+  .sk-sym{ font-size:26px; line-height:30px; }
   .sk-sec-tag{ background:none; padding:0; border-radius:0; font-size:12px; line-height:16px; color:var(--text-dim); }
 
   .sk-bh-r{ margin-left:auto; display:flex; gap:8px; }
