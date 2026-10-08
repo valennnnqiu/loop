@@ -533,7 +533,7 @@ function renderRisk(){
   if(!top || !sec) return;
   const M = riskModel();
   if(!M.rows.length){
-    top.innerHTML = emptyCard(L('还没有持仓','No positions yet'), ecBtn(L('+ 导入对账单','+ Import statement'), 'importStatement()'));
+    top.innerHTML = emptyCard(L('还没有持仓','No positions yet'), ecBtn(L('+ 导入对账单','+ Import statement'), 'importStatement()', true));
     sec.innerHTML = ''; return;
   }
   const big = M.rows[0];
@@ -713,7 +713,7 @@ function renderToday(){
     : `<div class="t-list"><div class="t-done"><b>${L('今天没有需要处理的事','Nothing needs you today')}</b>${L('计划都没到价位，持仓没超上限，近期没有财报和重要宏观事件。','No plan is at its levels, no limit is breached, no earnings or major macro ahead.')}</div></div>`);
   const ob = onboardHtml();
   const bare = ob && !trades.length && !plans.length;
-  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}${ob ? '' : `<button type="button" class="btn-ghost btn-small today-import" onclick="importStatement()">${L('+ 导入对账单','+ Import statement')}</button>`}</div>${ob}${bare ? '' : stats + body}`;
+  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}${ob ? '' : `<button type="button" class="btn-primary btn-small today-import" onclick="importStatement()">${L('+ 导入对账单','+ Import statement')}</button>`}</div>${ob}${bare ? '' : stats + body}`;
 }
 
 // ---------- review: plan reconciliation ----------
@@ -811,10 +811,10 @@ function openSettings(){
         ${fld({ id:'st-td', label:'Twelve Data API key', opt:true, tip:L('twelvedata.com 免费注册。用来在浏览器里直接拿日 K 线，个股页、动能榜、雷达、对比都靠它。只存在这个浏览器里。','Free at twelvedata.com. Lets the Stock page, momentum board, radar and compare pull daily bars directly in the browser. Stored only in this browser.'),
             hint:L('不填也行：个股页会提示，或者导入离线数据包。免费版每分钟 8 次请求。','Without it the Stock page asks for it, or you can import an offline pack. Free plan: 8 requests a minute.'), attrs:`type="password" autocomplete="off" placeholder="${L('粘贴你的 key','paste your key')}" value="${esc(tdKey)}"` })}
         <div class="f-field"><label class="f-label">${L('数据包','Data pack')}</label>
-          <div class="pk-row"><button type="button" class="btn-ghost btn-small" onclick="pickPackFile()">${L('导入数据包','Import data pack')}</button>${typeof pack !== 'undefined' && pack ? `<button type="button" class="btn-ghost btn-small" onclick="clearPack()">${L('移除','Remove')}</button><span class="muted sm">${pack.source === 'live' ? L('联网行情缓存','Live bars cached') : `${L('数据','Data')} ${md(pack.asOf)} ${L('收盘','close')}`}</span>` : ''}</div>
+          <div class="pk-row"><button type="button" class="btn-primary btn-small" onclick="pickPackFile()">${L('导入数据包','Import data pack')}</button>${typeof pack !== 'undefined' && pack ? `<button type="button" class="btn-ghost btn-small" onclick="clearPack()">${L('移除','Remove')}</button><span class="muted sm">${pack.source === 'live' ? L('联网行情缓存','Live bars cached') : `${L('数据','Data')} ${md(pack.asOf)} ${L('收盘','close')}`}</span>` : ''}</div>
           <div class="f-hint">${L('离线备选：运行 <code>node tools/make-pack.js</code> 生成 loop-data.json（Yahoo 日 K 线）再导入；填了 Twelve Data key 就不需要。','Offline alternative: run <code>node tools/make-pack.js</code> and import loop-data.json (Yahoo bars). Not needed once you add a Twelve Data key.')}</div></div>
         <div class="f-field" id="backupSec"><label class="f-label">${L('备份','Backup')}</label>
-          <div class="pk-row"><button type="button" class="btn-ghost btn-small" onclick="exportBackup()">${L('导出备份','Export backup')}</button><button type="button" class="btn-ghost btn-small" onclick="document.getElementById('backupFile').click()">${L('导入备份','Import backup')}</button><button type="button" class="btn-ghost btn-small" onclick="closeSettings(); resetToSeed()">${L('清空全部数据','Clear all data')}</button></div>
+          <div class="pk-row"><button type="button" class="btn-ghost btn-small" onclick="exportBackup()">${L('导出备份','Export backup')}</button><button type="button" class="btn-primary btn-small" onclick="document.getElementById('backupFile').click()">${L('导入备份','Import backup')}</button><button type="button" class="btn-ghost btn-small" onclick="closeSettings(); resetToSeed()">${L('清空全部数据','Clear all data')}</button></div>
           <div class="f-hint">${L('数据只存在这个浏览器里。换电脑或清缓存前先导出备份；导入会覆盖当前数据。','Data lives only in this browser. Export a backup before switching computers or clearing site data; importing replaces what is here.')}</div></div>
       </div>
     </div>`;
@@ -883,7 +883,7 @@ function pageHelp(key){
 function emptyCard(title, buttons, lead){
   return `<div class="empty-card"><div class="ec-t">${lead ? `<span class="ec-lead">${lead}</span>` : ''}${title}</div><div class="ec-b">${buttons || ''}</div></div>`;
 }
-const ecBtn = (label, js) => `<button type="button" class="btn-ghost btn-small" onclick="${js}">${label}</button>`;
+const ecBtn = (label, js, primary) => `<button type="button" class="${primary ? 'btn-primary' : 'btn-ghost'} btn-small" onclick="${js}">${label}</button>`;
 function openKeySetting(){ openSettings(); setTimeout(() => { const e = document.getElementById('st-td'); if(e) e.focus(); }, 80); }
 const NEED_KEY = () => emptyCard(L('填 Twelve Data key 才能加载行情','Add a Twelve Data key to load prices'), ecBtn(L('填写 key','Add key'), 'openKeySetting()'));
 
@@ -909,7 +909,7 @@ function onboardHtml(){
   // same card as every other empty state: "1/3 · title" on the left; demo exit, the step's button and ✕ on the right
   const lead = `${idx + 1}/${req.length}`;
   const btns = (isDemoMode() ? ecBtn(L('清空示例，用自己的数据','Clear demo data'), 'exitDemo()') : (!trades.length ? ecBtn(L('先看看示例数据','Try demo data'), 'loadDemoData()') : ''))
-    + (cur ? ecBtn(cur.btn, cur.go) : '')
+    + (cur ? ecBtn(cur.btn, cur.go, true) : '')
     + (cur ? '' : `<button type="button" class="icon-btn pc-x" aria-label="${L('隐藏','Hide')}" onclick="hideOnboard()">✕</button>`);   // can only be dismissed once every step is done
   return emptyCard(cur ? cur.t : L('已完成','All set'), btns, lead);
 }
@@ -2780,7 +2780,7 @@ function withExample(fn){
   pack = _examplePack; clearIndCache();
   try{ return fn(); } finally { pack = null; clearIndCache(); }
 }
-const exampleBanner = () => isExample() ? emptyCard(L('这是示例数据，填 Twelve Data key 就换成你自己的股票','Example data — add a Twelve Data key to see your own stocks'), ecBtn(L('填写 key','Add key'), 'openKeySetting()'), L('示例','Example')) : '';
+const exampleBanner = () => isExample() ? emptyCard(L('填 Twelve Data key，换成你自己的股票','Add a Twelve Data key to see your own stocks'), ecBtn(L('填写 key','Add key'), 'openKeySetting()'), L('示例','Example')) : '';
 (() => {
   const wrap = (name, hostId, banner) => {
     const orig = window[name];
