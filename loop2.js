@@ -857,7 +857,7 @@ renderTargets = function(){
   }
   const act = a => a==='BUY' ? L('买入','Buy') : a==='SELL' ? L('卖出','Sell') : L('关注','Watch');
   const rows = [...watchlist].sort((a,b)=> a.sym<b.sym?-1:a.sym>b.sym?1:0);
-  el.innerHTML = `<div class="watch-list">${rows.map(w => { const px = getPrice(w.sym); return `
+  el.innerHTML = `<div class="watch-list"><div class="watch-row watch-head"><span>${L('代码','Symbol')}</span><span>${L('方向','Side')}</span><span>${L('价位','Level')}</span><span>${L('现价','Price')}</span><span>${L('原因','Note')}</span><span></span><span></span></div>${rows.map(w => { const px = getPrice(w.sym); return `
     <div class="watch-row">
       <b class="w-sym">${esc(w.sym)}</b>
       <span class="w-act ${w.action.toLowerCase()}">${act(w.action)}</span>
