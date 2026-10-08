@@ -1738,6 +1738,12 @@
 
   .sk-bh-r{ margin-left:auto; display:flex; gap:8px; }
   .lr-s{ justify-self:start; } .lr-s.s1, .lr-s.s2, .lr-s.s3{ background:var(--panel-2); color:var(--text-dim); } .lr-s.s3{ color:var(--text); }
+
+  /* footer sits at the bottom of the window when the page is short */
+  .wrap{ min-height:calc(100vh - 118px); min-height:calc(100dvh - 118px); display:flex; flex-direction:column; }
+  @media (min-width:900px){ body{ padding-bottom:28px; } .wrap{ min-height:calc(100vh - 56px); min-height:calc(100dvh - 56px); } }
+  .wrap > footer{ margin-top:auto; }
+  .wrap > .tab-panel.active{ margin-bottom:36px; }
 </style>
 </head>
 <body>
