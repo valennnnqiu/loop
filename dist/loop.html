@@ -1766,12 +1766,13 @@
 
   /* risk rows: every column is the same two 24px lines, so labels, values and baselines line up across the row */
   .rk2{ align-items:start; }
-  .rk2-id, .rk2-mid, .rk2-erc, .rk2-loss{ display:grid; grid-template-rows:24px 24px; row-gap:8px; align-content:start; }
+  .rk2-id, .rk2-mid, .rk2-erc, .rk2-loss{ display:grid; grid-template-rows:24px 24px; row-gap:0; align-content:start; }
   .rk2-id{ align-items:stretch; justify-items:start; }
   .rk2-id > *, .rk2-erc > *, .rk2-loss > *{ display:flex; align-items:center; line-height:1; margin:0; }
   .rk2-id b{ font-size:16px; line-height:1; }
   .rk2-sec{ font-size:12px; }
   .rk2-line{ min-height:24px; }
+  .rk2{ padding-top:14px; padding-bottom:14px; }
   .rk2-erc span, .rk2-loss span{ font-size:11px; color:var(--text-dim); }
   .rk2-erc b, .rk2-loss b{ font-family:var(--mono); font-size:16px; font-weight:600; }
   .rk2-erc b{ color:var(--text); } .rk2-erc b.soon{ color:var(--loss); }
