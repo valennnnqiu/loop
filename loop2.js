@@ -126,15 +126,31 @@ function planCalc(p, H){
   const mid = (p.lo + p.hi) / 2;
   const riskAmt = num(p.risk) ?? riskSetting();
   const rps = mid - p.stop;
-  const shares = riskAmt != null && rps > 0 ? Math.floor(riskAmt / rps) : null;
-  const n = Math.max(1, p.tranches || 1);
-  const trPx = n === 1 ? [mid] : Array.from({length:n}, (_, i) => p.hi - (p.hi - p.lo) * i / (n - 1));
-  let trQty = null;
-  if(shares != null){ const base = Math.floor(shares / n); trQty = trPx.map((_, i) => i === n-1 ? shares - base*(n-1) : base); }
-  const rrMid = rps > 0 ? (p.target - mid) / rps : null;
-  const rrNow = price != null && price > p.stop ? (p.target - price) / (price - p.stop) : null;
   const fills = buysFor(p);
   const bought = fills.filter(f => f.inPlan).reduce((s,f) => s + f.t.qty, 0);
+  // how the position is sized: by risk (default), by an exact share count, or by a target % of the account
+  // ('pct' is the TOTAL weight you want, so what you already hold counts toward it)
+  const mode = p.sizeMode || 'risk';
+  const HH = H || holdingsNow();
+  const heldNow = (HH.map[p.sym] && HH.map[p.sym].qty) || 0;
+  const baseHeld = Math.max(0, heldNow - bought);          // held before this plan started buying
+  let shares = null, targetShares = null;
+  if(mode === 'shares'){ const q = num(p.sizeVal); shares = q != null && q > 0 ? Math.floor(q) : null; }
+  else if(mode === 'pct'){
+    const pc = num(p.sizeVal);
+    if(pc != null && pc > 0 && HH.total > 0 && mid > 0){ targetShares = Math.floor(HH.total * pc / 100 / mid); shares = Math.max(0, targetShares - baseHeld); }
+  }
+  else shares = riskAmt != null && rps > 0 ? Math.floor(riskAmt / rps) : null;
+  const n = Math.max(1, p.tranches || 1);
+  const trPx = n === 1 ? [mid] : Array.from({length:n}, (_, i) => p.hi - (p.hi - p.lo) * i / (n - 1));
+  let trQty = null, trW = null;
+  if(shares != null){
+    const base = Math.floor(shares / n); trQty = trPx.map((_, i) => i === n-1 ? shares - base*(n-1) : base);
+    // the position's weight in the account after each buy: what you held, plus the tranches so far
+    if(HH.total > 0){ let val = baseHeld * mid; trW = trQty.map((q, i) => { val += q * trPx[i]; return val / HH.total * 100; }); }
+  }
+  const rrMid = rps > 0 ? (p.target - mid) / rps : null;
+  const rrNow = price != null && price > p.stop ? (p.target - price) / (price - p.stop) : null;
   const today = todayISO();
 
   let state, label, cls;
@@ -163,6 +179,8 @@ function planCalc(p, H){
     warns.push({c:'err', t:L('价位顺序不对：需要 止损价 < 区间下沿 ≤ 上沿 < 目标','Levels out of order: need stop < zone low ≤ zone high < target')});
   else if(rrMid != null && rrMid < 1)
     warns.push({c:'', t:L(`区间中点的盈亏比只有 ${fmt(rrMid,2)}，不到 1`, `Reward/risk at zone mid is only ${fmt(rrMid,2)} (< 1)`)});
+  if(mode === 'pct' && targetShares != null && shares === 0 && !p.closedAt)
+    warns.push({c:'', t:L(`已经持有 ${fmt(baseHeld,0)} 股，超过目标仓位（约 ${fmt(targetShares,0)} 股），没有要买的了`, `You already hold ${fmt(baseHeld,0)} sh, above the target (≈ ${fmt(targetShares,0)} sh) — nothing left to buy`)});
   if(!p.closedAt){
     const er = earningsBetween(p.sym, today, d10(p.expiry));
     if(er.length) warns.push({c:'', t:L(`财报 ${md(er[0])} 在计划有效期内`, `Earnings ${md(er[0])} falls inside the plan window`)});
@@ -179,7 +197,7 @@ function planCalc(p, H){
       if(sw > cfg.maxSector) warns.push({c:'', t:L(`执行完后「${sec}」板块约占 ${fmt(sw,0)}%，超过板块上限 ${cfg.maxSector}%`, `After execution the ${secName(sec)} sector ≈ ${fmt(sw,0)}%, above the ${cfg.maxSector}% sector limit`)});
     }
   }
-  return { price, mid, riskAmt, rps, shares, trPx, trQty, rrMid, rrNow, fills, bought, state, label, cls, dist, warns };
+  return { price, mid, riskAmt, rps, shares, mode, targetShares, baseHeld, trW, trPx, trQty, rrMid, rrNow, fills, bought, state, label, cls, dist, warns };
 }
 
 // ---------- plans: UI ----------
@@ -227,7 +245,7 @@ function planCardHtml(p, H){
     const fr = q ? got / q : 0;
     const cls = fr >= 1 - 1e-9 ? 'done' : fr > 0 ? 'part' : '';
     return `<div class="tr ${cls}" style="${cls==='part' ? `--fr:${(fr*100).toFixed(0)}%` : ''}">
-      <div class="tr-n">${L('第','#')}${i+1}${L(' 批','')} · ${L('建议买 ','buy ')}${trPct[i]}%${cls==='done' ? ' ✓' : cls==='part' ? ` · ${fmt(got,0)}/${fmt(q,0)}` : ''}</div>
+      <div class="tr-n">${L('第','#')}${i+1}${L(' 批','')} · ${L('建议买 ','buy ')}${trPct[i]}%${cls==='done' ? ' ✓' : cls==='part' ? ` · ${fmt(got,0)}/${fmt(q,0)}` : ''}${c.trW && (c.mode === 'pct' || c.baseHeld > 0) ? ` · <span data-tip="${L('这一批买完后，这只股票占账户的比例','this stock\'s share of the account after this buy')}">→ ${fmt(c.trW[i],0)}%</span>` : ''}</div>
       <div class="tr-v">${fmt(px)}${q != null ? `<span> × ${fmt(q,0)}</span>` : ''}</div></div>`;
   }).join('');
   const off = c.fills.filter(f => !f.inPlan);
@@ -276,6 +294,7 @@ function planFormHtml(){
   const v = (k, d='') => p && p[k] != null ? p[k] : d;
   const r = riskSetting();
   const n = v('tranches', 3);
+  const mode = v('sizeMode', 'risk');
   return `<div class="form-card plan-form f2">
     <div class="f2-head"><b>${p ? L(`编辑 ${p.sym} 的计划`, `Edit ${p.sym} plan`) : L('新交易计划','New trade plan')}</b>
       <div class="f-btns"><button class="btn-primary btn-small" onclick="savePlan()">${L('保存','Save')}</button><button type="button" class="icon-btn f-x" aria-label="${L('取消','Cancel')}" aria-label="${L('取消','Cancel')}" onclick="closePlanForm()">✕</button></div></div>
@@ -292,10 +311,15 @@ function planFormHtml(){
             ${fld({ id:'pf-tgt', label:L('第一目标','Target'), req:true, dot:'tgt', prefix:'$', tip:L('第一个止盈位，通常是上方最近的压力区。','First profit-taking level, usually the nearest resistance above.'), attrs:`type="number" step="any" placeholder="${eg('260')}" value="${v('target')}" oninput="planPreview()"` })}
           </div>
         </div>
-        <details class="f2-more" ${p && p.risk ? 'open' : ''}>
+        <details class="f2-more" ${p && (p.risk || p.sizeMode) ? 'open' : ''}>
           <summary><span class="f2-sec-t" style="margin:0;"><span>3</span>${L('仓位与有效期','Size & timing')}</span><em id="pfMoreSum"></em></summary>
           <div class="f2-row3" style="margin-top:12px;">
-            ${fld({ id:'pf-risk', label:L('本笔风险','Risk on this trade'), prefix:'$', tip:L('这一笔打到止损价最多亏多少。留空就用设置里的默认值。','The most this trade may lose at its stop. Blank = the default from Settings.'), attrs:`type="number" step="any" placeholder="${r != null ? L('默认 ','default ') + fmt(r,0) : L('未设默认','no default set')}" value="${v('risk')}" oninput="planPreview()"` })}
+            ${fld({ label:L('仓位','Size'), cls:'span2', tip:L('三种定法，选一种：按风险（打到止损最多亏多少）、按占比（这只股票最终占账户百分之几，已经持有的也算进去）、按股数（你明确知道买多少）。其他数字系统会算出来给你看。','Pick how to size it: by risk (the most you lose at the stop), by % of the account (the final weight you want, what you already hold counts), or by exact shares. The other numbers are worked out for you.'),
+                body:`<input type="hidden" id="pf-mode" value="${mode}">
+                  <div class="sz-row"><div class="seg">${[['risk', L('风险','Risk')], ['pct', L('占比','% of account')], ['shares', L('股数','Shares')]].map(([k, t]) => `<button type="button" data-mode="${k}" class="${k === mode ? 'on' : ''}" onclick="setPlanMode('${k}')">${t}</button>`).join('')}</div>
+                    <div class="f-in sz sz-risk"><span class="f-ad">$</span><input id="pf-risk" type="number" step="any" placeholder="${r != null ? L('默认 ', 'default ') + fmt(r,0) : eg('500')}" value="${esc(v('risk'))}" oninput="planPreview()"></div>
+                    <div class="f-in sz sz-pct"><input id="pf-pct" type="number" step="any" placeholder="${eg('20')}" value="${mode === 'pct' ? esc(v('sizeVal')) : ''}" oninput="planPreview()"><span class="f-ad">%</span></div>
+                    <div class="f-in sz sz-shares"><input id="pf-shares" type="number" step="1" placeholder="${eg('500')}" value="${mode === 'shares' ? esc(v('sizeVal')) : ''}" oninput="planPreview()"><span class="f-ad">${L('股','sh')}</span></div></div>` })}
             ${fld({ label:L('分几批买','Tranches'), tip:L('在关注区间里平均分几次买入。分批能拿到更好的均价。','How many buys to spread across the zone. Scaling in gives a better average.'),
                 body:`<input type="hidden" id="pf-n" value="${n}"><div class="seg">${[1,2,3].map(k => `<button type="button" class="${k==n?'on':''}" onclick="document.getElementById('pf-n').value=${k}; this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); this.classList.add('on'); planPreview();">${k}</button>`).join('')}</div>` })}
             ${fld({ id:'pf-exp', label:L('有效期至','Valid until'), tip:L('过了这天还没执行，计划自动标成过期，提醒你重新评估。','If not executed by this date, the plan is flagged as expired so you re-evaluate.'), attrs:`type="date" value="${v('expiry', addDays(todayISO(), 30))}" onchange="planPreview()"` })}
@@ -315,17 +339,28 @@ function readPlanForm(){
   if(lo != null && hi == null) hi = lo;
   if(hi != null && lo == null) lo = hi;
   return { sym, lo, hi, stop: num(document.getElementById('pf-stop').value), target: num(document.getElementById('pf-tgt').value),
-    risk: document.getElementById('pf-risk').value, tranches: +document.getElementById('pf-n').value || 1,
+    risk: document.getElementById('pf-risk').value, sizeMode: document.getElementById('pf-mode').value || 'risk',
+    sizeVal: (document.getElementById('pf-mode').value === 'pct' ? document.getElementById('pf-pct') : document.getElementById('pf-shares')).value, tranches: +document.getElementById('pf-n').value || 1,
     expiry: document.getElementById('pf-exp').value || addDays(todayISO(), 30), note: document.getElementById('pf-note').value.trim() };
 }
 
+// "(1.0% of the account)" suffix for the loss line
+function HHtotalPct(c){ const t = accountTotal(); return t > 0 && c.shares != null ? ` · ${fmt(c.shares * c.rps / t * 100, 1)}% ${L('账户','of the account')}` : ''; }
+function setPlanMode(k){
+  const m = document.getElementById('pf-mode'); if(!m) return;
+  m.value = k;
+  document.querySelectorAll('.plan-form .sz-row .seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === k));
+  ['risk', 'pct', 'shares'].forEach(x => { const e = document.querySelector('.plan-form .sz-' + x); if(e) e.style.display = x === k ? '' : 'none'; });
+  planPreview();
+}
 function planPreview(){
   const el = document.getElementById('pfPreview'); if(!el) return;
   const f = readPlanForm();
   const sum = document.getElementById('pfMoreSum');
   if(sum){
     const r = num(f.risk) ?? riskSetting();
-    sum.textContent = [r != null ? L(`风险 $${fmt(r,0)}`, `risk $${fmt(r,0)}`) : L('风险未设','no risk set'), L(`${f.tranches} 批`, `${f.tranches} tranche${f.tranches>1?'s':''}`), L(`有效 ${Math.max(0, daysBetween(todayISO(), f.expiry))} 天`, `${Math.max(0, daysBetween(todayISO(), f.expiry))} days`)].join(' · ');
+    const sizeTxt = f.sizeMode === 'pct' && num(f.sizeVal) != null ? L(`目标 ${fmt(num(f.sizeVal),0)}% 仓位`, `target ${fmt(num(f.sizeVal),0)}% of account`) : f.sizeMode === 'shares' && num(f.sizeVal) != null ? L(`${fmt(num(f.sizeVal),0)} 股`, `${fmt(num(f.sizeVal),0)} sh`) : (r != null ? L(`风险 $${fmt(r,0)}`, `risk $${fmt(r,0)}`) : L('风险未设','no risk set'));
+    sum.textContent = [sizeTxt, L(`${f.tranches} 批`, `${f.tranches} tranche${f.tranches>1?'s':''}`), L(`有效 ${Math.max(0, daysBetween(todayISO(), f.expiry))} 天`, `${Math.max(0, daysBetween(todayISO(), f.expiry))} days`)].join(' · ');
   }
   const missing = [!f.sym && L('代码','symbol'), f.lo == null && L('关注区间','zone'), f.stop == null && L('止损价','stop'), f.target == null && L('目标','target')].filter(Boolean);
   if(missing.length){
@@ -341,6 +376,8 @@ function planPreview(){
       <div><span>${L('建议股数','Shares')}</span><b>${c.shares != null ? fmt(c.shares,0) : '—'}</b></div>
       <div><span>${L('约需资金','Capital')}</span><b>${c.shares != null ? '$'+fmt(c.shares*c.mid,0) : '—'}</b></div>
     </div>
+    ${c.mode === 'pct' && c.targetShares != null ? `<div class="f2-sizeline">${L(`目标 ${fmt(num(p.sizeVal),0)}% ≈ ${fmt(c.targetShares,0)} 股 · 已有 ${fmt(c.baseHeld,0)} 股 · 还要买 ${fmt(c.shares,0)} 股`, `Target ${fmt(num(p.sizeVal),0)}% ≈ ${fmt(c.targetShares,0)} sh · you hold ${fmt(c.baseHeld,0)} · buy ${fmt(c.shares,0)} more`)}</div>` : ''}
+    ${c.shares != null && c.rps > 0 ? `<div class="f2-sizeline">${L(`打到止损价会亏 $${fmt(c.shares * c.rps, 0)}`, `Loss at the stop: $${fmt(c.shares * c.rps, 0)}`)}${HHtotalPct(c)}</div>` : ''}
     ${c.warns.filter(w => w.c !== 'info').length ? `<div class="pc-alert" style="margin-top:10px;">${c.warns.filter(w => w.c !== 'info').map(w => `<div class="${w.c}">${w.t}</div>`).join('')}</div>` : ''}`;
 }
 
@@ -353,9 +390,9 @@ function savePlan(){
   if(!f.sym || f.lo == null || f.stop == null || f.target == null){ alert(L('代码、关注区间、止损价、目标都要填','Symbol, zone, stop and target are all required')); return; }
   if(planEditId){
     const p = plans.find(x => x.id === planEditId);
-    Object.assign(p, { lo:f.lo, hi:f.hi, stop:f.stop, target:f.target, risk:f.risk, tranches:f.tranches, expiry:f.expiry, note:f.note, editedAt: todayISO() });
+    Object.assign(p, { lo:f.lo, hi:f.hi, stop:f.stop, target:f.target, risk:f.risk, sizeMode:f.sizeMode, sizeVal:f.sizeVal, tranches:f.tranches, expiry:f.expiry, note:f.note, editedAt: todayISO() });
   } else {
-    plans.unshift({ id:'pl'+Date.now(), sym:f.sym, lo:f.lo, hi:f.hi, stop:f.stop, target:f.target, risk:f.risk, tranches:f.tranches,
+    plans.unshift({ id:'pl'+Date.now(), sym:f.sym, lo:f.lo, hi:f.hi, stop:f.stop, target:f.target, risk:f.risk, sizeMode:f.sizeMode, sizeVal:f.sizeVal, tranches:f.tranches,
       expiry:f.expiry, note:f.note, createdAt: todayISO(), createdPrice: getPrice(f.sym),
       orig:{ lo:f.lo, hi:f.hi, stop:f.stop, target:f.target } });
   }
@@ -411,7 +448,7 @@ function renderPlans(){
     Object.entries(draft).forEach(([id, v]) => { const i = document.getElementById(id); if(i && !i.disabled) i.value = v; });
     if(draft['pf-n']) document.querySelectorAll('.plan-form .seg button').forEach(b => b.classList.toggle('on', b.textContent.trim() === draft['pf-n']));
     if(moreOpen){ const m = el.querySelector('.f2-more'); if(m) m.open = true; }
-    planPreview();
+    setPlanMode((document.getElementById('pf-mode') || {}).value || 'risk');
   }
 }
 
