@@ -749,11 +749,22 @@ function openSettings(){
 }
 function openBackup(){ openSettings(); setTimeout(() => { const b = document.getElementById('backupSec'); if(b) b.scrollIntoView({ block:'center' }); }, 60); }
 function closeSettings(){ document.getElementById('settingsModal').classList.remove('show'); }
+// weekly target <-> monthly goal (4 weeks): "2000-3000" <-> "8000-12000"
+function scaleGoal(str, k){
+  const g = parseGoal(str); if(!g) return '';
+  const r = n => String(Math.round(n * k * 100) / 100);
+  return g.min === g.max ? r(g.min) : r(g.min) + '-' + r(g.max);
+}
+const _setWeeklyGoal3 = setWeeklyGoal;
+setWeeklyGoal = function(v){ _setWeeklyGoal3(v); cfg.weekTarget = scaleGoal(v, 0.25); saveCfg(); };
+
 async function saveSettings(){
   cfg.risk = document.getElementById('st-risk').value.trim();
   cfg.maxSingle = num(document.getElementById('st-single').value) ?? 40;
   cfg.maxSector = num(document.getElementById('st-sector').value) ?? 60;
-  cfg.weekTarget = document.getElementById('st-week').value.trim();
+  const wk = document.getElementById('st-week').value.trim();
+  if(wk !== (cfg.weekTarget || '')){ weeklyGoal = scaleGoal(wk, 4); saveGoal(); }   // the monthly goal on Review follows the weekly one: 4 weeks
+  cfg.weekTarget = wk;
   const k = document.getElementById('st-fh').value.trim();
   if(k !== finnhubKey){ finnhubKey = k; try{ await window.storage.set(FINNHUB_KEY, k); }catch(e){} }
   const td = document.getElementById('st-td'); if(td && td.value.trim() !== tdKey) saveTdKey(td.value);
@@ -2684,6 +2695,9 @@ loadAll = async function(){
   try{ tdKey = (await window.storage.get(TD_KEY)).value || ''; }catch(e){ tdKey = ''; }
   try{ fh = Object.assign({ insider:{}, er:{}, eps:{}, news:{}, metric:{} }, JSON.parse((await window.storage.get(FH_KEY)).value) || {}); }catch(e){}
   await _loadAll3();
+  // goals saved before the two were linked: fill whichever one is empty from the other
+  if(!cfg.weekTarget && weeklyGoal){ cfg.weekTarget = scaleGoal(weeklyGoal, 0.25); saveCfg(); }
+  else if(cfg.weekTarget && !weeklyGoal){ weeklyGoal = scaleGoal(cfg.weekTarget, 4); saveGoal(); }
   if(pack && pack.demo && !isDemoMode()){ pack = null; try{ window.storage.remove ? window.storage.remove(PACK_KEY) : null; }catch(e){} fh = { insider:{}, er:{}, eps:{}, news:{}, metric:{} }; saveFh(); }
   clearIndCache(); render();
   refreshInsiders();
