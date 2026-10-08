@@ -4808,10 +4808,7 @@ function renderRisk(){
           <div class="rk2-loss">${r.trig != null ? `<span>${L('跌到止损价会亏','loss at stop')}</span><b>${money(r.trig)}</b>` : `<span>${L('最多会亏','max loss')}</span><b class="muted">?</b>`}</div>
         </div>`;
       }).join('')}
-    </div>
-    <details class="fold" style="margin-top:12px;"><summary>${L('调整 Beta（默认按数据包近 120 天对 SPY 自动算；没有数据按 1）','Adjust beta (default: 120 days vs SPY from the data pack; else 1)')}</summary>
-      <div class="beta-row">${M.rows.map(r => `<label><b>${r.sym}</b><input type="number" step="any" class="rk-edit" placeholder="${r.betaAuto != null ? fmt(r.betaAuto,2) : '1.0'}" value="${r.betaSet ? cfg.betas[r.sym] : ''}" onchange="setRiskField('betas','${r.sym}',this.value)"></label>`).join('')}</div>
-    </details>`;
+    </div>`;
 }
 
 // ---------- today ----------
@@ -6816,15 +6813,13 @@ function sameBetHtml(){
   if(syms.length < 2) return '';
   const pairs = [];
   for(let i = 0; i < syms.length; i++) for(let j = i + 1; j < syms.length; j++){ const p = pairStats(syms[i], syms[j], 60); if(p && p.corr > 0.8) pairs.push([syms[i], syms[j], p.corr]); }
-  if(!pairs.length) return `<div class="bet-note muted sm">${L('近 60 天没有相关性超过 0.8 的持仓组合，仓位比较分散。','No two holdings correlate above 0.8 over 60 days.')}</div>`;
+  if(!pairs.length) return `<div class="bet-note muted sm">${L('持仓之间走势各不相同，比较分散。','Your holdings move independently — fairly spread out.')}</div>`;
   const parent = {}; const f = x => parent[x] === x || parent[x] == null ? (parent[x] = x) : (parent[x] = f(parent[x]));
   pairs.forEach(([a, b]) => { parent[f(a)] = f(b); });
   const groups = {}; [...new Set(pairs.flat().filter(x => typeof x === 'string'))].forEach(s => (groups[f(s)] = groups[f(s)] || []).push(s));
-  return `<div class="sk-block bet"><div class="sk-bh">🔗 ${L('同一个赌注','Same bet')}<span class="muted sm">${L('近 60 天日涨跌相关性 > 0.8','60-day correlation > 0.8')}</span></div>${Object.values(groups).map(g => {
+  return `<div class="sk-block bet"><div class="sk-bh">🔗 ${L('走势几乎一样','Move together')}</div>${Object.values(groups).map(g => {
     const w = g.reduce((s, x) => s + H.map[x].mv, 0) / H.total * 100;
-    const cs = pairs.filter(p => g.includes(p[0])).map(p => p[2]); const avgC = cs.reduce((s,v)=>s+v,0)/cs.length;
-    const secs = [...new Set(g.map(x => secName(sectorOf(x))))].join(' / ');
-    return `<div class="bet-row">${L(`<b>${g.join('、')}</b> 相关性 ${fmt(avgC,2)}，可以看作同一个方向（${esc(secs)}）。合计占账户 <b class="${w > cfg.maxSector ? 'loss-t' : ''}">${fmt(w,0)}%</b>${w > cfg.maxSector ? `，超过板块上限 ${cfg.maxSector}%` : ''}。`, `<b>${g.join(', ')}</b> correlate at ${fmt(avgC,2)} — effectively one bet (${esc(secs)}), together <b>${fmt(w,0)}%</b> of the account.`)}</div>`; }).join('')}</div>`;
+    return `<div class="bet-row">${L(`<b>${g.join('、')}</b> 最近走势高度同步，等于押同一个方向。合计占账户 <b class="${w > cfg.maxSector ? 'loss-t' : ''}">${fmt(w,0)}%</b>${w > cfg.maxSector ? `，超过板块上限 ${cfg.maxSector}%` : ''}。`, `<b>${g.join(', ')}</b> have been moving almost in lockstep — effectively one bet. Together <b class="${w > cfg.maxSector ? 'loss-t' : ''}">${fmt(w,0)}%</b> of the account${w > cfg.maxSector ? `, over the ${cfg.maxSector}% sector limit` : ''}.`)}</div>`; }).join('')}</div>`;
 }
 const _renderRisk3 = renderRisk;
 renderRisk = function(){ _renderRisk3(); const sec = document.getElementById('riskSection'); if(sec && holdingsNow().list.length && pack) sec.insertAdjacentHTML('beforeend', sameBetHtml()); };
