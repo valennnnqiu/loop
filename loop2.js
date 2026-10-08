@@ -197,24 +197,6 @@ function rulerHtml(p, c, showNow){
   </div>`;
 }
 
-function nextActionText(p, c){
-  if(p.closedAt) return '';
-  let cum = 0, nextI = -1;
-  if(c.trQty){ for(let i = 0; i < c.trQty.length; i++){ cum += c.trQty[i]; if(c.bought < cum - 1e-9){ nextI = i; break; } } }
-  const nx = nextI >= 0 ? L(`第 ${nextI+1} 批 ${fmt(c.trPx[nextI])} × ${fmt(c.trQty[nextI] - Math.max(0, c.bought - (cum - c.trQty[nextI])),0)}`, `tranche ${nextI+1}: ${fmt(c.trPx[nextI])} × ${fmt(c.trQty[nextI] - Math.max(0, c.bought - (cum - c.trQty[nextI])),0)}`) : '';
-  switch(c.state){
-    case 'stopHit':  return L(`已经跌到止损价 ${fmt(p.stop)}，按计划离场，然后结束这个计划。`, `Stop ${fmt(p.stop)} is hit — exit per plan, then close it.`);
-    case 'targetHit':return L(`到达目标 ${fmt(p.target)}：止盈，或者把止损上移锁住利润。`, `Target ${fmt(p.target)} reached — take profit or trail the stop.`);
-    case 'expired':  return L('有效期已过：结束它，或者改有效期继续。', 'Past its date — close it or extend it.');
-    case 'noprice':  return L('还没有报价，点「刷新股价」。', 'No quote yet — refresh prices.');
-    case 'inZone':   return nx ? L(`在关注区内，可以执行${nx}。`, `Inside the zone — ${nx} is live.`) : L('在关注区内。','Inside the zone.');
-    case 'below':    return L(`跌破关注区，离止损价还有 ${fmt((c.price / p.stop - 1) * 100, 1)}%。先别加，看能不能收回 ${fmt(p.lo)}。`, `Below the zone, ${fmt((c.price / p.stop - 1) * 100, 1)}% above the stop. Hold off until it reclaims ${fmt(p.lo)}.`);
-    default:
-      if(c.price != null && c.price > p.hi) return L(`现价比区间上沿高 ${fmt((c.price / p.hi - 1) * 100, 1)}%，等回落到 ${fmt(p.hi)} 以下${nx ? '再买' + nx.replace(/^第/, '第') : ''}。`, `${fmt((c.price / p.hi - 1) * 100, 1)}% above the zone — wait for ${fmt(p.hi)} or lower${nx ? ', then ' + nx : ''}.`);
-      return nx ? L(`下一步：${nx}。`, `Next: ${nx}.`) : '';
-  }
-}
-
 function planCardHtml(p, H){
   const c = planCalc(p, H);
   const hot = c.state === 'inZone', alarm = ['stopHit','expired'].includes(c.state);
@@ -246,7 +228,6 @@ function planCardHtml(p, H){
           : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button><button class="btn-ghost btn-small" onclick="closePlan('${p.id}')">${L('结束','Close')}</button>`}
       </span>
     </div>
-    ${!p.closedAt ? `<div class="pc-next">${nextActionText(p, c)}</div>` : ''}
     ${rulerHtml(p, c, !p.closedAt)}
     <div class="pc-stats">
       <div class="pc-stat"><div class="k">${term('rr')}</div><div class="v ${rrCls(c.rrMid)}">${c.rrMid != null ? fmt(c.rrMid,2) : '—'}</div><div class="s">${L('区间中点','at zone mid')}${c.rrNow != null && !p.closedAt ? ` · ${L('现价','now')} ${fmt(c.rrNow,2)}` : ''}</div></div>
