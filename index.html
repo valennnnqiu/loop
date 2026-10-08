@@ -1886,6 +1886,15 @@
   }
 
   #radarAdd{ width:230px; max-width:100%; }
+
+  /* collapsed rail: the logo sits at the top; on hover it turns into the "open sidebar" panel icon (with the dark tip) */
+  @media (min-width:900px){
+    body.nav-collapsed header.top .brand{ position:relative; width:40px; height:40px; padding:0; margin-bottom:18px; }
+    body.nav-collapsed header.top .brand-logo{ display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; transition:opacity .12s; }
+    body.nav-collapsed .nav-toggle{ position:absolute; top:0; left:0; opacity:0; transition:opacity .12s; }
+    body.nav-collapsed header.top .brand:hover .brand-logo{ opacity:0; }
+    body.nav-collapsed header.top .brand:hover .nav-toggle, body.nav-collapsed .nav-toggle:focus-visible{ opacity:1; }
+  }
 </style>
 </head>
 <body>

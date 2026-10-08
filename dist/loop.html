@@ -1886,6 +1886,15 @@
   }
 
   #radarAdd{ width:230px; max-width:100%; }
+
+  /* collapsed rail: the logo sits at the top; on hover it turns into the "open sidebar" panel icon (with the dark tip) */
+  @media (min-width:900px){
+    body.nav-collapsed header.top .brand{ position:relative; width:40px; height:40px; padding:0; margin-bottom:18px; }
+    body.nav-collapsed header.top .brand-logo{ display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; transition:opacity .12s; }
+    body.nav-collapsed .nav-toggle{ position:absolute; top:0; left:0; opacity:0; transition:opacity .12s; }
+    body.nav-collapsed header.top .brand:hover .brand-logo{ opacity:0; }
+    body.nav-collapsed header.top .brand:hover .nav-toggle, body.nav-collapsed .nav-toggle:focus-visible{ opacity:1; }
+  }
 </style>
 </head>
 <body>
@@ -5442,7 +5451,12 @@ function openAddPanel(){
 function applyNav(){
   let c = false; try{ c = localStorage.getItem('loop_nav_collapsed') === '1'; }catch(e){}
   document.body.classList.toggle('nav-collapsed', c);
-  const t = document.getElementById('navToggle'); if(t) t.setAttribute('aria-label', c ? 'Expand menu' : 'Collapse menu');
+  const t = document.getElementById('navToggle');
+  if(t){
+    t.setAttribute('aria-label', c ? L('打开侧栏', 'Open sidebar') : L('收起侧栏', 'Collapse sidebar'));
+    if(c){ t.setAttribute('data-tip', L('打开侧栏', 'Open sidebar')); t.setAttribute('data-tip-pos', 'right'); }
+    else { t.removeAttribute('data-tip'); t.removeAttribute('data-tip-pos'); }
+  }
   document.querySelectorAll('header.top .tab-btn').forEach(b => { const sp = b.querySelector('span:not(.nav-badge)'); if(sp) b.setAttribute('aria-label', sp.textContent.trim()); });
 }
 function toggleNav(){
@@ -7106,6 +7120,8 @@ loadDemoData = async function(){
     const r = el.getBoundingClientRect(), th = tip.offsetHeight;
     const left = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), window.innerWidth - tw - 8);
     let top = r.bottom + 8; if(top + th > window.innerHeight - 8) top = Math.max(8, r.top - th - 8);
+    if(el.getAttribute('data-tip-pos') === 'right'){ tip.style.width = 'max-content'; tip.style.maxWidth = '260px'; top = Math.max(8, r.top + r.height / 2 - tip.offsetHeight / 2); tip.style.left = (r.right + 10) + 'px'; tip.style.top = top + 'px'; return; }
+    tip.style.maxWidth = '';
     tip.style.left = left + 'px'; tip.style.top = top + 'px';
   };
   const hide = () => { if(tip) tip.style.display = 'none'; };

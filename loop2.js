@@ -1045,7 +1045,12 @@ function openAddPanel(){
 function applyNav(){
   let c = false; try{ c = localStorage.getItem('loop_nav_collapsed') === '1'; }catch(e){}
   document.body.classList.toggle('nav-collapsed', c);
-  const t = document.getElementById('navToggle'); if(t) t.setAttribute('aria-label', c ? 'Expand menu' : 'Collapse menu');
+  const t = document.getElementById('navToggle');
+  if(t){
+    t.setAttribute('aria-label', c ? L('打开侧栏', 'Open sidebar') : L('收起侧栏', 'Collapse sidebar'));
+    if(c){ t.setAttribute('data-tip', L('打开侧栏', 'Open sidebar')); t.setAttribute('data-tip-pos', 'right'); }
+    else { t.removeAttribute('data-tip'); t.removeAttribute('data-tip-pos'); }
+  }
   document.querySelectorAll('header.top .tab-btn').forEach(b => { const sp = b.querySelector('span:not(.nav-badge)'); if(sp) b.setAttribute('aria-label', sp.textContent.trim()); });
 }
 function toggleNav(){
@@ -2709,6 +2714,8 @@ loadDemoData = async function(){
     const r = el.getBoundingClientRect(), th = tip.offsetHeight;
     const left = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), window.innerWidth - tw - 8);
     let top = r.bottom + 8; if(top + th > window.innerHeight - 8) top = Math.max(8, r.top - th - 8);
+    if(el.getAttribute('data-tip-pos') === 'right'){ tip.style.width = 'max-content'; tip.style.maxWidth = '260px'; top = Math.max(8, r.top + r.height / 2 - tip.offsetHeight / 2); tip.style.left = (r.right + 10) + 'px'; tip.style.top = top + 'px'; return; }
+    tip.style.maxWidth = '';
     tip.style.left = left + 'px'; tip.style.top = top + 'px';
   };
   const hide = () => { if(tip) tip.style.display = 'none'; };
