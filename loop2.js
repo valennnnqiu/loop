@@ -517,7 +517,7 @@ function renderRisk(){
       L('到「复盘 → 交易明细」导入 IBKR 对账单，持仓会自动算出来。也可以点上面的「+ 添加」手动加。','Import an IBKR statement under Review → Trades and positions are computed for you. Or add one by hand with "+ Add" above.'),
       L(`给每只票填<b>${term('stop')}</b>，看全部打到止损价一共会亏多少。`, `Give each holding a <b>${term('stop')}</b> to see the total loss if every stop is hit.`),
       L('在设置里填单票和板块上限，超了才会提醒你。','Set single-stock and sector limits in Settings — you are only warned when one is exceeded.'),
-    ], `<button class="btn-ghost btn-small" onclick="switchTab('ledger'); openAddPanel();">${L('+ 添加','+ Add')}</button>`);
+    ], `<button class="btn-ghost btn-small" onclick="importStatement()">${L('+ 添加','+ Add')}</button>`);
     sec.innerHTML = ''; return;
   }
   const big = M.rows[0];
@@ -872,7 +872,7 @@ function stepsCard(title, steps, actions){
 function onboardState(){
   const realTrades = trades.filter(t => !String(t.id).startsWith('demo-'));
   return [
-    { done: realTrades.length > 0, t:L('导入 IBKR 对账单','Import an IBKR statement'), d:L('持仓和盈亏会自动算出来。','Positions and P&L are computed from it.'), go:"switchTab('ledger'); openAddPanel();", btn:L('+ 添加','+ Add') },
+    { done: realTrades.length > 0, t:L('导入 IBKR 对账单','Import an IBKR statement'), d:L('持仓和盈亏会自动算出来。','Positions and P&L are computed from it.'), go:"importStatement()", btn:L('+ 添加','+ Add') },
     { done: hasRisk(), t:L('设置每笔风险和仓位上限','Set risk per trade and limits'), d:L('每笔最多亏多少，单票和板块最多占多少。','Max loss per trade, and max weight per stock and sector.'), go:'openSettings()', btn:L('去设置','Settings') },
     { done: plans.some(p => !String(p.id).startsWith('demo-')), t:L('建第一个交易计划','Create your first plan'), d:L('写下关注区间、止损价和目标。','Write down the zone, stop and target.'), go:"switchTab('watchlist'); openPlanForm();", btn:L('+ 添加','+ Add') },
     { done: /\S/.test(finnhubKey), optional:true, t:L('（可选）填 Finnhub key','(Optional) Add a Finnhub key'), d:L('finnhub.io 免费注册。有了它才有实时股价和财报日期；不填也能用，价格手动填。','Free at finnhub.io. Needed for live prices and earnings dates; without it, type prices in by hand.'), go:'openSettings()', btn:L('去填','Add key') },
@@ -1073,10 +1073,7 @@ openImport = function(){
   setTimeout(() => c.scrollIntoView({ behavior:'smooth', block:'center' }), 40);
 };
 // one "+ Add" for trades: statement upload and manual entry live in the same place
-function openAddPanel(){
-  if(document.getElementById('importCard').style.display === 'none') openImport();
-  if(document.getElementById('addTradeForm').style.display === 'none') openAddTrade();
-}
+function openAddPanel(){ importStatement(); }
 
 // sidebar collapse (desktop): remembered per browser
 function applyNav(){
@@ -1113,13 +1110,22 @@ function toggleNav(){
   document.addEventListener('keydown', e => { if(e.key === 'Escape'){ const f = fly(); if(f) f.classList.remove('show'); } });
 })();
 // jump to Review → trades with the statement import open (the sidebar / Today buttons)
-function importStatement(){ switchTab('ledger'); openImport(); setTimeout(() => { const c = document.getElementById('importCard'); if(c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 60); }
-function openAddTrades(){
-  const open = document.getElementById('importCard').style.display !== 'none' || document.getElementById('addTradeForm').style.display !== 'none';
-  if(open){ closeImport(); document.getElementById('addTradeForm').style.display = 'none'; }
-  else openAddPanel();
+let importHome = null;   // where the import card lives on the Review page while it is borrowed by the popup
+function importStatement(){
+  const c = document.getElementById('importCard'), body = document.getElementById('importModalBody'), m = document.getElementById('importModal'); if(!c || !body || !m) return;
+  if(!importHome){ importHome = { parent: c.parentNode, next: c.nextSibling, display: c.style.display }; body.appendChild(c); }
+  c.style.display = 'block'; resetImport();
+  m.classList.add('show');
 }
-function showAddTradeForm(){ if(document.getElementById('addTradeForm').style.display === 'none') openAddTrade(); }
+function closeImportModal(){
+  const c = document.getElementById('importCard'), m = document.getElementById('importModal');
+  if(importHome && c){ importHome.parent.insertBefore(c, importHome.next); c.style.display = importHome.display === 'block' && trades.length === 0 ? 'block' : 'none'; resetImport(); }
+  importHome = null;
+  if(m) m.classList.remove('show');
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && importHome) closeImportModal(); });
+function openAddTrades(){ importStatement(); }
+function showAddTradeForm(){ importStatement(); }
 
 // ---------- navigation ----------
 const _origSwitchTab = switchTab;

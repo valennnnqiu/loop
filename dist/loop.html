@@ -1950,6 +1950,25 @@
   /* statement import result: title on the left, Import / Reset buttons top right */
   .imp-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
   .imp-head .import-actions{ margin-top:0; }
+
+  /* import statement in a popup: the existing drop zone / paste box / preview are moved into it, so nothing is re-implemented */
+  .import-modal{ max-width:620px !important; width:calc(100vw - 40px); padding:24px 28px 26px; }
+  .import-modal .import-card{ border:none; background:none; padding:0; margin:0; box-shadow:none; }
+  .import-modal .imp-x, .import-modal .imp-alt{ display:none; }
+  .import-modal .imp-row{ margin-top:12px; }
+
+  /* statement import lives in the popup only: no inline import card, paste box or hand-entry form on the Review page */
+  #addTradeForm, #sub-trades #importCard{ display:none !important; }
+  .import-modal .imp-row{ display:none; }
+  .import-empty{ display:none; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:36px 24px; text-align:center; }
+  .review-empty .import-empty{ display:block; }
+  .import-empty .ie-t{ font-size:15px; font-weight:700; }
+  .import-empty .ie-s{ font-size:13px; color:var(--text-dim); margin:6px 0 16px; }
+
+  /* popups are white all the way through (the drop zone too); the close ✕ gets a round hover tile */
+  .modal-x{ width:30px; height:30px; padding:0; box-sizing:border-box; border-radius:999px; }
+  .import-modal .import-drop{ background:var(--panel); }
+  .import-modal .import-drop:not(.drag):hover{ background:var(--hover); }
 </style>
 </head>
 <body>
@@ -2182,6 +2201,12 @@
 
     <div id="sub-trades" class="sub-panel">
 
+    <div class="import-empty" id="importEmpty">
+      <div class="ie-t" data-i18n="importEmptyT">还没有交易记录</div>
+      <div class="ie-s" data-i18n="importEmptyS">导入 IBKR 对账单后，持仓和盈亏会自动算出来。</div>
+      <button type="button" class="btn-ghost" onclick="importStatement()" data-i18n="sideImport">+ 导入对账单</button>
+    </div>
+
     <div class="warn" id="demoBox"></div>
     <div class="warn" id="warnBox"></div>
     <div class="warn" id="reconBox"></div>
@@ -2192,7 +2217,7 @@
         <h2 data-i18n="realizedTitle">已实现盈亏（按批次真实结算 · LIFO）</h2>
         <div class="grow" id="ledgerActions">
           <span class="count" id="closedCount"></span>
-          <button class="btn-ghost btn-small" onclick="openAddTrades()" data-i18n="btnAdd2">+ 添加</button>
+          <button class="btn-ghost btn-small" onclick="importStatement()" data-i18n="btnAdd2">+ 添加</button>
         </div>
       </div>
 
@@ -2251,6 +2276,8 @@
       <button class="btn-ghost btn-small" onclick="openBackup()" data-i18n="footerBackup">备份与数据</button>
       <input type="file" id="backupFile" accept=".json,application/json" style="display:none;">
   </footer>
+
+  <div class="modal-overlay" id="importModal" onclick="if(event.target===this)closeImportModal()"><div class="modal-card import-modal"><button class="modal-x" onclick="closeImportModal()" aria-label="Close">✕</button><div class="modal-title" data-i18n="sideImportTitle">导入对账单</div><div id="importModalBody"></div></div></div>
 
   <div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()"><div class="modal-card" style="max-width:420px;"><button class="modal-x" onclick="closeSettings()">✕</button><div id="settingsBody"></div></div></div>
 
@@ -2897,6 +2924,9 @@ const I18N = {
     importPastePh: '或者把 CSV 内容直接粘贴到这里，然后点下面的「解析」',
     footerBackup: '备份与数据',
     sideImport: '+ 导入对账单',
+    sideImportTitle: '导入对账单',
+    importEmptyT: '还没有交易记录',
+    importEmptyS: '导入 IBKR 对账单后，持仓和盈亏会自动算出来。',
     footerHint: '数据只存在这台电脑的浏览器里，不上传任何服务器。',
     evTitleAdd: '添加事件', evTextLabel: '内容', evCatLabel: '类别', evDelete: '删除', evSave: '保存',
     legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
@@ -2923,6 +2953,9 @@ const I18N = {
     importPastePh: 'Or paste the CSV text here, then click Parse below',
     footerBackup: 'Backup & data',
     sideImport: '+ Import statement',
+    sideImportTitle: 'Import statement',
+    importEmptyT: 'No trades yet',
+    importEmptyS: 'Import an IBKR statement and your positions and P&L are worked out for you.',
     footerHint: 'Data lives only in this browser on this computer, never uploaded.',
     evTitleAdd: 'Add event', evTextLabel: 'Text', evCatLabel: 'Category', evDelete: 'Delete', evSave: 'Save',
     legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
@@ -4091,7 +4124,7 @@ function openImport(){
   c.style.display = c.style.display==='none' ? 'block' : 'none';
   if(c.style.display==='none') resetImport();
 }
-function closeImport(){ document.getElementById('importCard').style.display='none'; resetImport(); }
+function closeImport(){ if(typeof closeImportModal === 'function' && importHome){ closeImportModal(); return; } document.getElementById('importCard').style.display='none'; resetImport(); }
 function resetImport(){
   importParsed = null;
   document.getElementById('importPaste').value = '';
@@ -4161,8 +4194,10 @@ function confirmImport(){
   trades = trades.concat(importParsed.added);
   saveTrades();
   if(stale.length){ stale.forEach(dropManualPos); savePosMeta(); }
+  const n = importParsed.added.length;
   closeImport();
   render();
+  if(typeof toast === 'function') toast(n ? L(`已导入 ${n} 笔交易`, `Imported ${n} trade${n === 1 ? '' : 's'}`) : L('已按对账单更新持仓', 'Positions updated from the statement'));
 }
 
 function openAddTrade(){
@@ -4988,7 +5023,7 @@ function renderRisk(){
       L('到「复盘 → 交易明细」导入 IBKR 对账单，持仓会自动算出来。也可以点上面的「+ 添加」手动加。','Import an IBKR statement under Review → Trades and positions are computed for you. Or add one by hand with "+ Add" above.'),
       L(`给每只票填<b>${term('stop')}</b>，看全部打到止损价一共会亏多少。`, `Give each holding a <b>${term('stop')}</b> to see the total loss if every stop is hit.`),
       L('在设置里填单票和板块上限，超了才会提醒你。','Set single-stock and sector limits in Settings — you are only warned when one is exceeded.'),
-    ], `<button class="btn-ghost btn-small" onclick="switchTab('ledger'); openAddPanel();">${L('+ 添加','+ Add')}</button>`);
+    ], `<button class="btn-ghost btn-small" onclick="importStatement()">${L('+ 添加','+ Add')}</button>`);
     sec.innerHTML = ''; return;
   }
   const big = M.rows[0];
@@ -5343,7 +5378,7 @@ function stepsCard(title, steps, actions){
 function onboardState(){
   const realTrades = trades.filter(t => !String(t.id).startsWith('demo-'));
   return [
-    { done: realTrades.length > 0, t:L('导入 IBKR 对账单','Import an IBKR statement'), d:L('持仓和盈亏会自动算出来。','Positions and P&L are computed from it.'), go:"switchTab('ledger'); openAddPanel();", btn:L('+ 添加','+ Add') },
+    { done: realTrades.length > 0, t:L('导入 IBKR 对账单','Import an IBKR statement'), d:L('持仓和盈亏会自动算出来。','Positions and P&L are computed from it.'), go:"importStatement()", btn:L('+ 添加','+ Add') },
     { done: hasRisk(), t:L('设置每笔风险和仓位上限','Set risk per trade and limits'), d:L('每笔最多亏多少，单票和板块最多占多少。','Max loss per trade, and max weight per stock and sector.'), go:'openSettings()', btn:L('去设置','Settings') },
     { done: plans.some(p => !String(p.id).startsWith('demo-')), t:L('建第一个交易计划','Create your first plan'), d:L('写下关注区间、止损价和目标。','Write down the zone, stop and target.'), go:"switchTab('watchlist'); openPlanForm();", btn:L('+ 添加','+ Add') },
     { done: /\S/.test(finnhubKey), optional:true, t:L('（可选）填 Finnhub key','(Optional) Add a Finnhub key'), d:L('finnhub.io 免费注册。有了它才有实时股价和财报日期；不填也能用，价格手动填。','Free at finnhub.io. Needed for live prices and earnings dates; without it, type prices in by hand.'), go:'openSettings()', btn:L('去填','Add key') },
@@ -5544,10 +5579,7 @@ openImport = function(){
   setTimeout(() => c.scrollIntoView({ behavior:'smooth', block:'center' }), 40);
 };
 // one "+ Add" for trades: statement upload and manual entry live in the same place
-function openAddPanel(){
-  if(document.getElementById('importCard').style.display === 'none') openImport();
-  if(document.getElementById('addTradeForm').style.display === 'none') openAddTrade();
-}
+function openAddPanel(){ importStatement(); }
 
 // sidebar collapse (desktop): remembered per browser
 function applyNav(){
@@ -5584,13 +5616,22 @@ function toggleNav(){
   document.addEventListener('keydown', e => { if(e.key === 'Escape'){ const f = fly(); if(f) f.classList.remove('show'); } });
 })();
 // jump to Review → trades with the statement import open (the sidebar / Today buttons)
-function importStatement(){ switchTab('ledger'); openImport(); setTimeout(() => { const c = document.getElementById('importCard'); if(c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 60); }
-function openAddTrades(){
-  const open = document.getElementById('importCard').style.display !== 'none' || document.getElementById('addTradeForm').style.display !== 'none';
-  if(open){ closeImport(); document.getElementById('addTradeForm').style.display = 'none'; }
-  else openAddPanel();
+let importHome = null;   // where the import card lives on the Review page while it is borrowed by the popup
+function importStatement(){
+  const c = document.getElementById('importCard'), body = document.getElementById('importModalBody'), m = document.getElementById('importModal'); if(!c || !body || !m) return;
+  if(!importHome){ importHome = { parent: c.parentNode, next: c.nextSibling, display: c.style.display }; body.appendChild(c); }
+  c.style.display = 'block'; resetImport();
+  m.classList.add('show');
 }
-function showAddTradeForm(){ if(document.getElementById('addTradeForm').style.display === 'none') openAddTrade(); }
+function closeImportModal(){
+  const c = document.getElementById('importCard'), m = document.getElementById('importModal');
+  if(importHome && c){ importHome.parent.insertBefore(c, importHome.next); c.style.display = importHome.display === 'block' && trades.length === 0 ? 'block' : 'none'; resetImport(); }
+  importHome = null;
+  if(m) m.classList.remove('show');
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && importHome) closeImportModal(); });
+function openAddTrades(){ importStatement(); }
+function showAddTradeForm(){ importStatement(); }
 
 // ---------- navigation ----------
 const _origSwitchTab = switchTab;
