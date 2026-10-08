@@ -204,7 +204,7 @@ function planCalc(p, H){
 // position-tool bar: stop ── risk (red) ── entry ── reward (green) ── target, zone bracket, price marker, fills
 function rulerHtml(p, c, showNow){
   const price = showNow ? c.price : null;
-  const fills = c.fills.filter(f => f.inPlan);
+  const fills = c.fills;   // every buy since the plan started: in-plan ones solid, off-plan ones hollow
   const vals = [p.stop, p.lo, p.hi, p.target].concat(price != null ? [price] : [], fills.map(f => f.t.price));
   let lo = Math.min(...vals), hi = Math.max(...vals);
   const pad = (hi - lo) * 0.04 || hi * 0.02;
@@ -219,7 +219,7 @@ function rulerHtml(p, c, showNow){
     <div class="pt-risk" style="left:${x(p.stop)}; width:${w(p.stop, c.mid)}"><span>${L('风险','risk')} ${riskTxt}</span></div>
     <div class="pt-reward" style="left:${x(c.mid)}; width:${w(c.mid, p.target)}"><span>${rewTxt} ${L('收益','reward')}</span></div>
     <div class="pt-zone" style="left:${x(p.lo)}; width:${w(p.lo, p.hi)}"></div>
-    ${fills.map(f => `<div class="pt-fill" style="left:${x(f.t.price)}" title="${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}"><svg viewBox="0 0 12 10" width="12" height="10"><path d="M6 .5 L11 9.5 H1 Z" fill="var(--gain)" stroke="var(--panel)" stroke-width="1.5" stroke-linejoin="round"/></svg></div>`).join('')}
+    ${fills.map(f => `<div class="pt-fill ${f.inPlan ? '' : 'off'}" style="left:${x(f.t.price)}" title="${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}${f.inPlan ? '' : ' · ' + L('计划外','off plan')}"><svg viewBox="0 0 12 10" width="12" height="10"><path d="M6 .5 L11 9.5 H1 Z" ${f.inPlan ? 'fill="var(--gain)" stroke="var(--panel)"' : 'fill="var(--panel)" stroke="var(--gain)"'} stroke-width="1.5" stroke-linejoin="round"/></svg></div>`).join('')}
     ${price != null ? `<div class="pt-now" style="left:${x(price)}"></div><div class="pt-nowlab" style="left:${x(price)}">${fmt(price)}</div>` : ''}
     <div class="pt-lab stop" style="left:${x(p.stop)}">${term('stop', L('止损','Stop'))} <b>${fmt(p.stop)}</b></div>
     <div class="pt-lab zone" style="left:${x((p.lo + p.hi) / 2)}">${L('关注区','Zone')} <b>${fmt(p.lo)}–${fmt(p.hi)}</b></div>
