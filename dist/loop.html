@@ -1114,7 +1114,7 @@
   .rk2-loss span{ font-size:11px; color:var(--text-dim); }
   .rk2-loss b{ font-family:var(--mono); font-size:20px; color:var(--loss); }
   .rk2-loss b.muted{ color:var(--line-strong); }
-  @media (max-width:760px){ .rk2{ grid-template-columns:1fr auto; } .rk2-id{ flex-direction:row; align-items:center; } .rk2-mid{ grid-column:1 / -1; grid-row:2; } .rk2-loss{ grid-row:1; grid-column:2; } }
+  @media (max-width:760px){ .rk2{ grid-template-columns:1fr auto; } .rk2-id{ flex-direction:column; align-items:flex-start; } .rk2-mid{ grid-column:1 / -1; grid-row:2; } .rk2-loss{ grid-row:1; grid-column:2; } }
   .beta-row{ display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:10px; }
   .beta-row label{ display:flex; align-items:center; gap:8px; font-size:12.5px; }
   .beta-row .rk-edit{ width:56px; text-align:left; }
@@ -1749,6 +1749,11 @@
   .sk-pick{ flex-direction:column; align-items:flex-start; gap:12px; }
   .sk-chips{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
   .sk-recent{ font-size:11.5px; color:var(--text-dim); margin-right:4px; }
+
+  /* risk rows: sector as plain grey text under the ticker, like everywhere else */
+  .rk2-id{ gap:0; }
+  .rk2-id b{ line-height:22px; }
+  .rk2-sec{ font-size:12px; line-height:16px; color:var(--text-dim); }
 </style>
 </head>
 <body>
@@ -4767,7 +4772,7 @@ function renderRisk(){
         const erD = r.er ? daysBetween(todayISO(), r.er) : null;
         const dist = r.stop != null && r.last > 0 ? (1 - r.stop / r.last) * 100 : null;
         return `<div class="rk2">
-          <div class="rk2-id"><b>${r.sym}</b><span class="tag">${esc(secName(r.sector))}</span></div>
+          <div class="rk2-id"><b>${r.sym}</b><span class="rk2-sec">${esc(secName(r.sector))}</span></div>
           <div class="rk2-mid">
             <div class="rk2-line">${L('占账户','Weight')} <b class="${over?'loss-t':''}">${pct(r.w,0)}</b>
               <span class="rk2-bar"><i class="${over?'over':''}" style="width:${Math.min(100, r.w / Math.max(cfg.maxSingle, r.w) * 100)}%"></i></span>

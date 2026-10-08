@@ -514,7 +514,7 @@ function renderRisk(){
         const erD = r.er ? daysBetween(todayISO(), r.er) : null;
         const dist = r.stop != null && r.last > 0 ? (1 - r.stop / r.last) * 100 : null;
         return `<div class="rk2">
-          <div class="rk2-id"><b>${r.sym}</b><span class="tag">${esc(secName(r.sector))}</span></div>
+          <div class="rk2-id"><b>${r.sym}</b><span class="rk2-sec">${esc(secName(r.sector))}</span></div>
           <div class="rk2-mid">
             <div class="rk2-line">${L('占账户','Weight')} <b class="${over?'loss-t':''}">${pct(r.w,0)}</b>
               <span class="rk2-bar"><i class="${over?'over':''}" style="width:${Math.min(100, r.w / Math.max(cfg.maxSingle, r.w) * 100)}%"></i></span>
