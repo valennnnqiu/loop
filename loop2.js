@@ -200,7 +200,6 @@ function rulerHtml(p, c, showNow){
 function planCardHtml(p, H){
   const c = planCalc(p, H);
   const hot = c.state === 'inZone', alarm = ['stopHit','expired'].includes(c.state);
-  const daysLeft = daysBetween(todayISO(), p.expiry);
   const rrCls = v => v == null ? '' : v >= 2 ? 'gain-t' : v < 1 ? 'loss-t' : '';
   const prog = c.shares ? Math.min(100, c.bought / c.shares * 100) : 0;
   // tranche ladder, filled in order by in-plan buys
@@ -230,10 +229,10 @@ function planCardHtml(p, H){
     </div>
     ${rulerHtml(p, c, !p.closedAt)}
     <div class="pc-stats">
-      <div class="pc-stat"><div class="k">${term('rr')}</div><div class="v ${rrCls(c.rrMid)}">${c.rrMid != null ? fmt(c.rrMid,2) : '—'}</div><div class="s">${L('区间中点','at zone mid')}${c.rrNow != null && !p.closedAt ? ` · ${L('现价','now')} ${fmt(c.rrNow,2)}` : ''}</div></div>
-      <div class="pc-stat"><div class="k">${L('计划仓位','Size')}</div><div class="v">${c.shares != null ? fmt(c.shares,0) + L(' 股',' sh') : '—'}</div><div class="s">${c.shares != null ? `≈ $${fmt(c.shares*c.mid,0)} · ${L('风险','risk')} $${fmt(c.riskAmt,0)}` : L(`每股风险 $${fmt(c.rps)}`, `risk/share $${fmt(c.rps)}`)}</div></div>
+      <div class="pc-stat"><div class="k">${term('rr')}</div><div class="v ${rrCls(c.rrMid)}">${c.rrMid != null ? fmt(c.rrMid,2) : '—'}</div></div>
+      <div class="pc-stat"><div class="k">${L('计划仓位','Size')}</div><div class="v">${c.shares != null ? fmt(c.shares,0) + L(' 股',' sh') : '—'}</div></div>
       <div class="pc-stat"><div class="k">${L('已执行','Filled')}</div><div class="v">${fmt(c.bought,0)}${c.shares ? `<span class="muted"> / ${fmt(c.shares,0)}</span>` : ''}</div><div class="mini"><i style="width:${prog}%"></i></div></div>
-      <div class="pc-stat"><div class="k">${p.closedAt ? L('结束于','Closed') : L('有效期','Valid to')}</div><div class="v">${md(p.closedAt || p.expiry)}</div><div class="s">${p.closedAt ? '' : daysLeft >= 0 ? L(`还剩 ${daysLeft} 天`, `${daysLeft} days left`) : L('已过期','expired')}</div></div>
+      <div class="pc-stat"><div class="k">${p.closedAt ? L('结束于','Closed') : L('有效期','Valid to')}</div><div class="v">${md(p.closedAt || p.expiry)}</div></div>
     </div>
     <div class="tr-steps">${steps}</div>
     ${off.length ? `<div class="pc-fills"><span class="muted">${L('计划外成交','Off-plan fills')}</span>${off.map(f => `<span class="fill-chip out" title="${L('点一下改成计划内','click to mark in-plan')}" onclick="toggleFillTag('${f.t.id}', false)">${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}</span>`).join('')}</div>` : ''}
