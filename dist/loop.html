@@ -4363,6 +4363,10 @@ function planCardHtml(p, H){
   const prog = c.shares ? Math.min(100, c.bought / c.shares * 100) : 0;
   // tranche ladder, filled in order by in-plan buys
   let cum = 0;
+  // suggested split of the position across the levels: an even split (the last level takes the rounding),
+  // independent of whole-share rounding so a 2-level plan reads 50 / 50, not 46 / 54
+  const nTr = c.trPx.length;
+  const trPct = c.trPx.map((_, i) => i < nTr - 1 ? Math.round(100 / nTr) : 100 - Math.round(100 / nTr) * (nTr - 1));
   const steps = c.trPx.map((px, i) => {
     const q = c.trQty ? c.trQty[i] : null;
     const start = cum; cum += q || 0;
@@ -4370,7 +4374,7 @@ function planCardHtml(p, H){
     const fr = q ? got / q : 0;
     const cls = fr >= 1 - 1e-9 ? 'done' : fr > 0 ? 'part' : '';
     return `<div class="tr ${cls}" style="${cls==='part' ? `--fr:${(fr*100).toFixed(0)}%` : ''}">
-      <div class="tr-n">${L('第','#')}${i+1}${L(' 批','')}${cls==='done' ? ' ✓' : cls==='part' ? ` · ${fmt(got,0)}/${fmt(q,0)}` : ''}</div>
+      <div class="tr-n">${L('第','#')}${i+1}${L(' 批','')} · ${L('建议买 ','buy ')}${trPct[i]}%${cls==='done' ? ' ✓' : cls==='part' ? ` · ${fmt(got,0)}/${fmt(q,0)}` : ''}</div>
       <div class="tr-v">${fmt(px)}${q != null ? `<span> × ${fmt(q,0)}</span>` : ''}</div></div>`;
   }).join('');
   const off = c.fills.filter(f => !f.inPlan);
@@ -4378,9 +4382,9 @@ function planCardHtml(p, H){
   return `<div class="plan-card ${hot?'hot':''} ${alarm?'alarm':''} ${p.closedAt?'closed':''}">
     <div class="pc-head">
       <a class="sym" onclick="openStock('${esc(p.sym)}')" title="${L('打开个股页','open stock page')}">${esc(p.sym)}</a>
+      <span class="sec-tag">${esc(secName(sectorOf(p.sym)))}</span>
       <span class="px">${c.price != null ? '$'+fmt(c.price) : '—'}</span>
-      <span class="pill ${c.cls}">${c.label}</span>
-      <span class="grow"><span class="sec-tag">${esc(secName(sectorOf(p.sym)))}</span>
+      <span class="grow"><span class="pill ${c.cls}">${c.label}</span>
         ${p.closedAt
           ? `<button class="btn-ghost btn-small" onclick="reopenPlan('${p.id}')">${L('重新打开','Reopen')}</button><button class="btn-ghost btn-small" onclick="deletePlan('${p.id}')">${L('删除','Delete')}</button>`
           : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button><button class="icon-btn pc-x" title="${L('结束这个计划','Close this plan')}" aria-label="${L('结束','Close')}" onclick="closePlan('${p.id}')">✕</button>`}
