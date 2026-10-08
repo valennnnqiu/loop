@@ -282,12 +282,14 @@ function planFormHtml(){
         <details class="f2-more" ${p && (p.risk || p.note) ? 'open' : ''}>
           <summary><span class="f2-sec-t" style="margin:0;"><span>3</span>${L('仓位与有效期','Size & timing')}</span><em id="pfMoreSum"></em><span class="f-opt">${L('选填','optional')}</span></summary>
           <div class="f2-row3" style="margin-top:12px;">
-            ${fld({ id:'pf-risk', label:L('本笔风险','Risk on this trade'), opt:true, prefix:'$', tip:L('这一笔打到止损价最多亏多少。留空就用设置里的默认值。','The most this trade may lose at its stop. Blank = the default from Settings.'), attrs:`type="number" step="any" placeholder="${r != null ? L('默认 ','default ') + fmt(r,0) : L('未设默认','no default set')}" value="${v('risk')}" oninput="planPreview()"` })}
-            ${fld({ label:L('分几批买','Tranches'), opt:true, tip:L('在关注区间里平均分几次买入。分批能拿到更好的均价。','How many buys to spread across the zone. Scaling in gives a better average.'),
+            ${fld({ id:'pf-risk', label:L('本笔风险','Risk on this trade'), prefix:'$', tip:L('这一笔打到止损价最多亏多少。留空就用设置里的默认值。','The most this trade may lose at its stop. Blank = the default from Settings.'), attrs:`type="number" step="any" placeholder="${r != null ? L('默认 ','default ') + fmt(r,0) : L('未设默认','no default set')}" value="${v('risk')}" oninput="planPreview()"` })}
+            ${fld({ label:L('分几批买','Tranches'), tip:L('在关注区间里平均分几次买入。分批能拿到更好的均价。','How many buys to spread across the zone. Scaling in gives a better average.'),
                 body:`<input type="hidden" id="pf-n" value="${n}"><div class="seg">${[1,2,3].map(k => `<button type="button" class="${k==n?'on':''}" onclick="document.getElementById('pf-n').value=${k}; this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); this.classList.add('on'); planPreview();">${k}</button>`).join('')}</div>` })}
-            ${fld({ id:'pf-exp', label:L('有效期至','Valid until'), opt:true, tip:L('过了这天还没执行，计划自动标成过期，提醒你重新评估。','If not executed by this date, the plan is flagged as expired so you re-evaluate.'), attrs:`type="date" value="${v('expiry', addDays(todayISO(), 30))}" onchange="planPreview()"` })}
           </div>
-          ${fld({ id:'pf-note', label:L('备注','Note'), opt:true, attrs:`type="text" placeholder="${eg(L('支撑区 · 触碰 9 次 · Put 墙 $230','support · 9 touches · put wall $230'))}" value="${esc(v('note'))}"` })}
+          <div class="f2-row2">
+            ${fld({ id:'pf-exp', label:L('有效期至','Valid until'), tip:L('过了这天还没执行，计划自动标成过期，提醒你重新评估。','If not executed by this date, the plan is flagged as expired so you re-evaluate.'), attrs:`type="date" value="${v('expiry', addDays(todayISO(), 30))}" onchange="planPreview()"` })}
+            ${fld({ id:'pf-note', label:L('备注','Note'), attrs:`type="text" placeholder="${eg(L('支撑区 · 触碰 9 次 · Put 墙 $230','support · 9 touches · put wall $230'))}" value="${esc(v('note'))}"` })}
+          </div>
         </details>
       </div>
       <div class="f2-side"><div class="f2-prev-t">${L('预览','Preview')}</div><div id="pfPreview"></div></div>
