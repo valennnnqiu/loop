@@ -5048,7 +5048,7 @@ function openSettings(){
         </div>
       </div>
       <div class="f2-sec"><div class="f2-sec-t">${L('目标','Goal')}</div>
-        ${fld({ id:'st-week', label:L('每周盈利目标','Weekly profit target'), req:true, prefix:'$', tip:L('只算已实现盈亏。可以填一个数，也可以填区间，如 2000-3000。','Realized P&L only. One number or a range like 2000-3000.'), attrs:`type="text" placeholder="${eg('2000-3000')}" value="${esc(cfg.weekTarget)}"` })}
+        ${fld({ id:'st-week', label:L('每周盈利目标','Weekly profit target'), prefix:'$', tip:L('只算已实现盈亏。可以填一个数，也可以填区间，如 2000-3000。','Realized P&L only. One number or a range like 2000-3000.'), attrs:`type="text" placeholder="${eg('2000-3000')}" value="${esc(cfg.weekTarget)}"` })}
       </div>
       <div class="f2-sec"><div class="f2-sec-t">${L('数据','Data')}</div>
         ${fld({ id:'st-fh', label:'Finnhub API key', opt:true, tip:L('finnhub.io 免费注册后拿到。用来自动拉股价和财报日期。只存在这个浏览器里。','Free at finnhub.io. Used for live prices and earnings dates. Stored only in this browser.'),
@@ -5078,10 +5078,9 @@ const _setWeeklyGoal3 = setWeeklyGoal;
 setWeeklyGoal = function(v){ _setWeeklyGoal3(v); cfg.weekTarget = scaleGoal(v, 0.25); saveCfg(); };
 
 async function saveSettings(){
-  // risk per trade and the weekly target are required: flag the empty ones and stay open
-  const need = ['st-risk', 'st-week'].filter(id => num(document.getElementById(id).value) == null && !(id === 'st-week' && parseGoal(document.getElementById(id).value)));
+  // risk per trade is required: flag it if empty and stay open (limits fall back to their defaults)
   document.querySelectorAll('#settingsBody .f-field').forEach(f => f.classList.remove('bad'));
-  if(need.length){ need.forEach(id => document.getElementById(id).closest('.f-field').classList.add('bad')); document.getElementById(need[0]).focus(); return; }
+  if(num(document.getElementById('st-risk').value) == null){ document.getElementById('st-risk').closest('.f-field').classList.add('bad'); document.getElementById('st-risk').focus(); return; }
   const rp = num(document.getElementById('st-risk').value); cfg.riskPct = rp == null ? '' : rp; cfg.risk = '';
   cfg.maxSingle = num(document.getElementById('st-single').value) ?? 40;
   cfg.maxSector = num(document.getElementById('st-sector').value) ?? 60;
