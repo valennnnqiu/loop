@@ -1991,13 +1991,13 @@ function renderMomo(){
     const sub = m.flags.length ? `${m.flags[0]}` : w.cons.length ? L('差：','Missing: ') + w.cons.slice(0, 2).join('、') : '';
     return `<div class="mm-why" title="${tip}"><div class="mm-main">${main}</div>${sub ? `<div class="mm-sub ${m.flags.length ? 'dot-warn' : ''}">${sub}</div>` : ''}</div>`; };
   const nums = list => `<div class="mm-nums">${list.map(([k, v, c, x]) => `<div><span>${k}</span><b class="${c}">${v}</b>${x ? `<small>${x}</small>` : ''}</div>`).join('')}</div>`;
-  const id = m => `<div class="mm-id"><a onclick="openStock('${m.sym}')">${m.sym}</a><span>${m.score}/7</span></div>`;
-  const heldRow = m => { const A = holdAction(m, H); return `<div class="mm-row">${id(m)}${A.note ? `<div class="mm-why"><div class="mm-main">${momoWhy(m).pros.slice(0, 3).join(' · ') || L('条件都不满足','no condition met')}</div><div class="mm-sub dot-warn">${A.note}</div></div>` : reason(m)}
+  const id = m => `<div class="mm-id"><a>${m.sym}</a><span>${m.score}/7</span></div>`;
+  const heldRow = m => { const A = holdAction(m, H); return `<div class="mm-row" onclick="openStock('${m.sym}')">${id(m)}${A.note ? `<div class="mm-why"><div class="mm-main">${momoWhy(m).pros.slice(0, 3).join(' · ') || L('条件都不满足','no condition met')}</div><div class="mm-sub dot-warn">${A.note}</div></div>` : reason(m)}
       <div class="mm-actw"><span class="pill mm-act ${A.act}">${{ buy:'BUY', hold:'HOLD', sell:'SELL' }[A.act]}</span></div>${nums(A.nums.map(n => [n[0], n[1], n[2]]))}
-      <a class="mm-go" onclick="openStock('${m.sym}')" title="${L('看图','chart')}">›</a></div>`; };
-  const candRow = m => `<div class="mm-row">${id(m)}${reason(m)}
+      </div>`; };
+  const candRow = m => `<div class="mm-row" onclick="openStock('${m.sym}')">${id(m)}${reason(m)}
       <div class="mm-actw"><span class="pill mm-act ${m.grade === 'hi' ? 'strong' : 'mid'}">${gradeTxt(m.grade)}</span></div>${nums([[m.entryKind === 'brk' ? L('突破买入','Breakout') : L('回踩买入','Pullback'), px(m.entry), ''], [L('止损','Stop'), px(m.stop), 'loss-t', '−' + fmt(m.riskPct,1) + '%']])}
-      <a class="mm-go" onclick="planFromMomentum('${m.sym}')" title="${L('用它建计划','plan it')}">›</a></div>`;
+      </div>`;
   el.innerHTML = head(sel)
     + (held.length ? `<div class="mm-cap">${L('我持有的','Held')}</div><div class="mm-list">${held.map(heldRow).join('')}</div>` : '')
     + (strongC.length ? `<div class="mm-cap">${L('可以买的','Candidates')}</div><div class="mm-list">${strongC.map(candRow).join('')}</div>` : '')

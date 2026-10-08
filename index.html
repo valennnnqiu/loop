@@ -1497,7 +1497,7 @@
   /* momentum v4 — same card language as the risk list */
   .mm-cap{ font-size:12px; font-weight:700; color:var(--text-dim); margin:4px 2px 8px; }
   .mm-list{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:16px; overflow:hidden; }
-  .mm-row{ display:grid; grid-template-columns:84px minmax(0,1fr) 96px 220px 20px; gap:18px; align-items:center; padding:14px 20px; border-top:1px solid var(--line); }
+  .mm-row{ display:grid; grid-template-columns:84px minmax(0,1fr) 96px 220px; cursor:pointer; gap:18px; align-items:center; padding:14px 20px; border-top:1px solid var(--line); }
   .mm-row:first-child{ border-top:none; }
   .mm-id{ display:flex; flex-direction:column; gap:2px; } .mm-id a{ font-weight:800; font-size:15px; cursor:pointer; color:var(--text); } .mm-id a:hover{ color:var(--gold); }
   .mm-id span{ font-family:var(--mono); font-size:11px; color:var(--text-dim); }
@@ -1508,9 +1508,8 @@
   .mm-act.strong{ background:var(--gain-dim); color:var(--gain); font-family:var(--disp); } .mm-act.mid{ background:var(--panel-2); color:var(--text-dim); font-family:var(--disp); }
   .mm-nums{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .mm-nums div{ display:flex; flex-direction:column; gap:1px; } .mm-nums span{ font-size:11px; color:var(--text-dim); } .mm-nums b{ font-family:var(--mono); font-size:14px; } .mm-nums small{ font-family:var(--mono); font-size:10.5px; color:var(--text-dim); }
-  .mm-go{ font-size:20px; color:var(--text-dim); cursor:pointer; text-align:right; line-height:1; } .mm-go:hover{ color:var(--text); }
   .mm-foot{ font-size:12px; color:var(--text-dim); margin:-6px 2px 0; }
-  @media (max-width:760px){ .mm-row{ grid-template-columns:70px minmax(0,1fr) auto; gap:10px 12px; padding:12px 14px; } .mm-why{ grid-column:2 / -1; }  .mm-go{ grid-row:1; grid-column:3; } .mm-nums{ grid-column:1 / -1; } }
+  @media (max-width:760px){ .mm-row{ grid-template-columns:70px minmax(0,1fr) auto; gap:10px 12px; padding:12px 14px; } .mm-why{ grid-column:2 / -1; } .mm-nums{ grid-column:1 / -1; } }
 
   .mm-actw{ display:flex; flex-direction:column; align-items:flex-start; gap:3px; } .mm-actw small{ font-size:11px; color:var(--text-dim); white-space:nowrap; }
   @media (max-width:760px){ .mm-actw{ grid-row:1; grid-column:2; flex-direction:row; align-items:center; gap:6px; } }
@@ -1580,9 +1579,8 @@
   .icon-btn{ width:var(--ctl-sm); height:var(--ctl-sm); padding:0; border-radius:999px; font-size:13px; }
 
   /* ---------- text links: one colour, underline only on hover ---------- */
-  .lnk, .mm-go, .pl-go, .mo-go, .ska-go, .pr-c{ color:var(--gold); font-weight:600; cursor:pointer; text-decoration:none; }
+  .lnk, .pl-go, .mo-go, .ska-go, .pr-c{ color:var(--gold); font-weight:600; cursor:pointer; text-decoration:none; }
   .lnk:hover, .pl-go:hover, .mo-go:hover, .ska-go:hover{ text-decoration:underline; text-underline-offset:3px; }
-  .mm-go{ color:var(--text-dim); } .mm-go:hover{ color:var(--text); text-decoration:none; }
 
   /* ---------- fields: same height, border, focus everywhere ---------- */
   .sk-in, .sel-sm, .cv-pick input.sk-in{ height:var(--ctl); padding:0 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel);
