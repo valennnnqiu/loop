@@ -2625,7 +2625,19 @@ loadDemoData = async function(){
     tip.style.left = left + 'px'; tip.style.top = top + 'px';
   };
   const hide = () => { if(tip) tip.style.display = 'none'; };
-  const tipOf = e => e.target && e.target.closest ? e.target.closest('[data-tip]') : null;
+  // native title="" bubbles (grey, system font, slow) are taken over so everything looks the same
+  const tipOf = e => {
+    const t = e.target; if(!t || !t.closest) return null;
+    const el = t.closest('[data-tip]'); if(el) return el;
+    const tt = t.closest('[title]');
+    if(tt && tt.getAttribute('title')){
+      const text = tt.getAttribute('title');
+      if(!tt.getAttribute('aria-label') && !tt.textContent.trim()) tt.setAttribute('aria-label', text);
+      tt.setAttribute('data-tip', text); tt.removeAttribute('title');
+      return tt;
+    }
+    return null;
+  };
   document.addEventListener('mouseover', e => { const el = tipOf(e); if(el) show(el); else hide(); });
   document.addEventListener('focusin', e => { const el = tipOf(e); if(el) show(el); });
   document.addEventListener('focusout', hide);
