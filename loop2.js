@@ -660,7 +660,7 @@ function renderToday(){
     : `<div class="t-list"><div class="t-done"><b>${L('今天没有需要处理的事','Nothing needs you today')}</b>${L('计划都没到价位，持仓没超上限，近期没有财报和重要宏观事件。','No plan is at its levels, no limit is breached, no earnings or major macro ahead.')}</div></div>`);
   const ob = onboardHtml();
   const bare = ob && !trades.length && !plans.length;
-  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}</div>${ob}${bare ? '' : stats + body}`;
+  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}<button type="button" class="btn-ghost btn-small today-import" onclick="importStatement()">${L('+ 导入对账单','+ Import statement')}</button></div>${ob}${bare ? '' : stats + body}`;
 }
 
 // ---------- review: plan reconciliation ----------
@@ -1039,6 +1039,8 @@ function openAddPanel(){
   if(document.getElementById('importCard').style.display === 'none') openImport();
   if(document.getElementById('addTradeForm').style.display === 'none') openAddTrade();
 }
+// jump to Review → trades with the statement import open (the sidebar / Today buttons)
+function importStatement(){ switchTab('ledger'); openImport(); setTimeout(() => { const c = document.getElementById('importCard'); if(c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 60); }
 function openAddTrades(){
   const open = document.getElementById('importCard').style.display !== 'none' || document.getElementById('addTradeForm').style.display !== 'none';
   if(open){ closeImport(); document.getElementById('addTradeForm').style.display = 'none'; }

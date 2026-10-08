@@ -1843,6 +1843,12 @@
   .tk-col{ display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
   .tk-col .sym-edit{ line-height:18px; }
   .tk-sec{ font-size:11.5px; line-height:15px; color:var(--text-dim); padding-left:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+
+  /* import-statement entry points outside Review: a button above the sidebar footer on desktop, in the Today title row on phones */
+  header.top .side-import{ display:none; }
+  .today-import{ display:none; margin-left:auto; }
+  @media (min-width:900px){ header.top .side-import{ display:flex; align-items:center; justify-content:center; margin:0 8px 14px; height:36px; font-size:13px; font-weight:600; } }
+  @media (max-width:899px){ .today-import{ display:inline-flex; } .today-date{ flex-wrap:wrap; row-gap:10px; } .today-date .today-import{ margin-left:0; flex-basis:auto; } }
 </style>
 </head>
 <body>
@@ -1873,6 +1879,7 @@
         <svg class="i" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg><span data-i18n="tabReview">复盘</span>
       </button>
     </nav>
+    <button type="button" class="btn-ghost side-import" id="sideImport" onclick="importStatement()" data-i18n="sideImport">+ 导入对账单</button>
     <div class="head-right">
       <button class="lang-toggle" id="settingsBtn" onclick="openSettings()" aria-label="Settings" aria-label="Settings"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></button>
       <button class="lang-toggle" id="helpBtn" onclick="openWelcome()" aria-label="How LOOP works" aria-label="Help">i</button>
@@ -2769,6 +2776,7 @@ const I18N = {
     importHint: 'IBKR → Performance &amp; Reports → Statements → Activity，格式选 <b>CSV</b>。<br>按「代码+成交时间+数量+价格」去重，同一份对账单重复导入不会重复计算。',
     importPastePh: '或者把 CSV 内容直接粘贴到这里，然后点下面的「解析」',
     footerBackup: '备份与数据',
+    sideImport: '+ 导入对账单',
     footerHint: '数据只存在这台电脑的浏览器里，不上传任何服务器。',
     evTitleAdd: '添加事件', evTextLabel: '内容', evCatLabel: '类别', evDelete: '删除', evSave: '保存',
     legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
@@ -2794,6 +2802,7 @@ const I18N = {
     importHint: 'IBKR → Performance &amp; Reports → Statements → Activity, format <b>CSV</b>.<br>Deduped by symbol + time + qty + price, so re-importing an overlapping statement is safe.',
     importPastePh: 'Or paste the CSV text here, then click Parse below',
     footerBackup: 'Backup & data',
+    sideImport: '+ Import statement',
     footerHint: 'Data lives only in this browser on this computer, never uploaded.',
     evTitleAdd: 'Add event', evTextLabel: 'Text', evCatLabel: 'Category', evDelete: 'Delete', evSave: 'Save',
     legendBuy: 'Buy / Add', legendSell: 'Sell / Reduce', legendHold: 'Hold', legendRotate: 'Rotate', legendWatch: 'Watch',
@@ -5002,7 +5011,7 @@ function renderToday(){
     : `<div class="t-list"><div class="t-done"><b>${L('今天没有需要处理的事','Nothing needs you today')}</b>${L('计划都没到价位，持仓没超上限，近期没有财报和重要宏观事件。','No plan is at its levels, no limit is breached, no earnings or major macro ahead.')}</div></div>`);
   const ob = onboardHtml();
   const bare = ob && !trades.length && !plans.length;
-  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}</div>${ob}${bare ? '' : stats + body}`;
+  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}<button type="button" class="btn-ghost btn-small today-import" onclick="importStatement()">${L('+ 导入对账单','+ Import statement')}</button></div>${ob}${bare ? '' : stats + body}`;
 }
 
 // ---------- review: plan reconciliation ----------
@@ -5381,6 +5390,8 @@ function openAddPanel(){
   if(document.getElementById('importCard').style.display === 'none') openImport();
   if(document.getElementById('addTradeForm').style.display === 'none') openAddTrade();
 }
+// jump to Review → trades with the statement import open (the sidebar / Today buttons)
+function importStatement(){ switchTab('ledger'); openImport(); setTimeout(() => { const c = document.getElementById('importCard'); if(c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 60); }
 function openAddTrades(){
   const open = document.getElementById('importCard').style.display !== 'none' || document.getElementById('addTradeForm').style.display !== 'none';
   if(open){ closeImport(); document.getElementById('addTradeForm').style.display = 'none'; }
