@@ -6917,7 +6917,11 @@ loadDemoData = async function(){
 (function(){
   let tip = null;
   const show = el => {
-    const text = el.getAttribute('data-tip'); if(!text) return;
+    const text = el.getAttribute('data-tip'); if(!text){ hide(); return; }
+    // a tip that only repeats what the element already says in full is noise; keep it when the text is cut off
+    const norm = x => String(x).replace(/\s+/g, ' ').trim();
+    const cut = [el, ...el.querySelectorAll('*')].some(n => n.scrollWidth > n.clientWidth + 1 || n.scrollHeight > n.clientHeight + 1);
+    if(norm(text) === norm(el.textContent) && !cut){ hide(); return; }
     if(!tip){ tip = document.createElement('div'); tip.className = 'tip-pop'; document.body.appendChild(tip); }
     tip.textContent = text; tip.style.display = 'block';
     const tw = Math.min(260, window.innerWidth - 16); tip.style.width = tw + 'px';
