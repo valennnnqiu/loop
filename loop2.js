@@ -228,7 +228,7 @@ function planCardHtml(p, H){
       <span class="grow">
         ${p.closedAt
           ? `<button class="btn-ghost btn-small" onclick="reopenPlan('${p.id}')">${L('重新打开','Reopen')}</button><button class="btn-ghost btn-small" onclick="deletePlan('${p.id}')">${L('删除','Delete')}</button>`
-          : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button><button class="icon-btn pc-x" aria-label="${L('结束这个计划','Close this plan')}" aria-label="${L('结束','Close')}" onclick="closePlan('${p.id}')">✕</button>`}
+          : `<button class="btn-ghost btn-small" onclick="editPlan('${p.id}')">${L('编辑','Edit')}</button><button class="icon-btn pc-x" aria-label="${L('结束这个计划','Close this plan')}" onclick="closePlan('${p.id}')">✕</button>`}
       </span>
     </div>
     ${rulerHtml(p, c, !p.closedAt)}
@@ -626,9 +626,8 @@ function renderToday(){
       <div class="t-main"><div class="t-title">${i.title}</div>${i.sub ? `<div class="t-sub">${i.sub}</div>` : ''}</div>
       ${i.p && i.c && i.c.price != null ? miniBar(i.p, i.c.price) : '<span></span>'}
       <div class="t-acts">
-        <button class="btn-primary btn-small" onclick="${i.go}">${L('查看','Open')}</button>
-        <button class="btn-ghost btn-small" onclick="dismissIdx(${idx}, 1, 'later')">${L('明天再提醒','Tomorrow')}</button>
-        <button class="btn-ghost btn-small" onclick="dismissIdx(${idx}, 7, 'done')">${L('已处理','Done')}</button>
+        <button class="btn-ghost btn-small" onclick="${i.go}">${L('查看','Open')}</button>
+        <button class="icon-btn pc-x" aria-label="${L('已处理','Done')}" onclick="dismissIdx(${idx}, 7, 'done')">✕</button>
       </div></div>`; };
   const welcome = !trades.length && !plans.length && cfg.onboardHidden
     ? `<div class="t-list"><div class="t-done"><b>${L('从这里开始','Start here')}</b>${L('先去「复盘 → 交易明细」导入 IBKR 对账单，再到「自选」建第一个计划。之后每天打开 LOOP，这里只列需要你处理的事。','Import an IBKR statement under Review → Trades, then create your first plan under Watchlist. After that this page only lists what needs you.')}</div></div>` : '';
