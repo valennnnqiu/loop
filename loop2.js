@@ -2000,7 +2000,7 @@ function renderMomo(){
       <div class="mm-actw"><span class="pill mm-act ${A.act}">${{ buy:'BUY', hold:'HOLD', sell:'SELL' }[A.act]}</span></div>${nums(A.nums.map(n => [n[0], n[1], n[2]]))}
       </div>`; };
   const candRow = m => `<div class="mm-row" onclick="openStock('${m.sym}')">${id(m)}${reason(m)}
-      <div class="mm-actw"><span class="pill mm-act ${m.grade === 'hi' ? 'strong' : 'mid'}">${gradeTxt(m.grade)}</span></div>${nums([[m.entryKind === 'brk' ? L('突破买入','Breakout') : L('回踩买入','Pullback'), px(m.entry), ''], [L('止损','Stop'), px(m.stop), 'loss-t', '−' + fmt(m.riskPct,1) + '%']])}
+      <div class="mm-actw"><span class="pill mm-act ${m.grade === 'hi' ? 'strong' : 'mid'}">${gradeTxt(m.grade)}</span></div>${nums([[m.entryKind === 'brk' ? L('突破买入','Breakout') : L('回踩买入','Pullback'), px(m.entry), ''], [L('止损','Stop'), px(m.stop), 'loss-t']])}
       </div>`;
   el.innerHTML = head(sel)
     + (held.length ? `<div class="mm-cap">${L('我持有的','Held')}</div><div class="mm-list">${held.map(heldRow).join('')}</div>` : '')
