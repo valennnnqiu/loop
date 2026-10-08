@@ -279,17 +279,15 @@ function planFormHtml(){
             ${fld({ id:'pf-tgt', label:L('第一目标','Target'), req:true, dot:'tgt', prefix:'$', tip:L('第一个止盈位，通常是上方最近的压力区。','First profit-taking level, usually the nearest resistance above.'), attrs:`type="number" step="any" placeholder="${eg('260')}" value="${v('target')}" oninput="planPreview()"` })}
           </div>
         </div>
-        <details class="f2-more" ${p && (p.risk || p.note) ? 'open' : ''}>
+        <details class="f2-more" ${p && p.risk ? 'open' : ''}>
           <summary><span class="f2-sec-t" style="margin:0;"><span>3</span>${L('仓位与有效期','Size & timing')}</span><em id="pfMoreSum"></em><span class="f-opt">${L('选填','optional')}</span></summary>
           <div class="f2-row3" style="margin-top:12px;">
             ${fld({ id:'pf-risk', label:L('本笔风险','Risk on this trade'), prefix:'$', tip:L('这一笔打到止损价最多亏多少。留空就用设置里的默认值。','The most this trade may lose at its stop. Blank = the default from Settings.'), attrs:`type="number" step="any" placeholder="${r != null ? L('默认 ','default ') + fmt(r,0) : L('未设默认','no default set')}" value="${v('risk')}" oninput="planPreview()"` })}
             ${fld({ label:L('分几批买','Tranches'), tip:L('在关注区间里平均分几次买入。分批能拿到更好的均价。','How many buys to spread across the zone. Scaling in gives a better average.'),
                 body:`<input type="hidden" id="pf-n" value="${n}"><div class="seg">${[1,2,3].map(k => `<button type="button" class="${k==n?'on':''}" onclick="document.getElementById('pf-n').value=${k}; this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); this.classList.add('on'); planPreview();">${k}</button>`).join('')}</div>` })}
-          </div>
-          <div class="f2-row2">
             ${fld({ id:'pf-exp', label:L('有效期至','Valid until'), tip:L('过了这天还没执行，计划自动标成过期，提醒你重新评估。','If not executed by this date, the plan is flagged as expired so you re-evaluate.'), attrs:`type="date" value="${v('expiry', addDays(todayISO(), 30))}" onchange="planPreview()"` })}
-            ${fld({ id:'pf-note', label:L('备注','Note'), attrs:`type="text" placeholder="${eg(L('支撑区 · 触碰 9 次 · Put 墙 $230','support · 9 touches · put wall $230'))}" value="${esc(v('note'))}"` })}
           </div>
+          <input type="hidden" id="pf-note" value="${esc(v('note'))}">
         </details>
       </div>
       <div class="f2-side"><div class="f2-prev-t">${L('预览','Preview')}</div><div id="pfPreview"></div></div>
@@ -782,7 +780,7 @@ const PAGE_HELP = () => ({
 });
 function pageHelp(key){
   const items = PAGE_HELP()[key] || [];
-  return `<details class="phelp"><summary title="${L('这页怎么用','How this page works')}">?</summary><div class="phelp-pop">${items.map((t,i) => `<div><b>${i+1}</b>${t}</div>`).join('')}</div></details>`;
+  return `<details class="phelp"><summary title="${L('这页怎么用','How this page works')}">i</summary><div class="phelp-pop">${items.map((t,i) => `<div><b>${i+1}</b>${t}</div>`).join('')}</div></details>`;
 }
 
 function stepsCard(title, steps, actions){
@@ -1988,14 +1986,14 @@ function renderMomo(){
   if(!all.length){ el.innerHTML = head(sel) + `<div class="watch-empty">${L('这个列表里的股票还没有 K 线数据。','No bars yet for this list.')}</div>`; return; }
   const held = all.filter(m => H.map[m.sym] && H.map[m.sym].qty > 0), cand = all.filter(m => !(H.map[m.sym] && H.map[m.sym].qty > 0));
   const strongC = cand.filter(m => m.grade !== 'lo'), weakC = cand.filter(m => m.grade === 'lo');
-  // one short line: up to 3 strengths, everything else in the tooltip
+  // up to 5 strengths (wraps to a second line if needed), everything else in the tooltip
   const reason = m => { const w = momoWhy(m); const tip = esc([...w.pros.map(x => '✓ ' + x), ...w.cons.map(x => '✗ ' + x), ...m.flags.map(x => '! ' + capEn(x))].join('\n'));
-    const main = w.pros.length ? w.pros.slice(0, 3).join(' · ') : L('条件都不满足','No condition met');
+    const main = w.pros.length ? w.pros.slice(0, 5).join(' · ') : L('条件都不满足','No condition met');
     const sub = m.flags.length ? capEn(m.flags[0]) : w.cons.length ? L('差：','Missing: ') + w.cons.slice(0, 2).join(L('、',' · ')) : '';
     return `<div class="mm-why" title="${tip}"><div class="mm-main">${main}</div>${sub ? `<div class="mm-sub ${m.flags.length ? 'dot-warn' : ''}">${sub}</div>` : ''}</div>`; };
   const nums = list => `<div class="mm-nums">${list.map(([k, v, c, x]) => `<div><span>${k}</span><b class="${c}">${v}</b>${x ? `<small>${x}</small>` : ''}</div>`).join('')}</div>`;
   const id = m => `<div class="mm-id"><a>${m.sym}</a><span>${m.score}/7</span></div>`;
-  const heldRow = m => { const A = holdAction(m, H); return `<div class="mm-row" onclick="openStock('${m.sym}')">${id(m)}${A.note ? `<div class="mm-why"><div class="mm-main">${momoWhy(m).pros.slice(0, 3).join(' · ') || L('条件都不满足','No condition met')}</div><div class="mm-sub dot-warn">${capEn(A.note)}</div></div>` : reason(m)}
+  const heldRow = m => { const A = holdAction(m, H); return `<div class="mm-row" onclick="openStock('${m.sym}')">${id(m)}${A.note ? `<div class="mm-why"><div class="mm-main">${momoWhy(m).pros.slice(0, 5).join(' · ') || L('条件都不满足','No condition met')}</div><div class="mm-sub dot-warn">${capEn(A.note)}</div></div>` : reason(m)}
       <div class="mm-actw"><span class="pill mm-act ${A.act}">${{ buy:'BUY', hold:'HOLD', sell:'SELL' }[A.act]}</span></div>${nums(A.nums.map(n => [n[0], n[1], n[2]]))}
       </div>`; };
   const candRow = m => `<div class="mm-row" onclick="openStock('${m.sym}')">${id(m)}${reason(m)}
