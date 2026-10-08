@@ -1921,6 +1921,11 @@
   @media (max-width:899px){ .nav-group{ display:contents; } }
   .stock-compare{ display:none; }
   @media (max-width:899px){ .stock-compare{ display:inline-flex; } }
+
+  /* menu hover: a soft grey tile on the item under the pointer (sidebar and the Stock panel); the current page keeps its green tile */
+  @media (min-width:900px){
+    header.top .tab-btn:not(.active):hover, .nav-fly-item:not(.active):hover{ background:var(--panel-2); color:var(--text); }
+  }
 </style>
 </head>
 <body>
