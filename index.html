@@ -1712,6 +1712,12 @@
   .plan-form .f2-row2 .span2 .f-pair, .plan-form .f-pair{ max-width:none; }
   .plan-form .f-pair .f-in{ flex:0 0 auto; }
   @media (max-width:560px){ .plan-form{ --fw:100%; } .plan-form .f-pair{ flex-wrap:wrap; } }
+
+  /* plan form: the second column lines up everywhere (high = target = tranches…): 220px + 28px gap */
+  .plan-form .f2-row2, .plan-form .f2-row3{ column-gap:28px; }
+  .plan-form .f-pair{ display:flex; align-items:center; gap:28px; position:relative; }
+  .plan-form .f-pair .f-dash{ position:absolute; left:calc(var(--fw) + 14px); top:50%; transform:translate(-50%,-50%); }
+  @media (max-width:560px){ .plan-form .f-pair{ gap:12px; } .plan-form .f-pair .f-dash{ display:none; } }
 </style>
 </head>
 <body>

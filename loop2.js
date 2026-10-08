@@ -265,7 +265,7 @@ function planFormHtml(){
   const n = v('tranches', 3);
   return `<div class="form-card plan-form f2">
     <div class="f2-head"><b>${p ? L(`编辑 ${p.sym} 的计划`, `Edit ${p.sym} plan`) : L('新交易计划','New trade plan')}</b>
-      <div class="f-btns"><button class="btn-primary btn-small" onclick="savePlan()">${p ? L('保存修改','Save changes') : L('保存计划','Save plan')}</button><button type="button" class="icon-btn f-x" title="${L('取消','Cancel')}" aria-label="${L('取消','Cancel')}" onclick="closePlanForm()">✕</button></div></div>
+      <div class="f-btns"><button class="btn-primary btn-small" onclick="savePlan()">${L('保存','Save')}</button><button type="button" class="icon-btn f-x" title="${L('取消','Cancel')}" aria-label="${L('取消','Cancel')}" onclick="closePlanForm()">✕</button></div></div>
     <div class="f2-grid">
       <div class="f2-main">
         <div class="f2-sec"><div class="f2-sec-t"><span>1</span>${L('股票','Stock')}</div>
@@ -328,7 +328,6 @@ function planPreview(){
       <div><span>${L('建议股数','Shares')}</span><b>${c.shares != null ? fmt(c.shares,0) : '—'}</b></div>
       <div><span>${L('约需资金','Capital')}</span><b>${c.shares != null ? '$'+fmt(c.shares*c.mid,0) : '—'}</b></div>
     </div>
-    ${c.shares == null ? `<div class="f-hint">${L(`每股风险 $${fmt(c.rps)}。在设置里填默认风险，或在第 3 步填本笔风险，就能算出股数。`, `Risk per share $${fmt(c.rps)}. Set a default risk in Settings or on this plan to get a size.`)}</div>` : `<div class="f-hint">${L('分批：','Tranches: ')}${c.trPx.map((px,i)=>`${fmt(px)} × ${fmt(c.trQty[i],0)}`).join(' · ')}</div>`}
     ${c.warns.filter(w => w.c !== 'info').length ? `<div class="pc-alert" style="margin-top:10px;">${c.warns.filter(w => w.c !== 'info').map(w => `<div class="${w.c}">${w.t}</div>`).join('')}</div>` : ''}`;
 }
 
