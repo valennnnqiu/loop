@@ -739,11 +739,15 @@ function openSettings(){
         <div class="f-field"><label class="f-label">${L('数据包','Data pack')}<span class="f-opt">${L('选填','optional')}</span></label>
           <div class="pk-row">${typeof packChip === 'function' ? packChip() : ''}${typeof pack !== 'undefined' && pack ? `<a class="lnk" onclick="clearPack()">${L('清除','remove')}</a>` : ''}</div>
           <div class="f-hint">${L('离线备选：运行 <code>node tools/make-pack.js</code> 生成 loop-data.json（Yahoo 日 K 线）再导入；填了 Twelve Data key 就不需要。','Offline alternative: run <code>node tools/make-pack.js</code> and import loop-data.json (Yahoo bars). Not needed once you add a Twelve Data key.')}</div></div>
+        <div class="f-field" id="backupSec"><label class="f-label">${L('备份','Backup')}</label>
+          <div class="pk-row"><button type="button" class="btn-ghost btn-small" onclick="exportBackup()">${L('导出备份','Export backup')}</button><button type="button" class="btn-ghost btn-small" onclick="document.getElementById('backupFile').click()">${L('导入备份','Import backup')}</button><button type="button" class="btn-ghost btn-small" onclick="closeSettings(); resetToSeed()">${L('清空全部数据','Clear all data')}</button></div>
+          <div class="f-hint">${L('数据只存在这个浏览器里。换电脑或清缓存前先导出备份；导入会覆盖当前数据。','Data lives only in this browser. Export a backup before switching computers or clearing site data; importing replaces what is here.')}</div></div>
       </div>
     </div>
     <div class="f2-actions" style="justify-content:flex-end;"><button class="btn-ghost" onclick="closeSettings()">${L('取消','Cancel')}</button><button class="btn-primary" onclick="saveSettings()">${L('保存','Save')}</button></div>`;
   document.getElementById('settingsModal').classList.add('show');
 }
+function openBackup(){ openSettings(); setTimeout(() => { const b = document.getElementById('backupSec'); if(b) b.scrollIntoView({ block:'center' }); }, 60); }
 function closeSettings(){ document.getElementById('settingsModal').classList.remove('show'); }
 async function saveSettings(){
   cfg.risk = document.getElementById('st-risk').value.trim();
