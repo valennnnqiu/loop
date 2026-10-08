@@ -1754,6 +1754,15 @@
   .rk2-id{ gap:0; }
   .rk2-id b{ line-height:22px; }
   .rk2-sec{ font-size:12px; line-height:16px; color:var(--text-dim); }
+
+  /* risk rows: earnings date gets its own column between the numbers and the loss figure */
+  .rk2{ grid-template-columns:110px minmax(0,1fr) 80px 120px; gap:16px; }
+  .rk2-bar{ width:90px; }
+  .rk2-erc{ display:flex; flex-direction:column; gap:2px; }
+  .rk2-erc span{ font-size:11px; color:var(--text-dim); }
+  .rk2-erc b{ font-family:var(--mono); font-size:15px; font-weight:600; color:var(--text); }
+  .rk2-erc b.soon{ color:var(--loss); }
+  @media (max-width:760px){ .rk2{ grid-template-columns:1fr auto; } .rk2-erc{ grid-column:1 / -1; flex-direction:row; align-items:baseline; gap:8px; } .rk2-erc:empty{ display:none; } }
 </style>
 </head>
 <body>
@@ -4778,9 +4787,9 @@ function renderRisk(){
               <span class="rk2-bar"><i class="${over?'over':''}" style="width:${Math.min(100, r.w / Math.max(cfg.maxSingle, r.w) * 100)}%"></i></span>
               <span class="${over?'loss-t':'muted'}">${over ? L(`超过 ${cfg.maxSingle}% 上限`, `over the ${cfg.maxSingle}% limit`) : L(`上限 ${cfg.maxSingle}%`, `limit ${cfg.maxSingle}%`)}</span></div>
             <div class="rk2-line">${L('止损价','Stop')} <span class="rk2-in">$<input type="number" step="any" class="rk-edit ${r.stop == null ? 'need' : ''}" placeholder="${r.stopFromPlan ? fmt(r.stop) : L('设置','set')}" value="${num(cfg.stops[r.sym]) ?? ''}" onchange="setRiskField('stops','${r.sym}',this.value)" title="${r.stopFromPlan ? L('来自你的计划，可以改','from your plan — editable') : ''}"></span>
-              ${dist != null ? `<span class="muted">${L(`比现价低 ${fmt(dist,1)}%`, `${fmt(dist,1)}% below price`)}${r.stopFromPlan ? L(' · 来自计划',' · from plan') : ''}</span>` : `<span class="muted">${L('还没设，设了才知道最多亏多少','not set yet')}</span>`}
-              ${r.er ? `<span class="tag rk2-er ${erD <= 7 ? 'soon' : ''}">${md(r.er)} ${L('财报','earnings')}</span>` : ''}</div>
+              ${dist != null ? `<span class="muted">${L(`比现价低 ${fmt(dist,1)}%`, `${fmt(dist,1)}% below price`)}${r.stopFromPlan ? L(' · 来自计划',' · from plan') : ''}</span>` : `<span class="muted">${L('还没设，设了才知道最多亏多少','not set yet')}</span>`}</div>
           </div>
+          <div class="rk2-erc">${r.er ? `<span>${L('财报','Earnings')}</span><b class="${erD <= 7 ? 'soon' : ''}">${md(r.er)}</b>` : ''}</div>
           <div class="rk2-loss">${r.trig != null ? `<span>${L('跌到止损价会亏','loss at stop')}</span><b>${money(r.trig)}</b>` : `<span>${L('最多会亏','max loss')}</span><b class="muted">?</b>`}</div>
         </div>`;
       }).join('')}

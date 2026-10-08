@@ -1754,6 +1754,15 @@
   .rk2-id{ gap:0; }
   .rk2-id b{ line-height:22px; }
   .rk2-sec{ font-size:12px; line-height:16px; color:var(--text-dim); }
+
+  /* risk rows: earnings date gets its own column between the numbers and the loss figure */
+  .rk2{ grid-template-columns:110px minmax(0,1fr) 80px 120px; gap:16px; }
+  .rk2-bar{ width:90px; }
+  .rk2-erc{ display:flex; flex-direction:column; gap:2px; }
+  .rk2-erc span{ font-size:11px; color:var(--text-dim); }
+  .rk2-erc b{ font-family:var(--mono); font-size:15px; font-weight:600; color:var(--text); }
+  .rk2-erc b.soon{ color:var(--loss); }
+  @media (max-width:760px){ .rk2{ grid-template-columns:1fr auto; } .rk2-erc{ grid-column:1 / -1; flex-direction:row; align-items:baseline; gap:8px; } .rk2-erc:empty{ display:none; } }
 </style>
 </head>
 <body>

@@ -520,9 +520,9 @@ function renderRisk(){
               <span class="rk2-bar"><i class="${over?'over':''}" style="width:${Math.min(100, r.w / Math.max(cfg.maxSingle, r.w) * 100)}%"></i></span>
               <span class="${over?'loss-t':'muted'}">${over ? L(`超过 ${cfg.maxSingle}% 上限`, `over the ${cfg.maxSingle}% limit`) : L(`上限 ${cfg.maxSingle}%`, `limit ${cfg.maxSingle}%`)}</span></div>
             <div class="rk2-line">${L('止损价','Stop')} <span class="rk2-in">$<input type="number" step="any" class="rk-edit ${r.stop == null ? 'need' : ''}" placeholder="${r.stopFromPlan ? fmt(r.stop) : L('设置','set')}" value="${num(cfg.stops[r.sym]) ?? ''}" onchange="setRiskField('stops','${r.sym}',this.value)" title="${r.stopFromPlan ? L('来自你的计划，可以改','from your plan — editable') : ''}"></span>
-              ${dist != null ? `<span class="muted">${L(`比现价低 ${fmt(dist,1)}%`, `${fmt(dist,1)}% below price`)}${r.stopFromPlan ? L(' · 来自计划',' · from plan') : ''}</span>` : `<span class="muted">${L('还没设，设了才知道最多亏多少','not set yet')}</span>`}
-              ${r.er ? `<span class="tag rk2-er ${erD <= 7 ? 'soon' : ''}">${md(r.er)} ${L('财报','earnings')}</span>` : ''}</div>
+              ${dist != null ? `<span class="muted">${L(`比现价低 ${fmt(dist,1)}%`, `${fmt(dist,1)}% below price`)}${r.stopFromPlan ? L(' · 来自计划',' · from plan') : ''}</span>` : `<span class="muted">${L('还没设，设了才知道最多亏多少','not set yet')}</span>`}</div>
           </div>
+          <div class="rk2-erc">${r.er ? `<span>${L('财报','Earnings')}</span><b class="${erD <= 7 ? 'soon' : ''}">${md(r.er)}</b>` : ''}</div>
           <div class="rk2-loss">${r.trig != null ? `<span>${L('跌到止损价会亏','loss at stop')}</span><b>${money(r.trig)}</b>` : `<span>${L('最多会亏','max loss')}</span><b class="muted">?</b>`}</div>
         </div>`;
       }).join('')}
