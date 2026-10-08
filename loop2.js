@@ -219,7 +219,7 @@ function rulerHtml(p, c, showNow){
     <div class="pt-risk" style="left:${x(p.stop)}; width:${w(p.stop, c.mid)}"><span>${L('风险','risk')} ${riskTxt}</span></div>
     <div class="pt-reward" style="left:${x(c.mid)}; width:${w(c.mid, p.target)}"><span>${rewTxt} ${L('收益','reward')}</span></div>
     <div class="pt-zone" style="left:${x(p.lo)}; width:${w(p.lo, p.hi)}"></div>
-    ${fills.map(f => `<div class="pt-fill" style="left:${x(f.t.price)}" title="${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}">💰</div>`).join('')}
+    ${fills.map(f => `<div class="pt-fill" style="left:${x(f.t.price)}" title="${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}"><svg viewBox="0 0 12 10" width="12" height="10"><path d="M6 .5 L11 9.5 H1 Z" fill="var(--gain)" stroke="var(--panel)" stroke-width="1.5" stroke-linejoin="round"/></svg></div>`).join('')}
     ${price != null ? `<div class="pt-now" style="left:${x(price)}"></div><div class="pt-nowlab" style="left:${x(price)}">${fmt(price)}</div>` : ''}
     <div class="pt-lab stop" style="left:${x(p.stop)}">${term('stop', L('止损','Stop'))} <b>${fmt(p.stop)}</b></div>
     <div class="pt-lab zone" style="left:${x((p.lo + p.hi) / 2)}">${L('关注区','Zone')} <b>${fmt(p.lo)}–${fmt(p.hi)}</b></div>
