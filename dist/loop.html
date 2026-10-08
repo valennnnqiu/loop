@@ -1091,7 +1091,7 @@
   }
 
   /* risk per stock — sentences */
-  .rk2-list{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); }
+  .rk2-list{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
   .rk2{ display:grid; grid-template-columns:150px minmax(0,1fr) 150px; gap:18px; align-items:center; padding:16px 20px; border-top:1px solid var(--line); }
   .rk2:first-child{ border-top:none; }
   .rk2-id{ display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
@@ -1496,7 +1496,7 @@
 
   /* momentum v4 — same card language as the risk list */
   .mm-cap{ font-size:12px; font-weight:700; color:var(--text-dim); margin:4px 2px 8px; }
-  .mm-list{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:16px; }
+  .mm-list{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:16px; overflow:hidden; }
   .mm-row{ display:grid; grid-template-columns:84px minmax(0,1fr) 96px 220px 20px; gap:18px; align-items:center; padding:14px 20px; border-top:1px solid var(--line); }
   .mm-row:first-child{ border-top:none; }
   .mm-id{ display:flex; flex-direction:column; gap:2px; } .mm-id a{ font-weight:800; font-size:15px; cursor:pointer; color:var(--text); } .mm-id a:hover{ color:var(--gold); }
