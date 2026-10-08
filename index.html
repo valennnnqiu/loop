@@ -1824,6 +1824,12 @@
   #settingsModal{ overflow-y:auto; }
   #settingsModal .modal-card{ max-height:none !important; overflow:visible !important; margin:auto; }
   #st-risk-prev{ display:block; min-height:17px; }
+
+  /* Today: realized-P&L cell with a 7d / month / YTD switch in its label row */
+  .pc-per-k{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .pc-per{ display:inline-flex; gap:10px; text-transform:none; letter-spacing:0; }
+  .pc-per button{ background:none; border:none; padding:0; height:auto; font:inherit; font-size:11px; font-weight:600; color:var(--text-dim); cursor:pointer; box-shadow:none; }
+  .pc-per button.on{ color:var(--text); text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1.5px; }
 </style>
 </head>
 <body>
