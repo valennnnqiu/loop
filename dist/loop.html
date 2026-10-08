@@ -5174,7 +5174,7 @@ function onboardHtml(){
     <div class="ob2-top">
       <span class="ob2-kicker">${cur ? L(`第 ${idx+1} / ${req.length} 步`, `Step ${idx+1} of ${req.length}`) : L('已完成','All set')}</span>
       <div class="ob2-seg">${req.map((s, i) => `<i class="${s.done ? 'done' : i === idx ? 'cur' : ''}"></i>`).join('')}</div>
-      <a class="lnk ob2-hide" onclick="hideOnboard()">${L('隐藏','Hide')}</a>
+      <button type="button" class="icon-btn pc-x ob2-hide" aria-label="${L('隐藏','Hide')}" onclick="hideOnboard()">✕</button>
     </div>
     ${isDemoMode() ? `<div class="ob2-demo">${L('现在是示例数据','You are viewing demo data')} · <a class="lnk" onclick="exitDemo()">${L('清空，用自己的数据','clear it and use your own')}</a></div>` : ''}
     ${cur ? `<div class="ob2-title">${cur.t}</div>
