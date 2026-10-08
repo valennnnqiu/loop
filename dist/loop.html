@@ -1539,7 +1539,7 @@
   .lr-act{ font-size:13px; margin-top:8px; display:flex; gap:12px; align-items:baseline; } .lr-act b{ font-family:var(--mono); color:var(--gain); }
 
   .lr-rows{ margin-top:6px; border-top:1px solid var(--line); }
-  .lr-row{ display:grid; grid-template-columns:96px 160px 60px minmax(0,1fr); gap:12px 20px; align-items:baseline; padding:10px 2px; border-bottom:1px solid var(--line); font-size:13px; }
+  .lr-row{ display:grid; grid-template-columns:96px 160px 70px minmax(0,1fr); gap:12px 20px; align-items:baseline; padding:10px 2px; border-bottom:1px solid var(--line); font-size:13px; }
   .lr-row:last-child{ border-bottom:none; }
   .lr-k{ font-weight:700; font-size:12px; } .lr-row.sup .lr-k{ color:var(--gain); } .lr-row.res .lr-k{ color:var(--loss); }
   .lr-p{ font-family:var(--mono); font-weight:600; } .lr-p small{ font-weight:400; color:var(--text-dim); margin-left:6px; font-size:11px; }
@@ -1600,10 +1600,10 @@
   .rk-edit{ border-bottom:1px dashed var(--line-strong); } .rk-edit:focus{ border-bottom-color:var(--gold); outline:none; }
 
   /* ---------- tags & status pills: one shape ---------- */
-  .tag, .pill, .sec-tag, .sk-sec-tag, .mn-role, .mo-badge, .mm-act, .fill-chip, .pk-chip, .mood{
+  .tag, .pill, .sec-tag, .sk-sec-tag, .mn-role, .mo-badge, .mm-act, .fill-chip, .pk-chip, .mood, .lr-s{
     display:inline-flex; align-items:center; justify-content:center; height:22px; padding:0 9px; border-radius:999px;
     font-family:var(--disp); font-size:11px; font-weight:600; line-height:1; letter-spacing:0; white-space:nowrap; border:none; }
-  .tag, .sec-tag, .sk-sec-tag, .mn-role, .mm-act.mid, .mo-badge.lo{ background:var(--panel-2); color:var(--text-dim); }
+  .tag, .sec-tag, .sk-sec-tag, .mn-role, .mm-act.mid, .mo-badge.lo, .lr-s{ background:var(--panel-2); color:var(--text-dim); }
   .tag.green, .pill.zone, .mn-role.plan, .mm-act.strong, .mo-badge.mid{ background:var(--gain-dim); color:var(--gain); }
   .tag.red, .pill.stop, .mm-act.sell{ background:var(--loss-dim); color:var(--loss); }
   .tag.amber, .pill.expired{ background:#F6EBD6; color:#7A5410; }
@@ -1737,7 +1737,7 @@
   .sk-sec-tag{ display:block; justify-content:flex-start; text-align:left; background:none; padding:0; border-radius:0; font-size:12px; line-height:16px; color:var(--text-dim); }
 
   .sk-bh-r{ margin-left:auto; display:flex; gap:8px; }
-  .lr-s{ justify-self:start; }
+  .lr-s{ justify-self:start; } .lr-s.s1, .lr-s.s2, .lr-s.s3{ background:var(--panel-2); color:var(--text-dim); } .lr-s.s3{ color:var(--text); }
 </style>
 </head>
 <body>
