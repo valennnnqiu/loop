@@ -544,6 +544,8 @@ function renderRisk(){
 
 // ---------- today ----------
 // realized P&L for the Today card: rolling 7 days, this calendar month, or this calendar year
+// the monthly goal on Review is read-only there; clicking it opens Settings at the weekly target (monthly = weekly x 4)
+function openGoalSetting(){ openSettings(); setTimeout(() => { const e = document.getElementById('st-week'); if(e) e.focus(); }, 80); }
 function setTodayPeriod(p){ cfg.todayPeriod = p; saveCfg(); renderToday(); }
 function periodRealized(period){
   const now = localDate(todayISO());

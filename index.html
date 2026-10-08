@@ -1994,7 +1994,7 @@
       </div>
       <div class="goal-bar">
         <label for="weeklyGoalInput" data-i18n="goalLabel">每月目标</label>
-        <span class="goal-input"><span class="goal-cur">$</span><input type="text" id="weeklyGoalInput" placeholder="8000-12000" onchange="setWeeklyGoal(this.value)"></span>
+        <button type="button" class="btn-ghost btn-small" id="weeklyGoalInput" onclick="openGoalSetting()"></button>
         <div class="goal-prog" id="goalProg" hidden><i></i></div>
         <span class="goal-stat" id="goalStat"></span>
       </div>
@@ -3165,7 +3165,7 @@ function renderReport(){
   const goal = parseGoal(weeklyGoal);
 
   const goalInput = document.getElementById('weeklyGoalInput');
-  if(goalInput && document.activeElement !== goalInput) goalInput.value = weeklyGoal;
+  if(goalInput){ const g = parseGoal(weeklyGoal); goalInput.textContent = g ? '$' + fmt(g.min, 0) + (g.max !== g.min ? '–' + fmt(g.max, 0) : '') : L('设置目标', 'Set goal'); }
   const prog = document.getElementById('goalProg');
   const stat = document.getElementById('goalStat');
   if(prog && stat){
