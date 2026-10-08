@@ -1122,7 +1122,7 @@
   /* review: one page */
   #sub-weekly, #sub-trades{ display:block !important; }
   #sub-trades{ margin-top:34px; padding-top:26px; border-top:1px solid var(--line); }
-  .review-empty #sub-weekly, .review-empty #aiReviewSec{ display:none !important; }
+  .review-empty #sub-weekly, .review-empty #aiReviewSec, .review-empty #reviewTop{ display:none !important; }
   .review-empty #sub-trades{ margin-top:0; padding-top:0; border-top:none; }
 
   /* ================= LOOP 2.0 — phases 2–4 ================= */
@@ -1782,16 +1782,16 @@
   /* reserve the scrollbar's space on every page, so content doesn't jump sideways when a page gets long enough to scroll */
   html{ overflow-y:scroll; scrollbar-gutter:stable; }
 
-  /* Today: realized-P&L card with a 7d / month / YTD switch in its label row */
-  .pc-per-k{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .pc-per{ display:inline-flex; gap:10px; text-transform:none; letter-spacing:0; }
-  .pc-per button{ background:none; border:none; padding:0; height:auto; font:inherit; font-size:11px; font-weight:600; color:var(--text-dim); cursor:pointer; box-shadow:none; }
-  .pc-per button.on{ color:var(--text); text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1.5px; }
 
   /* the little "i" next to every page / section title sits on the title's vertical centre */
   .phelp{ display:inline-flex; align-items:center; line-height:0; vertical-align:middle; }
   .phelp .f-tip{ display:inline-flex; align-items:center; justify-content:center; line-height:1; }
   .today-date{ display:flex; align-items:center; }
+
+  /* Today now has three stat cells; Review gets its own realized-P&L strip (7 days / month / year) on top */
+  .today-3{ grid-template-columns:repeat(3,1fr); }
+  .rv-top{ grid-template-columns:repeat(3,1fr); margin-bottom:24px; }
+  @media (max-width:640px){ .rv-top{ grid-template-columns:1fr; } .today-3{ grid-template-columns:1fr 1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -1941,6 +1941,7 @@
   </div>
 
   <div id="tab-review" class="tab-panel">
+    <div id="reviewTop"></div>
     <div id="sub-weekly" class="sub-panel active">
 
     <section>
