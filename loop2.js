@@ -149,6 +149,12 @@ function planCalc(p, H){
     // the position's weight in the account after each buy: what you held, plus the tranches so far
     if(HH.total > 0){ let val = baseHeld * mid; trW = trQty.map((q, i) => { val += q * trPx[i]; return val / HH.total * 100; }); }
   }
+  // sized by % or by shares: the TARGET position is split across the tranches, and what you already hold fills them from the top
+  let trQtyW = null, trFilledW = null;
+  if(mode !== 'risk' && targetShares != null && targetShares > 0){
+    const tb = Math.floor(targetShares / n); trQtyW = trPx.map((_, i) => i === n-1 ? targetShares - tb*(n-1) : tb);
+    let left = heldNow; trFilledW = trQtyW.map(q => { const g = Math.max(0, Math.min(q, left)); left -= g; return g; });
+  }
   const rrMid = rps > 0 ? (p.target - mid) / rps : null;
   const rrNow = price != null && price > p.stop ? (p.target - price) / (price - p.stop) : null;
   const today = todayISO();
@@ -185,7 +191,7 @@ function planCalc(p, H){
     const er = earningsBetween(p.sym, today, d10(p.expiry));
     if(er.length) warns.push({c:'', t:L(`财报 ${md(er[0])} 在计划有效期内`, `Earnings ${md(er[0])} falls inside the plan window`)});
     if(H && shares != null && H.total > 0){
-      const remaining = Math.max(0, shares - bought);
+      const remaining = mode !== 'risk' && targetShares != null ? Math.max(0, targetShares - heldNow) : Math.max(0, shares - bought);
       const add = remaining * mid;
       const totalAfter = H.total + Math.max(0, add - H.cashUSD);
       const symMV = (H.map[p.sym] ? H.map[p.sym].mv : 0) + add;
@@ -197,7 +203,7 @@ function planCalc(p, H){
       if(sw > cfg.maxSector) warns.push({c:'', t:L(`执行完后「${sec}」板块约占 ${fmt(sw,0)}%，超过板块上限 ${cfg.maxSector}%`, `After execution the ${secName(sec)} sector ≈ ${fmt(sw,0)}%, above the ${cfg.maxSector}% sector limit`)});
     }
   }
-  return { price, mid, riskAmt, rps, shares, mode, targetShares, baseHeld, heldNow, trW, trPx, trQty, rrMid, rrNow, fills, bought, state, label, cls, dist, warns };
+  return { price, mid, riskAmt, rps, shares, mode, targetShares, baseHeld, heldNow, trW, trQtyW, trFilledW, trPx, trQty, rrMid, rrNow, fills, bought, state, label, cls, dist, warns };
 }
 
 // ---------- plans: UI ----------
@@ -245,14 +251,15 @@ function planCardHtml(p, H){
   const nTr = c.trPx.length;
   const trPct = c.trPx.map((_, i) => i < nTr - 1 ? Math.round(100 / nTr) : 100 - Math.round(100 / nTr) * (nTr - 1));
   const steps = c.trPx.map((px, i) => {
-    const q = c.trQty ? c.trQty[i] : null;
+    const wh = !!c.trQtyW;
+    const q = wh ? c.trQtyW[i] : c.trQty ? c.trQty[i] : null;
     const start = cum; cum += q || 0;
-    const got = q ? Math.max(0, Math.min(q, c.bought - start)) : 0;
+    const got = wh ? c.trFilledW[i] : q ? Math.max(0, Math.min(q, c.bought - start)) : 0;
     const fr = q ? got / q : 0;
     const cls = fr >= 1 - 1e-9 ? 'done' : fr > 0 ? 'part' : '';
     return `<div class="tr ${cls}" style="${cls==='part' ? `--fr:${(fr*100).toFixed(0)}%` : ''}">
       <div class="tr-n">${L('第','#')}${i+1}${L(' 批','')} · ${L('建议买 ','buy ')}${trPct[i]}%</div>
-      <div class="tr-v">${fmt(px)}${q != null ? `<span> × ${fmt(q,0)}</span>` : ''}</div></div>`;
+      <div class="tr-v">${fmt(px)}${q != null ? `<span> × ${fmt(wh && got < q ? q - got : q,0)}</span>` : ''}</div></div>`;
   }).join('');
   const off = c.fills.filter(f => !f.inPlan);
   const warns = c.warns;
