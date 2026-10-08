@@ -849,7 +849,7 @@ applyStaticI18n = function(){ _applyStaticI18n(); const tip = document.getElemen
 renderTargets = function(){
   const el = document.getElementById('targetsView'); if(!el) return;
   if(!watchlist.length){
-    el.innerHTML = `<div class="watch-empty">${L('只想盯一个价位、还没想好怎么买？记在这里，到价时再点「建计划」。','Just watching a price and not ready to plan? Note it here, then turn it into a plan when it gets close.')}</div>`;
+    el.innerHTML = `<div class="watch-empty">${L('只想盯一个价位、还没想好怎么买？记在这里，到价时再点「设计划」。','Just watching a price and not ready to plan? Note it here, then turn it into a plan when it gets close.')}</div>`;
     return;
   }
   const act = a => a==='BUY' ? L('买入','Buy') : a==='SELL' ? L('卖出','Sell') : L('关注','Watch');
@@ -861,7 +861,7 @@ renderTargets = function(){
       <input class="tg-in w-lv" value="${esc(w.level||'')}" placeholder="${L('价位','level')}" onchange="updateTarget('${w.id}','level',this.value)">
       <span class="w-px">${px != null ? '$'+fmt(px) : ''}</span>
       <input class="tg-in tg-note w-note" value="${esc(w.note||'')}" placeholder="${L('一句原因','why')}" onchange="updateTarget('${w.id}','note',this.value)">
-      ${w.action !== 'SELL' ? `<button class="btn-ghost btn-small" onclick="planFromTarget('${w.id}')">${L('建计划','Plan it')}</button>` : '<span></span>'}
+      ${w.action !== 'SELL' ? `<button class="btn-ghost btn-small" onclick="planFromTarget('${w.id}')">${L('设计划','Set plan')}</button>` : '<span></span>'}
       <button class="tg-del" aria-label="${L('删除','delete')}" onclick="deleteTarget('${w.id}')">✕</button>
     </div>`; }).join('')}</div>`;
 };
