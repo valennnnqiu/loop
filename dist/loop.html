@@ -953,13 +953,14 @@
   .f2-wait-bar i.r{ flex:1; background:var(--loss-dim); } .f2-wait-bar i.g{ flex:1.6; background:var(--gain-dim); }
   .f2-actions{ display:flex; align-items:center; gap:10px; margin-top:18px; padding-top:16px; border-top:1px solid var(--line); flex-wrap:wrap; }
   .f2-actions .muted{ font-size:12px; }
-  .set2 .f2-sec{ padding:4px 0 2px; border-top:1px solid var(--line); }
+  .set2 .f2-sec{ padding:4px 0 2px; }
+  #settingsModal .f2-actions{ border-top:none; padding-top:6px; }
   .set2 .f2-sec:first-child{ border-top:none; }
   #settingsModal .modal-card{ max-width:860px !important; width:calc(100vw - 40px); max-height:86vh; overflow-y:auto; padding:26px 30px; }
   @media (min-width:700px){
     #settingsModal .set2{ display:grid; grid-template-columns:1fr 1fr; gap:0 48px; align-items:start; }
     #settingsModal .set2 .f2-sec{ border-top:none; }
-    #settingsModal .set2 .f2-sec:nth-child(3){ grid-column:1 / -1; border-top:1px solid var(--line); margin-top:8px; padding-top:18px; }
+    #settingsModal .set2 .f2-sec:nth-child(3){ grid-column:1 / -1; margin-top:8px; padding-top:6px; }
     #settingsModal .set2 .f2-sec:nth-child(3){ display:grid; grid-template-columns:1fr 1fr; gap:0 48px; align-items:start; }
     #settingsModal .set2 .f2-sec:nth-child(3) .f2-sec-t{ grid-column:1 / -1; }
   }
@@ -1799,6 +1800,9 @@
   .today-3{ grid-template-columns:repeat(3,1fr); }
   .rv-top{ grid-template-columns:repeat(3,1fr); margin-bottom:24px; }
   @media (max-width:640px){ .rv-top{ grid-template-columns:1fr; } .today-3{ grid-template-columns:1fr 1fr 1fr; } }
+
+  .f-field.bad input{ border-color:var(--loss) !important; }
+  .f-field.bad .f-label{ color:var(--loss); }
 </style>
 </head>
 <body>
@@ -4323,7 +4327,7 @@ const SECTORS = {
 };
 
 let plans = [];
-let cfg = { risk:'', maxSingle:40, maxSector:60, weekTarget:'', sectors:{}, betas:{}, stops:{} };
+let cfg = { risk:'', riskPct:'', maxSingle:40, maxSector:60, weekTarget:'', sectors:{}, betas:{}, stops:{} };
 let quotes = { at:0, q:{} };
 let fillTags = {};
 let todayState = { dismiss:{}, log:[] };
@@ -4361,7 +4365,20 @@ const SECTOR_EN = { '光通信':'Optical', '存储':'Memory', '封装':'Packagin
 function secName(s){ return lang === 'en' ? (SECTOR_EN[s] || s) : s; }
 function secKey(v){ v = String(v || '').trim(); const k = Object.keys(SECTOR_EN).find(z => SECTOR_EN[z].toLowerCase() === v.toLowerCase()); return k || v; }
 function betaOf(sym){ const b = num(cfg.betas[sym]); return b == null ? 1 : b; }
-function riskSetting(){ return num(cfg.risk); }
+function accountTotal(){ try{ return holdingsNow().total || 0; }catch(e){ return 0; } }
+// risk per trade is stored as a % of the account (cfg.riskPct); an older dollar amount (cfg.risk) still works until it is re-saved
+function riskPctSetting(){
+  const p = num(cfg.riskPct); if(p != null) return p;
+  const d = num(cfg.risk), t = accountTotal(); return d != null && t > 0 ? d / t * 100 : null;
+}
+function riskSetting(){
+  const p = num(cfg.riskPct), t = accountTotal();
+  if(p != null && t > 0) return t * p / 100;
+  return num(cfg.risk);
+}
+const hasRisk = () => riskPctSetting() != null || num(cfg.risk) != null;
+function riskPreview(v){ const p = num(v), t = accountTotal(); return p != null && t > 0 ? `≈ $${fmt(t * p / 100, 0)} ${L('每笔','per trade')}` : ''; }
+function updRiskPrev(v){ const e = document.getElementById('st-risk-prev'); if(e) e.textContent = riskPreview(v); }
 
 // same merge as renderPositions: ledger-derived holdings + manual layer
 function holdingsNow(){
@@ -4693,7 +4710,7 @@ function renderPlans(){
           L(`选一只想买的票，定一个<b>${term('zone')}</b>：通常是最近的支撑区。`, `Pick a stock and set a <b>${term('zone')}</b> — usually the nearest support.`),
           L(`定<b>${term('stop')}</b>（跌破就说明看错了）和<b>目标</b>。`, `Set a <b>${term('stop')}</b> (where you are wrong) and a <b>target</b>.`),
           L(`看<b>${term('rr')}</b>和建议股数，满意了再保存。只保存计划，不会下单。`, `Check <b>${term('rr')}</b> and the suggested size, then save. Saving never places an order.`),
-        ], `<button class="btn-ghost btn-small" onclick="openPlanForm()">${L('+ 添加','+ Add')}</button>${num(cfg.risk) == null ? `<button class="btn-ghost btn-small" onclick="openSettings()">${L('先设每笔风险','Set risk per trade first')}</button>` : ''}`))}
+        ], `<button class="btn-ghost btn-small" onclick="openPlanForm()">${L('+ 添加','+ Add')}</button>${!hasRisk() ? `<button class="btn-ghost btn-small" onclick="openSettings()">${L('先设每笔风险','Set risk per trade first')}</button>` : ''}`))}
     ${closed.length ? `<details class="fold closed-list"><summary>${L('已结束的计划','Closed plans')} · ${closed.length}</summary><div class="plan-list" style="margin-top:8px;">${closed.map(p => planCardHtml(p, H)).join('')}</div></details>` : ''}
   `;
   if(planFormOpen){
@@ -5023,15 +5040,15 @@ function openSettings(){
     <div class="modal-title">${L('设置','Settings')}</div>
     <div class="f2 set2">
       <div class="f2-sec"><div class="f2-sec-t">${L('风险','Risk')}</div>
-        ${fld({ id:'st-risk', label:L('每笔默认风险','Default risk per trade'), req:true, prefix:'$', tip:L('每一笔交易打到止损价时，最多愿意亏多少。计划会按它倒推买几股；每个计划也可以单独改。常见做法是账户的 0.5–1%。','The most one trade may lose if its stop is hit. Plans size from this; each plan can override. A common rule is 0.5–1% of the account.'),
-            hint:L('建议填。不填的话计划只显示每股风险，不算股数。','Recommended — without it plans show risk per share only.'), attrs:`type="number" step="any" placeholder="${eg('1000')}" value="${esc(cfg.risk)}"` })}
+        ${fld({ id:'st-risk', label:L('每笔默认风险','Default risk per trade'), req:true, unit:'%', tip:L('每一笔交易打到止损价时，最多愿意亏账户的百分之几。计划会换算成金额再倒推买几股；每个计划也可以单独填金额。常见做法是 0.5–1%。','The most one trade may lose if its stop is hit, as a % of the account. Plans turn it into dollars and size from that; each plan can override with an amount. A common rule is 0.5–1%.'),
+            hint:`<span id="st-risk-prev">${riskPreview(riskPctSetting())}</span>`, attrs:`type="number" step="any" placeholder="${eg('1')}" value="${riskPctSetting() != null ? Math.round(riskPctSetting() * 100) / 100 : ''}" oninput="updRiskPrev(this.value)"` })}
         <div class="f2-row2">
           ${fld({ id:'st-single', label:L('单票上限','Single-stock limit'), req:true, unit:'%', tip:L('一只股票最多占总资产（含现金）的百分比，超过了才提醒。','Max share of the account (incl. cash) one stock may take. You are only warned above it.'), attrs:`type="number" step="any" value="${cfg.maxSingle}"` })}
           ${fld({ id:'st-sector', label:L('板块上限','Sector limit'), req:true, unit:'%', tip:L('同一个细分板块（如存储、光通信）最多占多少。','Max share for one sub-sector (e.g. memory, optical).'), attrs:`type="number" step="any" value="${cfg.maxSector}"` })}
         </div>
       </div>
       <div class="f2-sec"><div class="f2-sec-t">${L('目标','Goal')}</div>
-        ${fld({ id:'st-week', label:L('每周盈利目标','Weekly profit target'), opt:true, prefix:'$', tip:L('只算已实现盈亏。可以填一个数，也可以填区间，如 2000-3000。','Realized P&L only. One number or a range like 2000-3000.'), attrs:`type="text" placeholder="${eg('2000-3000')}" value="${esc(cfg.weekTarget)}"` })}
+        ${fld({ id:'st-week', label:L('每周盈利目标','Weekly profit target'), req:true, prefix:'$', tip:L('只算已实现盈亏。可以填一个数，也可以填区间，如 2000-3000。','Realized P&L only. One number or a range like 2000-3000.'), attrs:`type="text" placeholder="${eg('2000-3000')}" value="${esc(cfg.weekTarget)}"` })}
       </div>
       <div class="f2-sec"><div class="f2-sec-t">${L('数据','Data')}</div>
         ${fld({ id:'st-fh', label:'Finnhub API key', opt:true, tip:L('finnhub.io 免费注册后拿到。用来自动拉股价和财报日期。只存在这个浏览器里。','Free at finnhub.io. Used for live prices and earnings dates. Stored only in this browser.'),
@@ -5061,7 +5078,11 @@ const _setWeeklyGoal3 = setWeeklyGoal;
 setWeeklyGoal = function(v){ _setWeeklyGoal3(v); cfg.weekTarget = scaleGoal(v, 0.25); saveCfg(); };
 
 async function saveSettings(){
-  cfg.risk = document.getElementById('st-risk').value.trim();
+  // risk per trade and the weekly target are required: flag the empty ones and stay open
+  const need = ['st-risk', 'st-week'].filter(id => num(document.getElementById(id).value) == null && !(id === 'st-week' && parseGoal(document.getElementById(id).value)));
+  document.querySelectorAll('#settingsBody .f-field').forEach(f => f.classList.remove('bad'));
+  if(need.length){ need.forEach(id => document.getElementById(id).closest('.f-field').classList.add('bad')); document.getElementById(need[0]).focus(); return; }
+  const rp = num(document.getElementById('st-risk').value); cfg.riskPct = rp == null ? '' : rp; cfg.risk = '';
   cfg.maxSingle = num(document.getElementById('st-single').value) ?? 40;
   cfg.maxSector = num(document.getElementById('st-sector').value) ?? 60;
   const wk = document.getElementById('st-week').value.trim();
@@ -5115,7 +5136,7 @@ function onboardState(){
   const realTrades = trades.filter(t => !String(t.id).startsWith('demo-'));
   return [
     { done: realTrades.length > 0, t:L('导入 IBKR 对账单','Import an IBKR statement'), d:L('持仓和盈亏会自动算出来。','Positions and P&L are computed from it.'), go:"switchTab('ledger'); openAddPanel();", btn:L('+ 添加','+ Add') },
-    { done: num(cfg.risk) != null, t:L('设置每笔风险和仓位上限','Set risk per trade and limits'), d:L('每笔最多亏多少，单票和板块最多占多少。','Max loss per trade, and max weight per stock and sector.'), go:'openSettings()', btn:L('去设置','Settings') },
+    { done: hasRisk(), t:L('设置每笔风险和仓位上限','Set risk per trade and limits'), d:L('每笔最多亏多少，单票和板块最多占多少。','Max loss per trade, and max weight per stock and sector.'), go:'openSettings()', btn:L('去设置','Settings') },
     { done: plans.some(p => !String(p.id).startsWith('demo-')), t:L('建第一个交易计划','Create your first plan'), d:L('写下关注区间、止损价和目标。','Write down the zone, stop and target.'), go:"switchTab('watchlist'); openPlanForm();", btn:L('+ 添加','+ Add') },
     { done: /\S/.test(finnhubKey), optional:true, t:L('（可选）填 Finnhub key','(Optional) Add a Finnhub key'), d:L('finnhub.io 免费注册。有了它才有实时股价和财报日期；不填也能用，价格手动填。','Free at finnhub.io. Needed for live prices and earnings dates; without it, type prices in by hand.'), go:'openSettings()', btn:L('去填','Add key') },
   ];
