@@ -6026,6 +6026,8 @@ function insiderView(sym){
 }
 
 /* ---------- stock page ---------- */
+// what the Stock and Compare pages show before you pick anything: a fixed example
+const EXAMPLE_STOCK = 'NVDA', EXAMPLE_PAIR = ['NVDA', 'AMD'];
 let stockSym = null, stockDays = 120, stockMode = 'stock';
 let cmp = { a:null, b:null, months:3, spy:true };
 
@@ -6038,7 +6040,7 @@ function openStock(sym){
 }
 async function loadStockExtras(sym){
   if(!/\S/.test(finnhubKey)) return;
-  const again = () => { if(stockSym === sym && stockMode === 'stock' && document.getElementById('tab-stock').classList.contains('active')) renderStock(); };
+  const again = () => { if((stockSym || EXAMPLE_STOCK) === sym && stockMode === 'stock' && document.getElementById('tab-stock').classList.contains('active')) renderStock(); };
   for(const f of [loadNews90, loadEr, loadInsider, loadEps]){ try{ await f(sym); }catch(e){} again(); }
 }
 function stockSearch(e){ if(e.key === 'Enter'){ openStock(e.target.value); } }
@@ -6392,11 +6394,7 @@ function stockPickerHtml(){
 
 function renderStock(){
   const el = document.getElementById('stockView'); if(!el) return;
-  const sym = stockSym;
-  if(!sym){
-    el.innerHTML = stockPickerHtml() + liveStatusHtml() + ((pack || liveOn()) ? '' : liveSetupHtml());
-    return;
-  }
+  const sym = stockSym || EXAMPLE_STOCK;
   const I = ind(sym);
   const H = holdingsNow(), h = H.map[sym], plan = activePlans().find(p => p.sym === sym);
   const p = lastPx(sym);
@@ -6744,9 +6742,7 @@ function swapSim(a, b){
 }
 function cmpDefaults(){
   if(cmp.a && cmp.b) return;
-  const H = holdingsNow();
-  const a = (H.list.find(h => S(h.sym)) || {}).sym || (watchlist.find(w => S(w.sym)) || {}).sym || 'NVDA';
-  cmp.a = cmp.a || a; cmp.b = cmp.b || peerOf(cmp.a) || 'SPY';
+  cmp.a = cmp.a || EXAMPLE_PAIR[0]; cmp.b = cmp.b || EXAMPLE_PAIR[1];
 }
 function renderCompare(){
   const el = document.getElementById('cmpSec'); if(!el) return;
@@ -7078,8 +7074,8 @@ const _toggleLang3 = toggleLang; toggleLang = async function(){ clearIndCache();
 const _switchTab3 = switchTab;
 switchTab = function(name){
   _switchTab3(name);
-  if(name === 'stock') renderStock();
-  if(name === 'compare'){ renderCompare(); const sb = document.querySelector('header.top .tab-btn[data-tab="stock"]'); if(sb) sb.classList.add('active'); }
+  if(name === 'stock'){ renderStock(); if(!stockSym){ loadStockExtras(EXAMPLE_STOCK); ensureBars([EXAMPLE_STOCK, 'SPY'], { first:true }); } }
+  if(name === 'compare'){ renderCompare(); cmpDefaults(); [cmp.a, cmp.b].forEach(x => loadMetric(x).then(() => { if(document.getElementById('tab-compare').classList.contains('active')) renderCompare(); }).catch(() => {})); const sb = document.querySelector('header.top .tab-btn[data-tab="stock"]'); if(sb) sb.classList.add('active'); }
   document.querySelectorAll('.nav-fly-item').forEach(b => b.classList.toggle('active', b.dataset.fly === name));
   const fly = document.getElementById('navFly'); if(fly) fly.classList.remove('show');
   if(name === 'calendar') renderMacroSec();
