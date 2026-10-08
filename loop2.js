@@ -819,7 +819,7 @@ function onboardHtml(){
     ${isDemoMode() ? `<div class="ob2-demo">${L('现在是示例数据','You are viewing demo data')} · <a class="lnk" onclick="exitDemo()">${L('清空，用自己的数据','clear it and use your own')}</a></div>` : ''}
     ${cur ? `<div class="ob2-title">${cur.t}</div>
       <div class="ob2-desc">${cur.d}</div>
-      <div class="ob2-cta"><button class="btn-primary" onclick="${cur.go}">${cur.btn} →</button>
+      <div class="ob2-cta"><button class="btn-ghost" onclick="${cur.go}">${cur.btn} →</button>
         ${!trades.length ? `<button class="btn-ghost" onclick="loadDemoData()">${L('先看看示例数据','Try demo data first')}</button>` : ''}</div>` : ''}
   </div>`;
 }
@@ -2164,7 +2164,7 @@ function renderRadar(){
       <tbody>${rows.slice(0, st.all || st.preset || st.sector || st.filter !== 'all' ? 999 : 20).map(rowHtml).join('') || `<tr><td colspan="11" class="muted" style="padding:18px">${L('没有符合条件的股票','nothing matches')}</td></tr>`}</tbody></table></div>
     ${rows.length > 20 && !(st.all || st.preset || st.sector || st.filter !== 'all') ? `<a class="lnk mo-more" onclick="radarState.all=true; renderRadar()">${L(`看全部 ${rows.length} 只`, `show all ${rows.length}`)}</a>` : ''}
     <div class="rd-legend"><span class="hl-zone">${L('进了计划区间','in plan zone')}</span><span class="hl-er">${L('7 天内财报','earnings ≤7d')}</span><span class="hl-weak">${L('跌破 50 日线','below MA50')}</span>${(cfg.universeDel || []).length ? `<a class="lnk" onclick="radarRestore()">${L(`已移除 ${cfg.universeDel.length} 只 · 恢复`, `${cfg.universeDel.length} removed · restore`)}</a>` : ''}</div>
-    ${st.picked.length ? `<div class="cmp-float"><span class="cf-k">${L('对比','Compare')}</span><span class="cf-slot">${st.picked[0]}</span><span class="cf-vs">vs</span><span class="cf-slot b ${st.picked[1] ? '' : 'empty'}">${st.picked[1] || L('再勾一只','pick one')}</span><button class="btn-primary btn-small" ${st.picked.length === 2 ? `onclick="openCompare('${st.picked[0]}','${st.picked[1]}')"` : 'disabled'}>${L('开始对比','Compare')}</button><button class="icon-btn cf-x" aria-label="${L('取消','clear')}" onclick="radarState.picked=[]; renderRadar()">✕</button></div>` : ''}`;
+    ${st.picked.length ? `<div class="cmp-float"><span class="cf-k">${L('对比','Compare')}</span><span class="cf-slot">${st.picked[0]}</span><span class="cf-vs">vs</span><span class="cf-slot b ${st.picked[1] ? '' : 'empty'}">${st.picked[1] || L('再勾一只','pick one')}</span><button class="btn-ghost btn-small" ${st.picked.length === 2 ? `onclick="openCompare('${st.picked[0]}','${st.picked[1]}')"` : 'disabled'}>${L('开始对比','Compare')}</button><button class="icon-btn cf-x" aria-label="${L('取消','clear')}" onclick="radarState.picked=[]; renderRadar()">✕</button></div>` : ''}`;
 }
 function radarCard(r){
   const I = r.I, m = I ? momentum(r.sym) : null, nl = I ? nearestLevels(r.sym) : null;
@@ -2173,7 +2173,7 @@ function radarCard(r){
     <div class="rd-cb"><div>${I ? statusLine(r.sym) : L('还没有 K 线数据','no bars yet')}</div>
       ${nl ? `<div class="muted sm">${nl.sup[0] ? L(`支撑 ${px(nl.sup[0].lo)}–${px(nl.sup[0].hi)} ${dots(nl.sup[0].score)}`, `support ${px(nl.sup[0].lo)}–${px(nl.sup[0].hi)} ${dots(nl.sup[0].score)}`) : ''}${nl.res[0] ? ' · ' + L(`压力 ${px(nl.res[0].lo)}–${px(nl.res[0].hi)} ${dots(nl.res[0].score)}`, `resistance ${px(nl.res[0].lo)}–${px(nl.res[0].hi)} ${dots(nl.res[0].score)}`) : ''}${m ? ` · ${L('动能','momentum')} <span class="mo-badge ${m.grade}">${gradeTxt(m.grade)} ${m.score}</span>` : ''}</div>` : ''}
       ${r.insAlert ? `<div class="dot-warn sm">${r.insAlert.map(a => a.t).join('；')}</div>` : ''}</div>
-    <div class="rd-ca"><button class="btn-primary btn-small" onclick="openStock('${r.sym}')">${L('个股页','Open')} →</button>${!r.plan ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${r.sym}'})">${L('设买入区间','Set buy zone')}</button>` : ''}${r.role === 'none' ? `<button class="btn-ghost btn-small" onclick="radarDel('${r.sym}')">${L('从雷达移除','remove')}</button>` : ''}</div></div>`;
+    <div class="rd-ca"><button class="btn-ghost btn-small" onclick="openStock('${r.sym}')">${L('个股页','Open')} →</button>${!r.plan ? `<button class="btn-ghost btn-small" onclick="prefillPlan({sym:'${r.sym}'})">${L('设买入区间','Set buy zone')}</button>` : ''}${r.role === 'none' ? `<button class="btn-ghost btn-small" onclick="radarDel('${r.sym}')">${L('从雷达移除','remove')}</button>` : ''}</div></div>`;
 }
 
 /* ---------- same-chain compare + swap simulation ---------- */

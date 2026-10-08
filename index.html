@@ -1642,7 +1642,7 @@
     background:var(--gold-dim); color:var(--gold); font-family:var(--mono); font-weight:700; font-size:12.5px; }
   .cf-slot.empty{ background:transparent; border:1px dashed var(--line-strong); color:var(--text-dim); font-family:var(--disp); font-weight:500; }
   .cf-vs{ color:var(--text-dim); font-size:11.5px; font-weight:500; }
-  .cmp-float .btn-primary{ min-width:96px; }
+  .cmp-float .btn-primary, .cmp-float .btn-ghost{ min-width:96px; }
   .cf-x{ color:var(--text-dim); }
 
   /* ---------- section headings & small text ---------- */
@@ -1921,7 +1921,7 @@
         <h2 data-i18n="reviewTitle">操作评价</h2>
         <div class="grow">
           <button class="btn-ghost btn-small" onclick="toggleAiSettings()" data-i18n="btnSettings">设置</button>
-          <button class="btn-primary btn-small" id="genReviewBtn" onclick="generateReview()">生成评价</button>
+          <button class="btn-ghost btn-small" id="genReviewBtn" onclick="generateReview()">生成评价</button>
         </div>
       </div>
 
