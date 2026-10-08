@@ -47,20 +47,16 @@ own Anthropic API key, which is stored **in plain text in this browser's
 localStorage**. Do not enable this on a shared or public computer. With the switch
 off, no request is ever made.
 
-## Stock pages need a data pack / 个股页的数据包
+## Live stock pages / 个股页联网
 
-Today, plans, positions, calendar and the P&L views work from your trades alone. The **Stock** page,
-the AI-chain radar, the momentum board and Compare need daily price bars, which a browser page can't fetch
-by itself. Generate them once (Node 18+), then import the file via Settings → Data pack:
+The **Stock** page, the momentum board, the AI-chain radar and Compare need daily price bars. LOOP fetches them
+itself, in the browser, from [Twelve Data](https://twelvedata.com) (free plan, 8 requests a minute — LOOP queues
+requests and caches bars). Paste a free key under **Settings → Twelve Data API key**; it stays in your browser,
+like the Finnhub key, and is not part of backups. Open a stock and its chart loads; the watchlist tab loads your
+momentum list; the radar has a **Load live** button for its ~50 names.
 
-```bash
-node tools/make-pack.js                          # default AI-chain universe + SPY/QQQ/SMH
-node tools/make-pack.js NVDA MU AVGO             # just these
-node tools/make-pack.js --from loop-backup.json  # everything you traded / held / watched / planned
-```
-
-Bars come from Yahoo Finance's public chart endpoint (unofficial, no key). Option walls and a macro
-calendar are not included; those sections simply stay hidden. Re-run it whenever you want fresh data.
+Offline alternative: `node tools/make-pack.js` (Node 18+) writes `loop-data.json` from Yahoo Finance, which you can
+import under Settings → Data pack. Option walls / macro calendar are not part of either source; those sections stay hidden.
 
 ## Development / 开发
 
@@ -72,6 +68,7 @@ lifo-engine.test.js   node --test
 ibkr-import.js         IBKR Activity Statement CSV parser
 news-watch.js          keyword filter for the market-news "watch out" panel
 loop2.js               Today / trade plans / risk / stock page / radar / momentum / compare
+live-bars.js           Twelve Data parsing, rate limiting and freshness rules (+ test)
 tools/make-pack.js     builds loop-data.json (daily bars from Yahoo) for the stock pages
 index.html             the app shell + core logic (loads the .js files)
 ```
@@ -90,6 +87,6 @@ No backend, no analytics. Network calls are limited to: Google Fonts (styling);
 *only if you turn on AI review*, the Anthropic API; and *only if you use a
 Finnhub key* (`finnhub.io`, your own free key): Refresh prices and the weekly calendar sync send ticker symbols
 only, and with a key saved LOOP also fetches market headlines on page load and, when you open a stock,
-that symbol's news / earnings / insider data (nothing personal is sent). `tools/make-pack.js` is a separate
-command-line tool that talks to Yahoo Finance; the app itself never does.
+that symbol's news / earnings / insider data (nothing personal is sent). With a Twelve Data key saved, opening the Stock page (or the watchlist) sends ticker symbols to
+`api.twelvedata.com`. `tools/make-pack.js` is a separate command-line tool that talks to Yahoo Finance; the app itself never does.
 Your trades never leave your machine.

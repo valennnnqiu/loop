@@ -1028,6 +1028,10 @@
   .mn-item:hover{ background:var(--ink); }
   .mn-sym{ flex:0 0 auto; font-family:var(--mono); font-size:10.5px; font-weight:700; color:#fff; padding:3px 7px; border-radius:6px; height:fit-content; margin-top:1px; min-width:44px; text-align:center; }
   .mn-body{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .live-status{ font-family:var(--mono); font-size:11.5px; color:var(--text-dim); margin:0 0 10px; }
+  .live-status.bad{ color:var(--loss); }
+  .live-status .lnk{ margin-left:6px; }
+  .mn-top{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .mn-h{ font-size:13px; line-height:1.45; color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .mn-sub{ font-size:11px; color:var(--text-dim); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .mn-role{ font-size:10px; font-weight:600; padding:0 6px; border-radius:999px; background:var(--panel-2); color:var(--text-dim); }
@@ -1875,8 +1879,7 @@
         <h2 data-i18n="realizedTitle">已实现盈亏（按批次真实结算 · LIFO）</h2>
         <div class="grow" id="ledgerActions">
           <span class="count" id="closedCount"></span>
-          <button class="btn-ghost btn-small" onclick="openImport()" data-i18n="btnImport">导入对账单</button>
-          <button class="btn-ghost btn-small" onclick="openAddTrade()" data-i18n="btnAdd2">+ 添加</button>
+          <button class="btn-ghost btn-small" onclick="openAddTrades()" data-i18n="btnAdd2">+ 添加</button>
         </div>
       </div>
 
@@ -1894,7 +1897,7 @@
           <textarea id="importPaste" class="import-paste" data-i18n-ph="importPastePh" placeholder="或者把 CSV 内容直接粘贴到这里，然后点下面的「解析」"></textarea>
           <button class="btn-ghost btn-small" onclick="parseImportPaste()" data-i18n="btnParsePaste" style="margin-top:8px;">解析粘贴内容</button>
         </details>
-        <a class="imp-alt" onclick="openAddTrade()" data-i18n="impManual">手动添加一笔</a>
+        <a class="imp-alt" onclick="showAddTradeForm()" data-i18n="impManual">手动添加一笔</a>
         </div>
         <div id="importPreview" class="import-preview" style="display:none;"></div>
       </div>
@@ -1983,6 +1986,7 @@
 <script src="lifo-engine.js"></script>
 <script src="ibkr-import.js"></script>
 <script src="news-watch.js"></script>
+<script src="live-bars.js"></script>
 <script>
 // Storage shim: in the Claude artifact environment window.storage is provided by
 // the host. Running the file locally (double-click), fall back to localStorage
@@ -3515,8 +3519,8 @@ function render(){
         <p>${L('LOOP 把每一笔平仓交易按批次（后进先出 / LIFO）逐笔结算，并和券商的均价法数字对照——让你看清均价法藏起来的那部分盈亏。',
                 'LOOP settles every closed trade lot-by-lot (last-in-first-out) and shows it next to your broker\'s average-cost number — so you can see the P&L average cost hides.')}</p>
         <div class="wc-actions">
-          <button class="btn-primary btn-small" onclick="openImport(); const c=document.getElementById('importCard'); if(c) c.scrollIntoView({behavior:'smooth',block:'center'});">${L('导入对账单','Import statement')}</button>
-          <button class="btn-ghost btn-small" onclick="openAddTrade()">${L('手动添加一笔','Add a trade')}</button>
+          <button class="btn-ghost btn-small" onclick="openAddPanel()">${L('+ 添加','+ Add')}</button>
+          <button class="btn-ghost btn-small" onclick="showAddTradeForm()">${L('+ 添加','+ Add')}</button>
         </div>
         <div class="wc-sub">${L('随便看看？','Just exploring? ')}<a onclick="loadDemoData()">${L('加载示例数据','load demo data')}</a> · <a onclick="openWelcome()">${L('它是怎么用的','how it works')}</a></div>
       </div>`;
