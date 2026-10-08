@@ -247,7 +247,7 @@ function planCardHtml(p, H){
 
 // ---------- form building blocks ----------
 function fld(o){
-  const tag = o.req ? `<i class="f-req" title="${L('必填','required')}">*</i>` : o.opt ? `<span class="f-opt">${L('选填','optional')}</span>` : '';
+  const tag = o.req ? `<i class="f-req" title="${L('必填','required')}">*</i>` : '';
   const tip = o.tip ? `<span class="f-tip" tabindex="0" data-tip="${esc(o.tip)}">i</span>` : '';
   const dot = o.dot ? `<span class="f-dot ${o.dot}"></span>` : '';
   return `<div class="f-field ${o.cls||''}">
@@ -280,7 +280,7 @@ function planFormHtml(){
           </div>
         </div>
         <details class="f2-more" ${p && p.risk ? 'open' : ''}>
-          <summary><span class="f2-sec-t" style="margin:0;"><span>3</span>${L('仓位与有效期','Size & timing')}</span><em id="pfMoreSum"></em><span class="f-opt">${L('选填','optional')}</span></summary>
+          <summary><span class="f2-sec-t" style="margin:0;"><span>3</span>${L('仓位与有效期','Size & timing')}</span><em id="pfMoreSum"></em></summary>
           <div class="f2-row3" style="margin-top:12px;">
             ${fld({ id:'pf-risk', label:L('本笔风险','Risk on this trade'), prefix:'$', tip:L('这一笔打到止损价最多亏多少。留空就用设置里的默认值。','The most this trade may lose at its stop. Blank = the default from Settings.'), attrs:`type="number" step="any" placeholder="${r != null ? L('默认 ','default ') + fmt(r,0) : L('未设默认','no default set')}" value="${v('risk')}" oninput="planPreview()"` })}
             ${fld({ label:L('分几批买','Tranches'), tip:L('在关注区间里平均分几次买入。分批能拿到更好的均价。','How many buys to spread across the zone. Scaling in gives a better average.'),
@@ -721,11 +721,11 @@ function openSettings(){
     <div class="modal-title">${L('设置','Settings')}</div>
     <div class="f2 set2">
       <div class="f2-sec"><div class="f2-sec-t">${L('风险','Risk')}</div>
-        ${fld({ id:'st-risk', label:L('每笔默认风险','Default risk per trade'), prefix:'$', tip:L('每一笔交易打到止损价时，最多愿意亏多少。计划会按它倒推买几股；每个计划也可以单独改。常见做法是账户的 0.5–1%。','The most one trade may lose if its stop is hit. Plans size from this; each plan can override. A common rule is 0.5–1% of the account.'),
+        ${fld({ id:'st-risk', label:L('每笔默认风险','Default risk per trade'), req:true, prefix:'$', tip:L('每一笔交易打到止损价时，最多愿意亏多少。计划会按它倒推买几股；每个计划也可以单独改。常见做法是账户的 0.5–1%。','The most one trade may lose if its stop is hit. Plans size from this; each plan can override. A common rule is 0.5–1% of the account.'),
             hint:L('建议填。不填的话计划只显示每股风险，不算股数。','Recommended — without it plans show risk per share only.'), attrs:`type="number" step="any" placeholder="${eg('1000')}" value="${esc(cfg.risk)}"` })}
         <div class="f2-row2">
-          ${fld({ id:'st-single', label:L('单票上限','Single-stock limit'), unit:'%', tip:L('一只股票最多占总资产（含现金）的百分比，超过了才提醒。','Max share of the account (incl. cash) one stock may take. You are only warned above it.'), attrs:`type="number" step="any" value="${cfg.maxSingle}"` })}
-          ${fld({ id:'st-sector', label:L('板块上限','Sector limit'), unit:'%', tip:L('同一个细分板块（如存储、光通信）最多占多少。','Max share for one sub-sector (e.g. memory, optical).'), attrs:`type="number" step="any" value="${cfg.maxSector}"` })}
+          ${fld({ id:'st-single', label:L('单票上限','Single-stock limit'), req:true, unit:'%', tip:L('一只股票最多占总资产（含现金）的百分比，超过了才提醒。','Max share of the account (incl. cash) one stock may take. You are only warned above it.'), attrs:`type="number" step="any" value="${cfg.maxSingle}"` })}
+          ${fld({ id:'st-sector', label:L('板块上限','Sector limit'), req:true, unit:'%', tip:L('同一个细分板块（如存储、光通信）最多占多少。','Max share for one sub-sector (e.g. memory, optical).'), attrs:`type="number" step="any" value="${cfg.maxSector}"` })}
         </div>
       </div>
       <div class="f2-sec"><div class="f2-sec-t">${L('目标','Goal')}</div>
@@ -733,10 +733,10 @@ function openSettings(){
       </div>
       <div class="f2-sec"><div class="f2-sec-t">${L('数据','Data')}</div>
         ${fld({ id:'st-fh', label:'Finnhub API key', opt:true, tip:L('finnhub.io 免费注册后拿到。用来自动拉股价和财报日期。只存在这个浏览器里。','Free at finnhub.io. Used for live prices and earnings dates. Stored only in this browser.'),
-            hint:L('不填也能用，股价可以手动输入。','Optional — you can type prices in by hand.'), attrs:`type="password" autocomplete="off" placeholder="${L('粘贴你的 key','paste your key')}" value="${esc(finnhubKey)}"` })}
+            hint:L('不填也能用，股价可以手动输入。','You can type prices in by hand.'), attrs:`type="password" autocomplete="off" placeholder="${L('粘贴你的 key','paste your key')}" value="${esc(finnhubKey)}"` })}
         ${fld({ id:'st-td', label:'Twelve Data API key', opt:true, tip:L('twelvedata.com 免费注册。用来在浏览器里直接拿日 K 线，个股页、动能榜、雷达、对比都靠它。只存在这个浏览器里。','Free at twelvedata.com. Lets the Stock page, momentum board, radar and compare pull daily bars directly in the browser. Stored only in this browser.'),
-            hint:L('不填也行：个股页会提示，或者导入离线数据包。免费版每分钟 8 次请求。','Optional — without it the Stock page asks for it, or you can import an offline pack. Free plan: 8 requests a minute.'), attrs:`type="password" autocomplete="off" placeholder="${L('粘贴你的 key','paste your key')}" value="${esc(tdKey)}"` })}
-        <div class="f-field"><label class="f-label">${L('数据包','Data pack')}<span class="f-opt">${L('选填','optional')}</span></label>
+            hint:L('不填也行：个股页会提示，或者导入离线数据包。免费版每分钟 8 次请求。','Without it the Stock page asks for it, or you can import an offline pack. Free plan: 8 requests a minute.'), attrs:`type="password" autocomplete="off" placeholder="${L('粘贴你的 key','paste your key')}" value="${esc(tdKey)}"` })}
+        <div class="f-field"><label class="f-label">${L('数据包','Data pack')}</label>
           <div class="pk-row">${typeof packChip === 'function' ? packChip() : ''}${typeof pack !== 'undefined' && pack ? `<a class="lnk" onclick="clearPack()">${L('清除','remove')}</a>` : ''}</div>
           <div class="f-hint">${L('离线备选：运行 <code>node tools/make-pack.js</code> 生成 loop-data.json（Yahoo 日 K 线）再导入；填了 Twelve Data key 就不需要。','Offline alternative: run <code>node tools/make-pack.js</code> and import loop-data.json (Yahoo bars). Not needed once you add a Twelve Data key.')}</div></div>
         <div class="f-field" id="backupSec"><label class="f-label">${L('备份','Backup')}</label>

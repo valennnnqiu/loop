@@ -955,7 +955,14 @@
   .f2-actions .muted{ font-size:12px; }
   .set2 .f2-sec{ padding:4px 0 2px; border-top:1px solid var(--line); }
   .set2 .f2-sec:first-child{ border-top:none; }
-  #settingsModal .modal-card{ max-width:460px !important; max-height:90vh; overflow-y:auto; }
+  #settingsModal .modal-card{ max-width:860px !important; width:calc(100vw - 40px); max-height:86vh; overflow-y:auto; padding:26px 30px; }
+  @media (min-width:700px){
+    #settingsModal .set2{ display:grid; grid-template-columns:1fr 1fr; gap:0 48px; align-items:start; }
+    #settingsModal .set2 .f2-sec{ border-top:none; }
+    #settingsModal .set2 .f2-sec:nth-child(3){ grid-column:1 / -1; border-top:1px solid var(--line); margin-top:8px; padding-top:18px; }
+    #settingsModal .set2 .f2-sec:nth-child(3){ display:grid; grid-template-columns:1fr 1fr; gap:0 48px; align-items:start; }
+    #settingsModal .set2 .f2-sec:nth-child(3) .f2-sec-t{ grid-column:1 / -1; }
+  }
 
   /* onboarding v2 — one focal step */
   .ob2{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 28px 26px; margin-bottom:18px; }
