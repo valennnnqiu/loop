@@ -530,10 +530,14 @@ function renderRisk(){
 }
 
 // ---------- today ----------
-function weekRealized(){
-  const wk = isoWeekKey(localDate(todayISO()));
-  return runFIFO(AT(), 'LIFO').closed.filter(c => isoWeekKey(localDate(c.date)) === wk).reduce((s,c)=> s + c.pnl, 0);
+// realized P&L for the Today card: rolling 7 days, this calendar month, or this calendar year
+function periodRealized(period){
+  const now = localDate(todayISO());
+  const from = period === 'ytd' ? new Date(now.getFullYear(), 0, 1) : period === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1) : new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+  const rows = runFIFO(AT(), 'LIFO').closed.filter(c => localDate(c.date) >= from);
+  return { pnl: rows.reduce((s, c) => s + c.pnl, 0), n: rows.length };
 }
+function setTodayPeriod(p){ cfg.todayPeriod = p; saveCfg(); renderToday(); }
 
 function todayItems(){
   const items = [];
@@ -595,18 +599,19 @@ function renderToday(){
   const items = todayItems();
   lastTodayItems = items;
   const badge = document.getElementById('todayBadge'); if(badge){ badge.textContent = items.length; badge.hidden = !items.length; }
-  const goal = parseGoal(cfg.weekTarget);
-  const wr = weekRealized();
+  const per = cfg.todayPeriod || '7d';
+  const pr = periodRealized(per);
+  const pg = per === '7d' ? parseGoal(cfg.weekTarget) : per === 'month' ? parseGoal(weeklyGoal) : null;   // 7d: weekly target from Settings; month: the Review page's monthly goal
+  const pgPct = pg ? Math.max(0, Math.min(100, pr.pnl / pg.min * 100)) : 0;
   const act = activePlans();
   const H = holdingsNow();
   const inZoneN = act.filter(p => planCalc(p, H).state === 'inZone').length;
   const urgent = items.filter(i => i.pr <= 2).length;
   const ageMin = quotes.at ? Math.round((Date.now() - quotes.at) / 60000) : null;
   const stale = ageMin == null || ageMin > 24*60;
-  const goalPct = goal ? Math.max(0, Math.min(100, wr / goal.min * 100)) : 0;
   const stats = `<div class="pc-stats big-stats">
-    <div class="pc-stat"><div class="k">${L('本周已实现','This week')}</div><div class="v ${wr>=0?'gain-t':'loss-t'}">${money(wr)}</div>
-      ${goal ? `<div class="mini"><i style="width:${goalPct}%; background:var(--gain)"></i></div><div class="s">${L('目标','target')} $${fmt(goal.min,0)}${goal.max!==goal.min?'–'+fmt(goal.max,0):''} · ${fmt(wr/goal.min*100,0)}%</div>` : `<div class="s">${L('在设置里填周目标','set a weekly target in Settings')}</div>`}</div>
+    <div class="pc-stat"><div class="k pc-per-k">${L('已实现盈亏','Realized')}<span class="pc-per">${[['7d', L('7 天','7d')], ['month', L('本月','Month')], ['ytd', L('今年','YTD')]].map(([k2, t]) => `<button type="button" class="${per === k2 ? 'on' : ''}" onclick="setTodayPeriod('${k2}')">${t}</button>`).join('')}</span></div><div class="v ${pr.pnl>=0?'gain-t':'loss-t'}">${money(pr.pnl)}</div>
+      ${pg ? `<div class="mini"><i style="width:${pgPct}%; background:var(--gain)"></i></div><div class="s">${L('目标','target')} $${fmt(pg.min,0)}${pg.max!==pg.min?'–'+fmt(pg.max,0):''} · ${fmt(pr.pnl/pg.min*100,0)}%</div>` : `<div class="s">${L(`${pr.n} 笔已平仓`, `${pr.n} closed trade${pr.n === 1 ? '' : 's'}`)}</div>`}</div>
     <div class="pc-stat"><div class="k">${L('待处理','To do')}</div><div class="v">${items.length}</div><div class="s">${urgent ? L(`其中 ${urgent} 项和价格有关`, `${urgent} price-triggered`) : L('没有紧急的','nothing urgent')}</div></div>
     <div class="pc-stat"><div class="k">${L('进行中的计划','Active plans')}</div><div class="v">${act.length}</div><div class="s">${inZoneN ? L(`${inZoneN} 只在关注区`, `${inZoneN} in zone`) : L('都还没到价位','none at their levels')}</div></div>
     <div class="pc-stat"><div class="k">${L('股价时点','Prices as of')}</div><div class="v ${stale?'loss-t':''}">${quotes.at ? new Date(quotes.at).toTimeString().slice(0,5) : '—'}</div><div class="s">${ageMin == null ? L('还没刷新过','never refreshed') : ageMin < 60 ? ageMin + L(' 分钟前',' min ago') : Math.round(ageMin/60) + L(' 小时前','h ago')} · <a class="lnk" data-refresh onclick="refreshAllPrices()">${L('刷新','refresh')}</a></div></div>
