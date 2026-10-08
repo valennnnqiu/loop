@@ -1973,6 +1973,10 @@
   /* buy markers on the plan ruler: the same green ▲ as the stock chart */
   .pt-fill{ height:30px; display:flex; align-items:center; font-size:0; line-height:0; filter:none; }
   .pt-fill svg{ display:block; }
+
+  /* shares added outside the plan: plain text, nothing to click */
+  .pc-fills{ gap:8px; font-size:12px; }
+  .pc-fills b{ font-family:var(--mono); font-weight:600; }
 </style>
 </head>
 <body>
@@ -4793,7 +4797,7 @@ function planCardHtml(p, H){
       <div class="pc-stat"><div class="k">${p.closedAt ? L('结束于','Closed') : L('有效期','Valid to')}</div><div class="v">${md(p.closedAt || p.expiry)}</div></div>
     </div>
     <div class="tr-steps">${steps}</div>
-    ${off.length ? `<div class="pc-fills"><span class="muted">${L('计划外成交','Off-plan fills')}</span>${off.map(f => `<span class="fill-chip out" aria-label="${L('点一下改成计划内','click to mark in-plan')}" onclick="toggleFillTag('${f.t.id}', false)">${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}</span>`).join('')}</div>` : ''}
+    ${off.length ? `<div class="pc-fills"><span class="muted">${L('计划外加仓','Added outside the plan')}</span><b>${L(`${fmt(off.reduce((t, f) => t + f.t.qty, 0),0)} 股`, `${fmt(off.reduce((t, f) => t + f.t.qty, 0),0)} sh`)}</b><span class="muted">${off.map(f => `${md(f.t.date)} ${fmt(f.t.qty,0)} @ ${fmt(f.t.price)}`).join(' · ')}</span></div>` : ''}
     ${warns.length ? `<div class="pc-alert">${warns.map(w => `<div class="${w.c}">${w.t}</div>`).join('')}</div>` : ''}
     ${p.note ? `<div class="pc-note">${esc(p.note)}</div>` : ''}
   </div>`;
