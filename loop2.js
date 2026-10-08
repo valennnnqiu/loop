@@ -942,8 +942,8 @@ function renderMyNews(){
   const head = `<div class="sec-head">
       <span class="badge"><svg class="i" viewBox="0 0 24 24"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
       <h2>${L('我的股票动态','My stocks')}</h2><span class="count">${syms.length}</span>
+      ${syms.length ? `<div class="seg mn-seg">${[['all',L('全部','All')],['hold',L('持仓','Held')],['plan',L('计划','Plans')],['watch',L('观察','Watching')]].map(([k,t]) => `<button type="button" class="${myNewsFilter===k?'on':''}" onclick="setMyNewsFilter('${k}')">${t}${k!=='all' && counts[k] ? ` <em>${counts[k]}</em>` : ''}</button>`).join('')}</div>` : ''}
       <div class="grow">
-        ${syms.length ? `<div class="seg mn-seg">${[['all',L('全部','All')],['hold',L('持仓','Held')],['plan',L('计划','Plans')],['watch',L('观察','Watching')]].map(([k,t]) => `<button type="button" class="${myNewsFilter===k?'on':''}" onclick="setMyNewsFilter('${k}')">${t}${k!=='all' && counts[k] ? ` <em>${counts[k]}</em>` : ''}</button>`).join('')}</div>` : ''}
         ${/\S/.test(finnhubKey) && syms.length ? `<button class="btn-ghost btn-small" onclick="refreshMyNews(true)" ${myNewsBusy?'disabled':''}>${myNewsBusy ? L('更新中…','Updating…') : L('刷新','Refresh')}</button>` : ''}
       </div></div>`;
   if(!syms.length){
