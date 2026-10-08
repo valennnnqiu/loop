@@ -979,7 +979,7 @@ function renderMyNews(){
     return;
   }
   const evs = myEvents(roles).filter(e => pass(e.sym));
-  const tagsOf = sym => [...(roles[sym] || [])].map(r => `<span class="mn-role ${r}">${roleLabel(r)}</span>`).join('');
+  const tagsOf = sym => [...(roles[sym] || [])].map(r => `<span class="tag">${roleLabel(r)}</span>`).join('');
   const evHtml = evs.length ? evs.map(e => { const d = localDate(e.date); const dd = daysBetween(todayISO(), e.date);
       return `<div class="mn-ev"><div class="mn-date"><b>${d.getDate()}</b><span>${(d.getMonth()+1)}${L('月','/')}</span></div>
         <div class="mn-ev-b"><div class="mn-top"><b>${e.sym}</b>${tagsOf(e.sym)}<span>${e.text}</span></div><div class="mn-sub">${dd === 0 ? L('今天','today') : dd === 1 ? L('明天','tomorrow') : L(`${dd} 天后`, `in ${dd} days`)}</div></div></div>`; }).join('')
@@ -998,7 +998,7 @@ function renderMyNews(){
         const hdr = day !== lastDay ? `<div class="mn-day">${dd === 0 ? L('今天','Today') : dd === 1 ? L('昨天','Yesterday') : md(day)}</div>` : '';
         lastDay = day;
         return hdr + `<a class="mn-item" href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">
-          <span class="mn-body"><span class="mn-top"><span class="mn-sym">${esc(n.sym)}</span>${tagsOf(n.sym)}</span>
+          <span class="mn-body"><span class="mn-top"><b class="mn-sym">${esc(n.sym)}</b>${tagsOf(n.sym)}</span>
             <span class="mn-h">${esc(n.headline)}</span><span class="mn-sub">${esc(n.source || '')} · ${agoStr(n.datetime)}</span></span></a>`;
       }).join('');
     }
