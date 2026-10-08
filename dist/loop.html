@@ -1809,6 +1809,15 @@
   .head-right .lang-toggle svg.i{ width:16px; height:16px; }
   .head-right #helpBtn{ font-size:16px; }
   .head-right #langToggle{ font-size:12px; }
+
+  /* settings: Save sits top right next to the close ✕; compact enough to fit without scrolling */
+  #settingsModal .modal-card{ padding:20px 28px 22px; }
+  .set-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding-right:44px; }
+  .set-head .modal-title{ margin:0; }
+  #settingsModal .f2 .f-field{ margin-bottom:10px; }
+  #settingsModal .set2 .f2-sec{ padding:0; }
+  #settingsModal .set2 .f2-sec-t{ margin-bottom:6px; }
+  #settingsModal .f-hint{ margin-top:4px; line-height:1.4; }
 </style>
 </head>
 <body>
@@ -5043,7 +5052,7 @@ function renderPlanReview(){
 // ---------- settings ----------
 function openSettings(){
   document.getElementById('settingsBody').innerHTML = `
-    <div class="modal-title">${L('设置','Settings')}</div>
+    <div class="set-head"><div class="modal-title">${L('设置','Settings')}</div><button class="btn-primary btn-small" onclick="saveSettings()">${L('保存','Save')}</button></div>
     <div class="f2 set2">
       <div class="f2-sec"><div class="f2-sec-t">${L('风险','Risk')}</div>
         ${fld({ id:'st-risk', label:L('每笔默认风险','Default risk per trade'), req:true, unit:'%', tip:L('每一笔交易打到止损价时，最多愿意亏账户的百分之几。计划会换算成金额再倒推买几股；每个计划也可以单独填金额。常见做法是 0.5–1%。','The most one trade may lose if its stop is hit, as a % of the account. Plans turn it into dollars and size from that; each plan can override with an amount. A common rule is 0.5–1%.'),
@@ -5068,8 +5077,7 @@ function openSettings(){
           <div class="pk-row"><button type="button" class="btn-ghost btn-small" onclick="exportBackup()">${L('导出备份','Export backup')}</button><button type="button" class="btn-ghost btn-small" onclick="document.getElementById('backupFile').click()">${L('导入备份','Import backup')}</button><button type="button" class="btn-ghost btn-small" onclick="closeSettings(); resetToSeed()">${L('清空全部数据','Clear all data')}</button></div>
           <div class="f-hint">${L('数据只存在这个浏览器里。换电脑或清缓存前先导出备份；导入会覆盖当前数据。','Data lives only in this browser. Export a backup before switching computers or clearing site data; importing replaces what is here.')}</div></div>
       </div>
-    </div>
-    <div class="f2-actions" style="justify-content:flex-end;"><button class="btn-ghost" onclick="closeSettings()">${L('取消','Cancel')}</button><button class="btn-primary" onclick="saveSettings()">${L('保存','Save')}</button></div>`;
+    </div>`;
   document.getElementById('settingsModal').classList.add('show');
 }
 function openBackup(){ openSettings(); setTimeout(() => { const b = document.getElementById('backupSec'); if(b) b.scrollIntoView({ block:'center' }); }, 60); }
