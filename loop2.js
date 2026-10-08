@@ -1870,8 +1870,7 @@ function renderStock(){
   const el = document.getElementById('stockView'); if(!el) return;
   const sym = stockSym;
   if(!sym){
-    el.innerHTML = stockPickerHtml() + liveStatusHtml() + ((pack || liveOn()) ? `<div class="watch-empty">${L('选一只股票：K 线、支撑压力、期权墙、量能、驱动新闻、财报和内部人都在一页。','Pick a stock: chart, levels, option walls, volume, news drivers, earnings and insiders on one page.')}</div>`
-      : liveSetupHtml());
+    el.innerHTML = stockPickerHtml() + liveStatusHtml() + ((pack || liveOn()) ? '' : liveSetupHtml());
     return;
   }
   const I = ind(sym);
