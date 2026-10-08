@@ -93,7 +93,7 @@
   .welcome-card .wc-sub a, .warn a{ color:var(--gold); cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
   .modal-card.welcome-modal{ max-width:860px; width:calc(100vw - 40px); max-height:86vh; overflow-y:auto; padding:26px 30px; }
   #welcomeBody .modal-title{ margin-bottom:18px; font-size:16px; }
-  #welcomeBody .w-grid{ display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(4,auto); grid-auto-flow:column; gap:20px 40px; }
+  #welcomeBody .w-grid{ display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(5,auto); grid-auto-flow:column; gap:20px 40px; }
   #welcomeBody .w-item .w-h{ display:flex; align-items:center; gap:7px; font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text); margin:0 0 5px; }
   #welcomeBody .w-item .w-h svg.i{ font-size:14px; color:var(--gold); }
   #welcomeBody .w-item p{ font-size:12.5px; color:var(--text-dim); line-height:1.6; margin:0; }
@@ -1884,6 +1884,8 @@
     body.nav-collapsed header.top .head-right{ padding:14px 0 0; align-items:center; }
     body.nav-collapsed .head-right .lang-toggle{ width:40px; height:40px; border-radius:10px; }
   }
+
+  #radarAdd{ width:230px; max-width:100%; }
 </style>
 </head>
 <body>
@@ -1901,6 +1903,9 @@
       </button>
       <button class="tab-btn" data-tab="watchlist" onclick="switchTab('watchlist')">
         <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg><span data-i18n="tabWatchlist">自选</span>
+      </button>
+      <button class="tab-btn" data-tab="screener" onclick="switchTab('screener')">
+        <svg class="i" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg><span data-i18n="tabScreener">筛选</span>
       </button>
       <button class="tab-btn" data-tab="stock" onclick="switchTab('stock')">
         <svg class="i" viewBox="0 0 24 24"><path d="M4 19V9M9 19V5M14 19v-7M19 19V8"/><path d="M3 21h18"/></svg><span data-i18n="tabStock">个股</span>
@@ -1991,9 +1996,14 @@
       <div id="targetsView"></div>
     </section>
 
+    <section id="cmpSec"></section>
+
+  </div>
+
+  <div id="tab-screener" class="tab-panel">
+
     <section id="momoSec"></section>
     <section id="radarSec"></section>
-    <section id="cmpSec"></section>
 
   </div>
 
@@ -2315,7 +2325,7 @@ const SEED_CALENDAR = {};
 
 const I18N = {
   zh: {
-    subtitle: 'LIFO 逐批结算 · 持仓 · 自选', tabLedger: '交易盈亏', tabPositions: '持仓', tabWatchlist: '自选', tabReport: '周报',
+    subtitle: 'LIFO 逐批结算 · 持仓 · 自选', tabLedger: '交易盈亏', tabPositions: '持仓', tabWatchlist: '自选', tabScreener: '筛选', tabReport: '周报',
     notesTitle: '笔记目录', btnAddNote: '+ 添加笔记', noteTitleLabel: '标题', noteTitlePh: '为什么卖早了',
     noteTickerLabel: '代码 (可选)', noteDateLabel: '日期', btnAdd: '添加', noteBodyLabel: '内容', noteBodyPh: '写点什么…',
     weeklyChartTitle: '每周已实现盈亏', monthlyChartTitle: '每月已实现盈亏', reviewTitle: '操作评价', btnGenReview: '生成评价', goalLabel: '每月目标',
@@ -2341,7 +2351,7 @@ const I18N = {
     tgBuy: '买入', tgSell: '卖出', tgWatch: '关注', tgLevelPh: '150-160 / 175 / 190', tgNotePh: '看图 · ER 前',
   },
   en: {
-    subtitle: 'LIFO lot matching · Positions · Watchlist', tabLedger: 'Trades', tabPositions: 'Positions', tabWatchlist: 'Watchlist', tabReport: 'Report',
+    subtitle: 'LIFO lot matching · Positions · Watchlist', tabLedger: 'Trades', tabPositions: 'Positions', tabWatchlist: 'Watchlist', tabScreener: 'Screener', tabReport: 'Report',
     notesTitle: 'Notes Directory', btnAddNote: '+ Add Note', noteTitleLabel: 'Title', noteTitlePh: 'Why I sold too early',
     noteTickerLabel: 'Ticker (optional)', noteDateLabel: 'Date', btnAdd: 'Add', noteBodyLabel: 'Body', noteBodyPh: 'Write something…',
     weeklyChartTitle: 'Weekly Realized P&L', monthlyChartTitle: 'Monthly Realized P&L', reviewTitle: 'Trading Review', btnGenReview: 'Generate Review', goalLabel: 'Monthly goal',

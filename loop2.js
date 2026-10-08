@@ -873,7 +873,8 @@ renderWelcome = function(){
   el.innerHTML = `<div class="modal-title">${L('LOOP 怎么用','How LOOP works')}</div>
     <div class="w-grid">
       ${it(L('今日','Today'), '每天先看这页。只列需要你动手的事：计划到价、财报临近、仓位超上限、重要宏观数据。处理完点 <b>✕</b>。', 'Start here every day. Only what needs action: plans at their levels, earnings, limit breaches, major macro. Tick it off with <b>✕</b>.')}
-      ${it(L('自选','Watchlist'), '你的股票新闻、<b>短线动能榜</b>和 AI 链<b>雷达</b>（可按预设筛选、勾两只对比）。想买哪只，点<b>设计划</b>写好买入区间、止损和目标。', 'News on your stocks, the <b>momentum board</b> and the AI-chain <b>radar</b> (filter by preset, tick two to compare). To buy one, hit <b>Set plan</b> and fill in zone, stop and target.')}
+      ${it(L('自选','Watchlist'), '你的<b>交易计划</b>和价格目标。想买哪只，点<b>设计划</b>写好买入区间、止损和目标。页面下面还有两只股票的对比。', 'Your <b>trade plans</b> and price targets. To buy one, hit <b>Set plan</b> and fill in zone, stop and target. Below: compare two stocks.')}
+      ${it(L('筛选','Screener'), '<b>短线动能榜</b>和 AI 链<b>雷达</b>：给一批股票排名，可按预设筛选，勾两只去对比，粘贴一串代码批量加进雷达。', 'The <b>momentum board</b> and the AI-chain <b>radar</b>: rank a batch of stocks, filter by preset, tick two to compare, paste a list of symbols to add many at once.')}
       ${it(L('个股','Stock'), '一页看完一只股票：K 线、<b>关键价位</b>、期权墙、量能、新闻、财报、内部人。联网拉行情要在设置里填 <b>Twelve Data key</b>。', 'One page per stock: chart, <b>key levels</b>, option walls, volume, news, earnings, insiders. Live bars need a <b>Twelve Data key</b> in Settings.')}
       ${it(L('持仓','Positions'), '持仓从交易记录<b>自动算出</b>。看单票和板块集中度、全部打到止损价会亏多少、走势几乎一样的持仓。', 'Computed <b>from your trades</b>. Concentration, loss if every stop is hit, and holdings that move together.')}
       ${it(L('日历','Calendar'), '财报日、宏观事件和可能影响大盘的新闻。填 Finnhub key 后自动同步；也可以点某天的 + 自己加。', 'Earnings, macro dates and market-moving news. Syncs automatically with a Finnhub key; or add your own with +.')}
@@ -2614,7 +2615,7 @@ switchTab = function(name){
   _switchTab3(name);
   if(name === 'stock') renderStock();
   if(name === 'calendar') renderMacroSec();
-  if(name === 'watchlist' && liveOn()) ensureBars(BENCH_SYMS.concat(momoUniverse().syms), { relaxed:true });
+  if((name === 'watchlist' || name === 'screener') && liveOn()) ensureBars(BENCH_SYMS.concat(momoUniverse().syms), { relaxed:true });
 };
 function aiCompact(){
   const sec = document.getElementById('aiReviewSec'); if(!sec) return;
