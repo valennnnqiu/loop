@@ -1509,7 +1509,7 @@ let cmp = { a:null, b:null, months:3, spy:true };
 function openStock(sym){
   sym = String(sym || '').toUpperCase().trim(); if(!sym) return;
   stockSym = sym; stockMode = 'stock';
-  cfg.recentStocks = [sym, ...(cfg.recentStocks || []).filter(s => s !== sym)].slice(0, 8); saveCfg();
+  cfg.recentStocks = [sym, ...(cfg.recentStocks || []).filter(s => s !== sym)].slice(0, 6); saveCfg();
   switchTab('stock'); renderStock(); loadStockExtras(sym);
   ensureBars([sym, 'SPY'], { first:true });
 }
@@ -1857,13 +1857,12 @@ function stockAlerts(sym, E, N){
 }
 
 function stockPickerHtml(){
-  const H = holdingsNow();
-  const chips = [...new Set([...H.list.map(h => h.sym), ...activePlans().map(p => p.sym), ...(cfg.recentStocks || [])])].slice(0, 12);
+  const chips = (cfg.recentStocks || []).slice(0, 6);   // last few stocks you opened — capped, newest first
   const all = Object.keys((pack && pack.bars) || {}).sort();
   return `<div class="sk-pick">
     <input id="skSearch" class="sk-in" placeholder="${L('输入代码，回车','Symbol, then Enter')}" list="skList" onkeydown="stockSearch(event)" autocomplete="off" style="text-transform:uppercase">
     <datalist id="skList">${all.map(s => `<option value="${s}">`).join('')}</datalist>
-    <div class="sk-chips">${chips.map(s => `<button class="chip ${s === stockSym ? 'on' : ''}" onclick="openStock('${s}')">${s}</button>`).join('')}</div>
+    ${chips.length ? `<div class="sk-chips"><span class="sk-recent">${L('最近看过','Recent')}</span>${chips.map(s => `<button class="chip ${s === stockSym ? 'on' : ''}" onclick="openStock('${s}')">${s}</button>`).join('')}</div>` : ''}
   </div>`;
 }
 
