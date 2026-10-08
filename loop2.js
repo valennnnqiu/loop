@@ -998,7 +998,7 @@ function renderMyNews(){
         const hdr = day !== lastDay ? `<div class="mn-day">${dd === 0 ? L('今天','Today') : dd === 1 ? L('昨天','Yesterday') : md(day)}</div>` : '';
         lastDay = day;
         return hdr + `<a class="mn-item" href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">
-          <span class="mn-body"><span class="mn-top"><span class="mn-sym" style="background:${tkColor(n.sym)}">${esc(n.sym)}</span>${tagsOf(n.sym)}</span>
+          <span class="mn-body"><span class="mn-top"><span class="mn-sym">${esc(n.sym)}</span>${tagsOf(n.sym)}</span>
             <span class="mn-h">${esc(n.headline)}</span><span class="mn-sub">${esc(n.source || '')} · ${agoStr(n.datetime)}</span></span></a>`;
       }).join('');
     }
@@ -1144,7 +1144,7 @@ function toast(msg){
   t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 3200);
 }
 // only speak up when something needs doing: no pack yet, or it is out of date
-function packChipIfNeeded(){ if(liveOn() || (pack && pack.source === 'live')) return ''; const a = packAge(); return !pack || a > 1 ? packChip() : ''; }
+function packChipIfNeeded(){ return ''; }   // no chip on the pages; the offline pack import lives in Settings
 function packChip(){
   if(pack && pack.source === 'live') return '';
   if(!pack) return `<button class="pk-chip none" onclick="pickPackFile()">📦 ${L('导入数据包','Import data pack')}</button>`;
@@ -2490,7 +2490,7 @@ function semisMood(){
 }
 function todayStatusHtml(){
   const m = semisMood();
-  return `<div class="t-status">${packChip()}${m ? `<span class="mood ${m.g}" tabindex="0" data-tip="${esc(m.ev.join('\n'))}">${m.t}</span>` : ''}</div>`;
+  return m ? `<div class="t-status"><span class="mood ${m.g}" tabindex="0" data-tip="${esc(m.ev.join('\n'))}">${m.t}</span></div>` : '';
 }
 
 // extra Today items: macro 3★ from the pack, insider alerts on holdings/plans

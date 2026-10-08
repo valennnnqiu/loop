@@ -1026,7 +1026,7 @@
   .mn-day{ font-size:11px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; margin:10px 0 4px; }
   .mn-item{ display:flex; gap:10px; padding:8px 6px; margin:0 -6px; border-radius:9px; text-decoration:none; color:inherit; }
   .mn-item:hover{ background:var(--ink); }
-  .mn-sym{ flex:0 0 auto; font-family:var(--mono); font-size:10.5px; font-weight:700; color:#fff; padding:3px 7px; border-radius:6px; height:fit-content; margin-top:1px; min-width:44px; text-align:center; }
+  .mn-sym{ flex:0 0 auto; font-family:var(--mono); font-size:10.5px; font-weight:700; color:#fff; background:var(--text); padding:3px 7px; border-radius:6px; height:fit-content; margin-top:1px; min-width:44px; text-align:center; }
   .mn-body{ display:flex; flex-direction:column; gap:3px; min-width:0; }
   .live-status{ font-family:var(--mono); font-size:11.5px; color:var(--text-dim); margin:0 0 10px; }
   .live-status.bad{ color:var(--loss); }
@@ -5157,7 +5157,7 @@ function renderMyNews(){
         const hdr = day !== lastDay ? `<div class="mn-day">${dd === 0 ? L('今天','Today') : dd === 1 ? L('昨天','Yesterday') : md(day)}</div>` : '';
         lastDay = day;
         return hdr + `<a class="mn-item" href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">
-          <span class="mn-body"><span class="mn-top"><span class="mn-sym" style="background:${tkColor(n.sym)}">${esc(n.sym)}</span>${tagsOf(n.sym)}</span>
+          <span class="mn-body"><span class="mn-top"><span class="mn-sym">${esc(n.sym)}</span>${tagsOf(n.sym)}</span>
             <span class="mn-h">${esc(n.headline)}</span><span class="mn-sub">${esc(n.source || '')} · ${agoStr(n.datetime)}</span></span></a>`;
       }).join('');
     }
@@ -5303,7 +5303,7 @@ function toast(msg){
   t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 3200);
 }
 // only speak up when something needs doing: no pack yet, or it is out of date
-function packChipIfNeeded(){ if(liveOn() || (pack && pack.source === 'live')) return ''; const a = packAge(); return !pack || a > 1 ? packChip() : ''; }
+function packChipIfNeeded(){ return ''; }   // no chip on the pages; the offline pack import lives in Settings
 function packChip(){
   if(pack && pack.source === 'live') return '';
   if(!pack) return `<button class="pk-chip none" onclick="pickPackFile()">📦 ${L('导入数据包','Import data pack')}</button>`;
@@ -6649,7 +6649,7 @@ function semisMood(){
 }
 function todayStatusHtml(){
   const m = semisMood();
-  return `<div class="t-status">${packChip()}${m ? `<span class="mood ${m.g}" tabindex="0" data-tip="${esc(m.ev.join('\n'))}">${m.t}</span>` : ''}</div>`;
+  return m ? `<div class="t-status"><span class="mood ${m.g}" tabindex="0" data-tip="${esc(m.ev.join('\n'))}">${m.t}</span></div>` : '';
 }
 
 // extra Today items: macro 3★ from the pack, insider alerts on holdings/plans
