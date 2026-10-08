@@ -122,7 +122,7 @@ function buysFor(p){
 }
 
 function planCalc(p, H){
-  const price = getPrice(p.sym);
+  const price = p.example ? p.examplePrice : getPrice(p.sym);
   const mid = (p.lo + p.hi) / 2;
   const riskAmt = num(p.risk) ?? riskSetting();
   const rps = mid - p.stop;
@@ -212,7 +212,7 @@ function rulerHtml(p, c, showNow){
   const price = showNow ? c.price : null;
   // buy markers show only what you hold right now: the open lots of this stock (same last-in-first-out as Positions).
   // A lot that came from one of this plan's in-plan buys is solid; any other lot is hollow. No position, no markers.
-  const lots = p.sym ? (((runFIFO(AT(), 'LIFO').openLots || {})[p.sym]) || []).filter(l => l.qty > 1e-7) : [];
+  const lots = p.sym && !p.example ? (((runFIFO(AT(), 'LIFO').openLots || {})[p.sym]) || []).filter(l => l.qty > 1e-7) : [];
   const planFill = {}; c.fills.forEach(f => { planFill[f.t.id] = f; });
   const held = lots.map(l => { const f = planFill[l.sourceId]; return { t:{ id:l.sourceId, qty:l.qty, price:l.unitCost, date:l.date }, inPlan: !!(f && f.inPlan), offFill: !!(f && !f.inPlan) }; });
   const fills = held.filter(h => h.inPlan);
@@ -461,7 +461,7 @@ function renderPlans(){
     </div>
     ${planFormOpen && !planEditId ? planFormHtml() : ''}
     ${act.length ? `<div class="plan-list">${act.map(p => planFormOpen && planEditId === p.id ? planFormHtml() : planCardHtml(p, H)).join('')}</div>`
-      : (planFormOpen ? '' : emptyCard(L('还没有交易计划','No trade plans yet'), ecBtn(L('+ 添加','+ Add'), 'openPlanForm()')))}
+      : (planFormOpen ? '' : emptyCard(L('还没有交易计划','No trade plans yet'), ecBtn(L('+ 添加','+ Add'), 'openPlanForm()')) + examplePlanHtml())}
     ${closed.length ? `<details class="fold closed-list"><summary>${L('已结束的计划','Closed plans')} · ${closed.length}</summary><div class="plan-list" style="margin-top:8px;">${closed.map(p => planCardHtml(p, H)).join('')}</div></details>` : ''}
   `;
   if(planFormOpen){
@@ -942,7 +942,7 @@ applyStaticI18n = function(){ _applyStaticI18n(); const tip = document.getElemen
 renderTargets = function(){
   const el = document.getElementById('targetsView'); if(!el) return;
   if(!watchlist.length){
-    el.innerHTML = `${emptyCard(L('还没有价格目标','No price targets yet'), ecBtn(L('+ 添加','+ Add'), 'openAddTarget()'))}`;
+    el.innerHTML = emptyCard(L('还没有价格目标','No price targets yet'), ecBtn(L('+ 添加','+ Add'), 'openAddTarget()')) + exampleTargetHtml();
     return;
   }
   const act = a => a==='BUY' ? L('买入','Buy') : a==='SELL' ? L('卖出','Sell') : L('关注','Watch');
@@ -2756,6 +2756,19 @@ function demoExtras(){
   const k = addDays(todayISO(), 9);
   (calendarEvents[k] = calendarEvents[k] || []).push({ id:'demo-ev-3', text:'NVDA earnings · post', category:'earnings', source:'auto-demo' });
 }
+// a sample card for pages whose content you create yourself (plans, price targets): labelled, faded, not clickable, never counted
+const exampleWrap = html => `<div class="example-wrap"><span class="ec-lead ex-tag">${L('示例','Example')}</span>${html}</div>`;
+function examplePlanHtml(){
+  return withExample(() => {
+    const p = { id:'_example', example:true, examplePrice:189.9, sym:'NVDA', lo:176, hi:184, stop:165, target:215, tranches:3, expiry:addDays(todayISO(), 30), createdAt:todayISO(), sizeMode:'shares', sizeVal:'60' };
+    return exampleWrap(planCardHtml(p, { list:[], map:{}, cashUSD:0, stockMV:0, total:0 }));
+  });
+}
+function exampleTargetHtml(){
+  return exampleWrap(`<div class="watch-list"><div class="watch-row watch-head"><span>${L('代码','Symbol')}</span><span>${L('方向','Side')}</span><span>${L('价位','Level')}</span><span>${L('现价','Price')}</span><span>${L('原因','Note')}</span><span></span><span></span></div>
+    <div class="watch-row"><b class="w-sym">AMD</b><span class="w-act buy">${L('买入','Buy')}</span><span class="w-lv">150-160</span><span class="w-px"></span><span class="w-note">${L('回踩再进','buy on a pullback')}</span><span></span><span></span></div></div>`);
+}
+
 // ---------- example mode: no Twelve Data key and no data pack → Stock / Compare / Screener show a built-in sample ----------
 // The sample pack is only swapped in while one of those four views renders, then taken away again, so it never reaches
 // Today / Positions / Risk, is never saved, and disappears the moment a real key or pack exists.

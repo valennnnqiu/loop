@@ -1992,6 +1992,12 @@
   .empty-card .ec-b{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 
   .empty-card{ min-height:56px; box-sizing:border-box; }
+
+  /* sample cards: faded, labelled, nothing to click */
+  .example-wrap{ position:relative; margin-bottom:14px; opacity:.62; pointer-events:none; user-select:none; }
+  .example-wrap .ex-tag{ position:absolute; top:12px; right:14px; z-index:2; background:var(--panel-2); border-radius:999px; padding:2px 9px; font-family:var(--disp); font-size:11px; }
+  .example-wrap .pc-head .btn-ghost, .example-wrap .pc-head .icon-btn, .example-wrap .tg-del, .example-wrap .watch-row .btn-ghost{ display:none !important; }
+  .example-wrap .watch-list{ margin-bottom:0; }
 </style>
 </head>
 <body>
