@@ -505,7 +505,7 @@ async function refreshAllPrices(silent){
     finnhubKey = k; try{ await window.storage.set(FINNHUB_KEY, k); }catch(e){}
   }
   const held = holdingsNow().list.map(h => h.sym);
-  const syms = [...new Set(held.concat(activePlans().map(p => p.sym)))];
+  const syms = [...new Set(held.concat(activePlans().map(p => p.sym), MARKET.map(m => m[0]).filter(m => m !== 'VIX')))];
   if(!syms.length) return;
   document.querySelectorAll('[data-refresh]').forEach(b => { b.disabled = true; });
   const failed = [];
@@ -694,6 +694,26 @@ function miniBar(p, price){
     <i class="z" style="left:${X(p.lo)}; width:calc(${X(p.hi)} - ${X(p.lo)})"></i><i class="n" style="left:${X(price)}"></i></div>`;
 }
 
+// ---------- today: market strip ----------
+const MARKET = [['SPY', 'S&P 500'], ['QQQ', 'Nasdaq 100'], ['IWM', 'Russell 2000'], ['DIA', 'Dow'], ['VIX', 'Volatility']];
+function marketHtml(){
+  if(!MARKET.some(m => S(m[0]))) return '';
+  const cell = ([sym, name]) => {
+    const I = ind(sym);
+    if(!I) return `<div class="mk"><div class="k">${sym}<span>${name}</span></div><div class="v">—</div><div class="s"></div></div>`;
+    const q = quotes.q[sym];
+    const px = sym === 'VIX' ? I.last : lastPx(sym);
+    const chg = q && q.pc && sym !== 'VIX' ? (q.p / q.pc - 1) * 100 : I.chg1;
+    let sub;
+    if(sym === 'VIX') sub = I.last < 15 ? L('平静','calm') : I.last < 20 ? L('正常','normal') : I.last < 30 ? L('偏紧张','elevated') : L('恐慌','stressed');
+    else sub = I.ma50 ? (I.vsMa50 >= 0 ? L('在 50 日线上方','above MA50') : L('在 50 日线下方','below MA50')) + ` · 5d ${sg(I.ret5)}` : `5d ${sg(I.ret5)}`;
+    const up = sym === 'VIX' ? chg <= 0 : chg >= 0;
+    return `<div class="mk"><div class="k">${sym}<span>${name}</span></div><div class="v">${fmt(px, 2)} <b class="${chg == null ? '' : up ? 'gain-t' : 'loss-t'}">${sg(chg)}</b></div><div class="s">${sub}</div></div>`;
+  };
+  return `<div class="mk-strip">${MARKET.map(cell).join('')}</div>`;
+}
+function ensureMarket(){ if(liveOn() && !live.bad && !(pack && pack.demo)) ensureBars(MARKET.map(m => m[0]), { relaxed:true }); }
+
 function renderToday(){
   const el = document.getElementById('todayView'); if(!el) return;
   const items = todayItems();
@@ -737,7 +757,8 @@ function renderToday(){
     : `<div class="t-list"><div class="t-done"><b>${L('今天没有需要处理的事','Nothing needs you today')}</b>${L('计划都没到价位，持仓没超上限，近期没有财报和重要宏观事件。','No plan is at its levels, no limit is breached, no earnings or major macro ahead.')}</div></div>`);
   const ob = onboardHtml();
   const bare = ob && !trades.length && !plans.length;
-  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}${ob ? '' : `<button type="button" class="btn-ghost btn-small today-import" onclick="importStatement()">${L('+ 导入对账单','+ Import statement')}</button>`}</div>${ob}${bare ? '' : stats + body}`;
+  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}${ob ? '' : `<button type="button" class="btn-ghost btn-small today-import" onclick="importStatement()">${L('+ 导入对账单','+ Import statement')}</button>`}</div>${ob}${bare ? '' : stats + marketHtml() + body}`;
+  if(!bare) ensureMarket();
 }
 
 // ---------- review: plan reconciliation ----------
@@ -2819,6 +2840,7 @@ function demoPack(){
     bars[sym] = { t: dates.slice(), o, h, l, c: c.map(x => +x.toFixed(2)), v };
   };
   make('SPY', finals.SPY, 1, 0.002, 0, 7e7); make('QQQ', finals.QQQ, 1.2, 0.003, 0.0002, 4e7); make('SMH', finals.SMH, 1.5, 0.008, 0.0008, 6e6);
+  make('IWM', 238, 1.1, 0.004, 0, 3e7); make('DIA', 452, 0.8, 0.002, 0, 4e6); make('VIX', 16.4, -4, 0.02, 0, 0);
   const syms = [...new Set([...Object.keys(SECTORS), 'NVDA','MSFT','META','AAPL','AMD','SMCI'])];
   syms.forEach(s => { const f = finals[s] || +(20 + rnd() * 600).toFixed(2); const semi = SEMI_SECTORS.includes(SECTORS[s]); make(s, f, semi ? 1.5 : 1.1, semi ? 0.022 : 0.016, (rnd() - 0.35) * 0.003, 2e6 + rnd() * 2e7); });
   // give the demo leaders a clean uptrend into the last weeks
