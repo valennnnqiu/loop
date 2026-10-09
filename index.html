@@ -2163,7 +2163,7 @@
   .report-chart .rbar-detail{ margin:12px 0 0; padding:10px 2px 0; background:none; border-radius:0; border-top:1px solid var(--line); }
 
   /* oversold-day card */
-  .dip-sec{ margin-top:16px; }
+  .dip-sec{ margin-top:16px; } .dip-top{ margin-top:0; } .dip-top:empty{ display:none; }
   .dp-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 20px; margin-bottom:14px; display:flex; flex-direction:column; gap:8px; }
   .dp-lead{ font-size:15px; font-weight:600; } .dp-lead b{ font-family:var(--mono); color:var(--loss); }
   .dp-stat{ font-size:13px; color:var(--text); line-height:1.55; }
@@ -2265,6 +2265,8 @@
   </div>
 
   <div id="tab-watchlist" class="tab-panel">
+
+    <section id="dipWatch" class="dip-sec dip-top"></section>
 
     <section id="plansSection"></section>
 

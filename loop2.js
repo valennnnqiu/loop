@@ -3092,6 +3092,7 @@ function renderDip(){
   const el = document.getElementById('dipSec'); if(!el) return;
   const M = dipView ? dipModel(dipView) : dipLive();
   el.innerHTML = M && M.trig ? dipCardHtml(M) : '';
+  const w = document.getElementById('dipWatch'); if(w){ const L2 = dipLive(); w.innerHTML = L2 ? dipCardHtml(L2) : ''; }
 }
 function dipShow(t){ dipView = t || null; if(!document.getElementById('tab-screener').classList.contains('active')) switchTab('screener'); renderDip(); const s = document.getElementById('dipSec'); if(s && s.innerHTML) s.scrollIntoView({ behavior:'smooth', block:'start' }); }
 // quiet link under the momentum board to the last oversold day, so the card can be checked against what really happened
