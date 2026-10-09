@@ -1884,7 +1884,10 @@ function ladderHtml(sym, all){
   const why = l => esc(Object.values(l.ev).join(L('、',', ')));
   const zones = vis.map(l => `<div class="lr-zone ${l.hi < p ? 'sup' : 'res'} s${l.score}" style="left:${X(l.lo)}; width:calc(${X(l.hi)} - ${X(l.lo)})" title="${pr(l.lo)}–${pr(l.hi)} · ${why(l)}"></div>`).join('');
   const labels = vis.map(l => `<div class="lr-lb ${l.hi < p ? 'sup' : 'res'}" style="left:calc((${X(l.lo)} + ${X(l.hi)}) / 2)">${l.hi < p ? L('支撑','support') : L('压力','resist')}<b>${pr(l.hi < p ? l.hi : l.lo)}</b></div>`).join('');
-  const stopM = stop != null && stop < p ? `<div class="lr-stop" style="left:${X(stop)}"></div><div class="lr-lb stop" style="left:${X(stop)}">${L('止损','stop')}<b>${pr(stop)}</b></div>` : '';
+  // your own stop is drawn above the axis (the support / resistance labels, which are worked out for you, stay below);
+  // if it sits right next to the price marker its label goes one tier higher so the two never overlap
+  const near = stop != null && stop < p && Math.abs(parseFloat(X(stop)) - parseFloat(X(p))) < 13;
+  const stopM = stop != null && stop < p ? `<div class="lr-stop" style="left:${X(stop)}"></div><div class="lr-lb stop${near ? ' hi' : ''}" style="left:${X(stop)}">${L('止损','stop')} <b>${pr(stop)}</b></div>` : '';
   return `<div class="lr">
       <div class="lr-track"></div>${zones}${stopM}
       <div class="lr-now" style="left:${X(p)}"><span>${pr(p)}</span></div>${labels}</div>
