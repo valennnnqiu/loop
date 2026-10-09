@@ -3040,7 +3040,7 @@ function dipModel(t){
     const r0 = b.c[i] / b.c[i - 1] - 1, beta = dipBeta(sym, t);
     const resid = beta != null ? r0 - beta * trig.spy : null;
     const er = t === todayISO() || !dipView ? nextEarnings(sym, 4) : null;
-    const row = { sym, n: past.length, avg: past.length ? past.reduce((p,v) => p + v, 0) / past.length : null,
+    const row = { sym, n: past.length, hits: past.map(v => v > 0), avg: past.length ? past.reduce((p,v) => p + v, 0) / past.length : null,
       up: past.filter(v => v > 0).length, worst: past.length ? Math.min(...past) : null, r0, beta, resid,
       close: b.c[i], low: b.l[i], prev: b.c[i - 1], atr: atrOf(b, 14, i + 1), next: dipRet(sym, t, 1) };
     // tested: names that fell more than beta explains bounced MORE next day (11 of 16 days), so no price-only "own bad news" filter
@@ -3068,7 +3068,7 @@ function dipCardHtml(M, o = {}){
     <div class="dot-warn">${L('弹性是双向的：仓位不超过平时一半，2 天没反弹就走', 'Cuts both ways: half your usual size, out if no bounce in 2 days')}</div></div>`;
   const nums = list => `<div class="mm-nums">${list.map(([k, v, c, x]) => `<div><span>${k}</span><b class="${c}">${v}</b>${x ? `<small>${x}</small>` : ''}</div>`).join('')}</div>`;
   const row = r => { const stop = r.low - (r.atr || 0) * 0.5;
-    const why = `<div class="mm-why"><div class="mm-main">${L(`第二天平均 ${sg(r.avg * 100)} · ${r.n} 次里涨 ${r.up} 次`, `Next day avg ${sg(r.avg * 100)} · up ${r.up} of ${r.n}`)}</div>
+    const why = `<div class="mm-why"><div class="mm-main">${L(`第二天平均 ${sg(r.avg * 100)}`, `Next day avg ${sg(r.avg * 100)}`)}<span class="dp-dots">${(r.hits || []).map(u => `<i class="${u ? 'u' : 'd'}"></i>`).join('')}</span>${''}</div>
       <div class="mm-sub">${L('第二天最差', 'Worst next day')} <span class="loss-t">${sg(r.worst * 100)}</span></div></div>`;
     const res = M.past ? nums([[L('第二天实际', 'Next day'), r.next == null ? '—' : sg(r.next * 100), r.next > 0 ? 'gain-t' : r.next < 0 ? 'loss-t' : ''], [L('收盘', 'Close'), px(r.close), '']])
       : nums([[L('收盘前买', 'Buy'), px(r.close), ''], [L('止损', 'Stop'), px(stop), 'loss-t', sg((stop / r.close - 1) * 100)], [L('目标', 'Target'), px(r.prev), 'gain-t', sg((r.prev / r.close - 1) * 100)]]);

@@ -2173,6 +2173,9 @@
   .dip-sec .sec-head .grow{ display:flex; justify-content:flex-end; }
   @media (max-width:760px){ .dp-row{ grid-template-columns:70px minmax(0,1fr); } .dp-row .mm-why{ grid-column:1 / -1; } .dp-row .mm-nums{ display:grid; grid-template-columns:repeat(3, 1fr); grid-column:1 / -1; } }
   @media (min-width:761px){ .dp-row .mm-nums{ display:grid; grid-column:auto; } }
+  .dp-dots{ display:inline-flex; gap:2px; margin-left:10px; vertical-align:-1px; }
+  .dp-dots i{ width:4px; height:11px; border-radius:2px; background:var(--gain); }
+  .dp-dots i.d{ background:var(--loss); opacity:.8; }
 </style>
 </head>
 <body>
