@@ -2630,8 +2630,8 @@ function calRowHtml(i){
     return `<div class="cm-row ${e.stars >= 3 ? 'hi' : ''}"><span class="cm-time">${esc(e.time || '')}</span><span class="cm-star"></span><span class="cm-ev"><b>${esc(e.event)}</b>${e.period ? ` <span class="muted">${esc(e.period)}</span>` : ''}</span>
       <span class="cm-num">${L('预期','fcst')} <b>${esc(e.forecast ?? '—')}</b> · ${L('前值','prior')} ${esc(e.prior ?? '—')}${done ? ` · ${L('实际','actual')} <b>${esc(e.actual)}</b> ${delta(e)}` : ''}</span><span>${done ? biasTag(macroBias(e)) : ''}</span></div>`; }
   if(i.kind === 'fomc') return `<div class="cm-row hi"><span class="cm-time">14:00</span><span class="cm-star"></span><span class="cm-ev"><b>${L('FOMC 利率决议','FOMC decision')}</b>${f && f.dots ? ` <span class="muted">${L('含点阵图','with dot plot')}</span>` : ''}</span><span class="cm-num">${L('14:30 发布会','14:30 press conference')}</span><span></span></div>`;
-  if(i.kind === 'er') return `<div class="cm-row er ${i.held ? 'held' : ''}"><span class="cm-time">${i.hour === 'bmo' ? L('盘前','pre') : i.hour === 'amc' ? L('盘后','post') : ''}</span><span class="cm-star"><span class="mn-role ${i.role === 'radar' ? '' : i.role}">${i.role === 'hold' ? L('持仓','Held') : i.role === 'plan' ? L('计划','Plan') : i.role === 'watch' ? L('观察','Watch') : L('雷达','Radar')}</span></span>
-      <span class="cm-ev"><a class="lnk" onclick="openStock('${i.sym}')"><b>${i.sym}</b></a> ${L('财报','ER')}</span>
+  if(i.kind === 'er') return `<div class="cm-row er ${i.held ? 'held' : ''}"><span class="cm-time">${i.hour === 'bmo' ? L('盘前','pre') : i.hour === 'amc' ? L('盘后','post') : ''}</span><span class="cm-star"></span>
+      <span class="cm-ev"><a class="lnk" onclick="openStock('${i.sym}')"><b>${i.sym}</b></a> ${L('财报','ER')} <span class="mn-role ${i.role === 'radar' ? '' : i.role}">${i.role === 'hold' ? L('持仓','Held') : i.role === 'plan' ? L('计划','Plan') : i.role === 'watch' ? L('观察','Watch') : L('雷达','Radar')}</span></span>
       <span class="cm-num">${i.iv ? L(`隐含波动 ${fmt(i.iv*100,0)}%`, `IV ${fmt(i.iv*100,0)}%`) : ''}${i.mvPct ? ` · ${i.mvSrc === 'hist' ? L('历史平均','hist avg') : '1σ'} ±${fmt(i.mvPct,1)}%` : ''}</span>
       <span>${i.expo ? `<b class="loss-t" title="${L('这笔仓位可能的单日波动','possible one-day swing of your position')}">±${money(i.expo)}</b>` : ''}</span></div>`;
   return '';
@@ -2658,7 +2658,7 @@ function renderCalDay(){
   const dd = localDate(d);
   el.innerHTML = `<div class="cal-day"><div class="cd-h"><b>${md(d)} ${L('周' + '日一二三四五六'[dd.getDay()], ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dd.getDay()])}</b>${d === today ? `<span class="muted">${L('今天','today')}</span>` : ''}<a class="cd-x" onclick="calPick('${d}')">✕</a></div>
     ${rows.map(i => calRowHtml(i) + calHistHtml(i, ED)).join('')}
-    ${exp.map(p => `<div class="cm-row"><span class="cm-time"></span><span class="cm-star"><span class="mn-role plan">${L('计划','plan')}</span></span><span class="cm-ev"><b>${p.sym}</b> ${L('计划到期','plan expires')}</span><span></span><span></span></div>`).join('')}
+    ${exp.map(p => `<div class="cm-row"><span class="cm-time"></span><span class="cm-star"></span><span class="cm-ev"><b>${p.sym}</b> ${L('计划到期','plan expires')} <span class="mn-role plan">${L('计划','Plan')}</span></span><span></span><span></span></div>`).join('')}
     ${mine.map(ev => `<div class="cm-row"><span class="cm-time"></span><span class="cm-star"></span><span class="cm-ev"><a class="lnk" onclick="openEventModal('${d}','${ev.id}')">${esc(ev.text)}</a>${ev.plan ? ` <span class="muted">— ${esc(ev.plan)}</span>` : ''}</span><span></span><span></span></div>`).join('')}
     ${react}
     </div>`;

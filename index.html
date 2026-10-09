@@ -1531,7 +1531,7 @@
   .mm-nums span{ white-space:nowrap; } .mm-nums b.muted{ color:var(--text-dim); font-weight:400; }
   .mm-actw small{ display:none; }
 
-  .cm-row{ grid-template-columns:46px 0 minmax(0,1fr) minmax(0,1.3fr) auto; } .cm-row.er{ grid-template-columns:46px 52px minmax(0,1fr) minmax(0,1.3fr) auto; } .cm-row.hi .cm-ev b{ color:inherit; }
+  .cm-row{ grid-template-columns:46px 0 minmax(0,1fr) minmax(0,1.3fr) auto; } .cm-row.er{ grid-template-columns:46px 0 minmax(0,1fr) minmax(0,1.3fr) auto; } .cm-row.hi .cm-ev b{ color:inherit; }
 
   /* key levels: plan-card style ruler */
   .lr{ position:relative; height:70px; margin:20px 14px 4px; }
@@ -2090,9 +2090,13 @@
   .lr-lb.stop.hi{ top:-32px; }
 
   /* calendar: how past occurrences went, shown in the day panel under the event */
-  .cm-hist{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; margin:-2px 0 8px 118px; font-size:12px; color:var(--text-dim); }
+  .cm-hist{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 14px; margin:-2px 0 8px 66px; font-size:12px; color:var(--text-dim); }
   .cm-hist small{ font-size:11px; opacity:.75; }
   @media (max-width:640px){ .cm-hist{ margin-left:56px; } }
+  .cal-day .cm-row, .cal-day .cm-row.er{ grid-template-columns:46px 0 minmax(0,1fr) minmax(0,1.2fr) 96px; }
+  .cal-day .cm-row > *:last-child{ justify-self:end; text-align:right; }
+  .cd-h .cd-x{ margin-left:auto; font-size:16px; padding:0 2px; }
+  .cm-ev .mn-role{ margin-left:8px; vertical-align:1px; }
 
   /* market strip on Today */
   .mk-strip{ display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; margin-top:12px; }
