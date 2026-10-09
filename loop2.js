@@ -713,7 +713,7 @@ function renderToday(){
     : `<div class="t-list"><div class="t-done"><b>${L('今天没有需要处理的事','Nothing needs you today')}</b>${L('计划都没到价位，持仓没超上限，近期没有财报和重要宏观事件。','No plan is at its levels, no limit is breached, no earnings or major macro ahead.')}</div></div>`);
   const ob = onboardHtml();
   const bare = ob && !trades.length && !plans.length;
-  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}${ob ? '' : `<button type="button" class="btn-primary btn-small today-import" onclick="importStatement()">${L('+ 导入对账单','+ Import statement')}</button>`}</div>${ob}${bare ? '' : stats + body}`;
+  el.innerHTML = `<div class="today-date">${new Date().toLocaleDateString(lang==='zh'?'zh-CN':'en-US', {weekday:'long', month:'long', day:'numeric'})}${pageHelp('today')}${ob ? '' : `<button type="button" class="btn-ghost btn-small today-import" onclick="importStatement()">${L('+ 导入对账单','+ Import statement')}</button>`}</div>${ob}${bare ? '' : stats + body}`;
 }
 
 // ---------- review: plan reconciliation ----------
@@ -812,10 +812,10 @@ function openSettings(){
         ${fld({ id:'st-td', label:'Twelve Data API key', opt:true, tip:L('twelvedata.com 免费注册。用来在浏览器里直接拿日 K 线，个股页、动能榜、雷达、对比都靠它。只存在这个浏览器里。','Free at twelvedata.com. Lets the Stock page, momentum board, radar and compare pull daily bars directly in the browser. Stored only in this browser.'),
             hint:L('不填也行：个股页会提示，或者导入离线数据包。免费版每分钟 8 次请求。','Without it the Stock page asks for it, or you can import an offline pack. Free plan: 8 requests a minute.'), attrs:`type="password" autocomplete="off" placeholder="${L('粘贴你的 key','paste your key')}" value="${esc(tdKey)}"` })}
         <div class="f-field"><label class="f-label">${L('数据包','Data pack')}</label>
-          <div class="pk-row"><button type="button" class="btn-primary btn-small" onclick="pickPackFile()">${L('导入数据包','Import data pack')}</button>${typeof pack !== 'undefined' && pack ? `<button type="button" class="btn-ghost btn-small" onclick="clearPack()">${L('移除','Remove')}</button><span class="muted sm">${pack.source === 'live' ? L('联网行情缓存','Live bars cached') : `${L('数据','Data')} ${md(pack.asOf)} ${L('收盘','close')}`}</span>` : ''}</div>
+          <div class="pk-row"><button type="button" class="btn-ghost btn-small" onclick="pickPackFile()">${L('导入数据包','Import data pack')}</button>${typeof pack !== 'undefined' && pack ? `<button type="button" class="btn-ghost btn-small" onclick="clearPack()">${L('移除','Remove')}</button><span class="muted sm">${pack.source === 'live' ? L('联网行情缓存','Live bars cached') : `${L('数据','Data')} ${md(pack.asOf)} ${L('收盘','close')}`}</span>` : ''}</div>
           <div class="f-hint">${L('离线备选：运行 <code>node tools/make-pack.js</code> 生成 loop-data.json（Yahoo 日 K 线）再导入；填了 Twelve Data key 就不需要。','Offline alternative: run <code>node tools/make-pack.js</code> and import loop-data.json (Yahoo bars). Not needed once you add a Twelve Data key.')}</div></div>
         <div class="f-field" id="backupSec"><label class="f-label">${L('备份','Backup')}</label>
-          <div class="pk-row"><button type="button" class="btn-ghost btn-small" onclick="exportBackup()">${L('导出备份','Export backup')}</button><button type="button" class="btn-primary btn-small" onclick="document.getElementById('backupFile').click()">${L('导入备份','Import backup')}</button><button type="button" class="btn-ghost btn-small" onclick="closeSettings(); resetToSeed()">${L('清空全部数据','Clear all data')}</button></div>
+          <div class="pk-row"><button type="button" class="btn-ghost btn-small" onclick="exportBackup()">${L('导出备份','Export backup')}</button><button type="button" class="btn-ghost btn-small" onclick="document.getElementById('backupFile').click()">${L('导入备份','Import backup')}</button><button type="button" class="btn-ghost btn-small" onclick="closeSettings(); resetToSeed()">${L('清空全部数据','Clear all data')}</button></div>
           <div class="f-hint">${L('数据只存在这个浏览器里。换电脑或清缓存前先导出备份；导入会覆盖当前数据。','Data lives only in this browser. Export a backup before switching computers or clearing site data; importing replaces what is here.')}</div></div>
       </div>
     </div>`;
