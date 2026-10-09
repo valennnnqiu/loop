@@ -7778,7 +7778,7 @@ function dipCardHtml(M, o = {}){
     <div class="dot-warn">${L('弹性是双向的：仓位不超过平时一半，2 天没反弹就走', 'Cuts both ways: half your usual size, out if no bounce in 2 days')}</div></div>`;
   const nums = list => `<div class="mm-nums">${list.map(([k, v, c, x]) => `<div><span>${k}</span><b class="${c}">${v}</b>${x ? `<small>${x}</small>` : ''}</div>`).join('')}</div>`;
   const row = r => { const stop = r.low - (r.atr || 0) * 0.5;
-    const why = `<div class="mm-why"><div class="mm-main">${L(`第二天平均 ${sg(r.avg * 100)}`, `Next day avg ${sg(r.avg * 100)}`)}<span class="dp-ratio">▲ ${r.up}/${r.n}</span>${''}</div>
+    const why = `<div class="mm-why"><div class="mm-main">${L(`第二天平均 ${sg(r.avg * 100)}`, `Next day avg ${sg(r.avg * 100)}`)}<span class="dp-ratio">${L('上涨概率 ', 'Up ')}${fmt(r.up / r.n * 100, 0)}%</span>${''}</div>
       <div class="mm-sub">${L('第二天最差', 'Worst next day')} <span class="loss-t">${sg(r.worst * 100)}</span></div></div>`;
     const res = M.past ? nums([[L('第二天实际', 'Next day'), r.next == null ? '—' : sg(r.next * 100), r.next > 0 ? 'gain-t' : r.next < 0 ? 'loss-t' : ''], [L('收盘', 'Close'), px(r.close), '']])
       : nums([[L('收盘前买', 'Buy'), px(r.close), ''], [L('止损', 'Stop'), px(stop), 'loss-t', sg((stop / r.close - 1) * 100)], [L('目标', 'Target'), px(r.prev), 'gain-t', sg((r.prev / r.close - 1) * 100)]]);
