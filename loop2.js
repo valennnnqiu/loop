@@ -757,9 +757,10 @@ function renderPlanReview(){
     const status = !plans.length ? L('你还没有建过计划。','You have no plans yet.')
       : !buys.length ? L('还没有按计划买入，卖出后这里会对比计划内和计划外的盈亏。', 'No buys since your plans yet — once trades close, in-plan vs off-plan P&L shows here.')
       : L(`${buys.length} 笔买入（${nIn} 笔在计划内），卖出后显示结果。`, `${buys.length} buys (${nIn} in plan) — results once sold.`);
-    el.innerHTML = head + `<div class="rv-empty">
-      <div class="rv-status">${status}${!plans.length ? ` <a class="lnk" onclick="switchTab('watchlist'); openPlanForm();">${L('去建计划','Create a plan')}</a>` : ''}</div>
-      ${buyList}</div>`;
+    // nothing to compare yet: no box — just the one action as a pill, or a single grey line saying where things stand
+    el.innerHTML = head + `<div class="rv-bare">${!plans.length
+      ? `<button type="button" class="btn-ghost btn-small" onclick="switchTab('watchlist'); openPlanForm();">${L('建一个计划','Create a plan')}</button>`
+      : `<div class="rv-status">${status}</div>`}${buyList}</div>`;
     return;
   }
   const avg = a => a.n ? a.pnl / a.n : 0;
