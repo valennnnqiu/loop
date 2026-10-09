@@ -2603,13 +2603,13 @@ function calItems(from, to){
   const H = holdingsNow();
   Object.keys(calendarEvents).forEach(k => { if(k < from || k > to) return; (calendarEvents[k] || []).forEach(ev => {
     if(ev.category !== 'earnings') return;
-    const sym = String(ev.text || '').toUpperCase().split(/\s/)[0]; if(!U.has(sym)) return;
+    const sym = String(ev.text || '').toUpperCase().split(/\s/)[0];
     const sn = pack && pack.snap && pack.snap[sym]; const h = H.map[sym];
     const er = fh.er[sym] && fh.er[sym].d; let avg = null;
     if(er && S(sym)){ const b = S(sym); const mv = er.filter(e => e.date < todayISO() && e.act != null).slice(0, 4).map(e => { const i = b.t.indexOf(e.date); return i > 0 && i + 1 < b.c.length ? Math.max(Math.abs(b.c[i]/b.c[i-1]-1), Math.abs(b.c[i+1]/b.c[i]-1)) * 100 : null; }).filter(v => v != null); if(mv.length) avg = mv.reduce((s,v)=>s+v,0)/mv.length; }
     const ivMove = sn && sn.iv ? sn.iv * Math.sqrt(Math.max(1, daysBetween(todayISO(), k)) / 365) * 100 : null;
     const mvPct = avg ?? ivMove;
-    out.push({ date:k, kind:'er', sym, hour: /pre/.test(ev.text) ? 'bmo' : /post/.test(ev.text) ? 'amc' : '', held: !!h, role: H.map[sym] ? 'hold' : activePlans().some(p => p.sym === sym) ? 'plan' : watchlist.some(w => w.sym === sym) ? 'watch' : 'radar', iv: sn && sn.iv, mvPct, mvSrc: avg != null ? 'hist' : 'iv', expo: h && mvPct ? h.mv * mvPct / 100 : null, sort: /pre/.test(ev.text) ? '08:00' : '16:30' });
+    out.push({ date:k, kind:'er', sym, hour: /pre/.test(ev.text) ? 'bmo' : /post/.test(ev.text) ? 'amc' : '', held: !!h, role: H.map[sym] ? 'hold' : activePlans().some(p => p.sym === sym) ? 'plan' : watchlist.some(w => w.sym === sym) ? 'watch' : U.has(sym) ? 'radar' : '', iv: sn && sn.iv, mvPct, mvSrc: avg != null ? 'hist' : 'iv', expo: h && mvPct ? h.mv * mvPct / 100 : null, sort: /pre/.test(ev.text) ? '08:00' : '16:30' });
   }); });
   return out.sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : String(a.sort || '').localeCompare(String(b.sort || '')));
 }
@@ -2636,10 +2636,11 @@ function calRowHtml(i, ED){
   if(i.kind === 'fomc') return row('hi', `<b>${L('FOMC 利率决议','FOMC decision')}</b>${f && f.dots ? ` <span class="muted">${L('含点阵图','with dot plot')}</span>` : ''}`, L('14:00 · 14:30 发布会','14:00 · press 14:30'), '', hist(macroReaction('FOMC', ED)));
   if(i.kind === 'er'){
     const when = i.hour === 'bmo' ? L('盘前','Pre-market') : i.hour === 'amc' ? L('盘后','After close') : '';
-    const role = `<span class="mn-role ${i.role === 'radar' ? '' : i.role}">${i.role === 'hold' ? L('持仓','Held') : i.role === 'plan' ? L('计划','Plan') : i.role === 'watch' ? L('观察','Watch') : L('雷达','Radar')}</span>`;
+    const role = !i.role ? '' : `<span class="mn-role ${i.role === 'radar' ? '' : i.role}">${i.role === 'hold' ? L('持仓','Held') : i.role === 'plan' ? L('计划','Plan') : i.role === 'watch' ? L('观察','Watch') : L('雷达','Radar')}</span>`;
     return row(`er ${i.held ? 'held' : ''}`, `<a class="lnk" onclick="openStock('${i.sym}')"><b>${i.sym}</b></a> ${L('财报','ER')} ${role}`, when,
       `${i.iv ? L(`隐含波动 ${fmt(i.iv*100,0)}%`, `IV ${fmt(i.iv*100,0)}%`) : ''}${i.mvPct ? ` · ${i.mvSrc === 'hist' ? L('历史平均','hist avg') : '1σ'} ±${fmt(i.mvPct,1)}%` : ''}${i.expo ? ` · <b class="loss-t" data-tip="${L('这笔仓位可能的单日波动','possible one-day swing of your position')}">±${money(i.expo)}</b>` : ''}`,
       hist(earningsReaction(i.sym))); }
+  if(i.kind === 'approx') return row('', `<b>${esc(i.text)}</b>`, L('日期为估算','approximate date'), '', '');
   return '';
 }
 function calPick(key){ calSel = calSel === key ? null : key; renderCalendar(); if(calSel) setTimeout(() => { const d = document.getElementById('calDay'); if(d) d.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 30); }
@@ -2650,6 +2651,7 @@ function renderCalDay(){
   const rows = calItems(d, d);
   const ED = pack ? eventDays() : [];
   const mine = (calendarEvents[d] || []).filter(ev => !(ev.source || '').startsWith('auto'));
+  const other = (calendarEvents[d] || []).filter(ev => (ev.source || '').startsWith('auto') && ev.category !== 'earnings' && ev.source !== 'auto-macro');
   const exp = activePlans().filter(p => d10(p.expiry) === d);
   let react = '';
   if(d < today){ const spy = dayReturn('SPY', d), my = myDayPnl(d);
@@ -2659,9 +2661,10 @@ function renderCalDay(){
     ${rows.map(i => calRowHtml(i, ED)).join('')}
     ${exp.map(p => `<div class="ev3"><div class="ev3-l"><div class="ev3-t"><b>${p.sym}</b> ${L('计划到期','plan expires')} <span class="mn-role plan">${L('计划','Plan')}</span></div></div><div class="ev3-m"></div><div class="ev3-r"></div></div>`).join('')}
     ${mine.map(ev => `<div class="ev3"><div class="ev3-l"><div class="ev3-t"><a class="lnk" onclick="openEventModal('${d}','${ev.id}')">${esc(ev.text)}</a></div>${ev.plan ? `<div class="ev3-s">${esc(ev.plan)}</div>` : ''}</div><div class="ev3-m"></div><div class="ev3-r"></div></div>`).join('')}
+    ${other.map(ev => `<div class="ev3"><div class="ev3-l"><div class="ev3-t"><b>${esc(ev.text)}</b></div></div><div class="ev3-m"></div><div class="ev3-r"></div></div>`).join('')}
     ${react}
     </div>`;
-  if(!rows.length && !mine.length && !exp.length && !react) el.innerHTML = '';
+  if(!rows.length && !other.length && !mine.length && !exp.length && !react) el.innerHTML = '';
 }
 // month grid: same calendar as before, plus macro stars from the data pack, FOMC, held earnings highlighted, click a day for details
 renderCalendar = function(){
@@ -2687,7 +2690,8 @@ renderCalendar = function(){
     events.forEach(ev => {
       const sym = String(ev.text || '').toUpperCase().split(/\s/)[0];
       const label = ev.category === 'earnings' ? `${sym} ${L('财报','ER')}${/pre/.test(ev.text) ? L(' · 盘前',' pre') : /post/.test(ev.text) ? L(' · 盘后',' post') : ''}` : esc(ev.text);
-      chips.push(`<div class="cal-event ${ev.category} ${ev.plan ? 'has-plan' : ''}" onclick="event.stopPropagation(); openEventModal('${key}','${ev.id}')">${label}</div>`);
+      const auto = (ev.source || '').startsWith('auto');
+      chips.push(`<div class="cal-event ${ev.category} ${ev.plan ? 'has-plan' : ''}" ${auto ? '' : `onclick="event.stopPropagation(); openEventModal('${key}','${ev.id}')"`}>${label}</div>`);
     });
     (newsDays[key] || []).forEach(({it, idx}) => chips.push(`<div class="cal-event news" onclick="event.stopPropagation(); openNews(${idx})">${escHtml(it.headline)}</div>`));
     const extra = chips.length > 4 ? chips.length - 3 : 0;
