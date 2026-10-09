@@ -2125,6 +2125,19 @@
   .lv-n{ display:inline-flex; align-items:center; gap:3px; }
   .lv-n input{ width:54px; padding:3px 6px; font-size:12.5px; }
   .lv-n i{ font-style:normal; color:var(--text-dim); font-size:12px; }
+
+  /* calendar day panel: title + time | numbers | judgment */
+  .ev3{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,1.5fr); gap:6px 24px; align-items:start; padding:10px 0; border-top:1px solid var(--line); font-size:12.5px; }
+  .cd-h + .ev3{ border-top:none; }
+  .ev3.held{ background:var(--gold-dim); border-radius:8px; padding-left:10px; padding-right:10px; border-top-color:transparent; }
+  .ev3-t{ font-size:13.5px; }
+  .ev3-s{ font-family:var(--mono); font-size:11.5px; color:var(--text-dim); margin-top:3px; }
+  .ev3-m{ font-family:var(--mono); font-size:11.5px; color:var(--text-dim); padding-top:2px; line-height:1.7; } .ev3-m b{ color:var(--text); }
+  .ev3-r{ display:flex; flex-direction:column; gap:3px; align-items:flex-start; font-size:12px; color:var(--text); }
+  .ev3-r small{ font-size:11px; color:var(--text-dim); opacity:.8; }
+  .ev3-r .tag{ margin-bottom:2px; }
+  .ev3 .mn-role{ margin-left:8px; vertical-align:1px; }
+  @media (max-width:760px){ .ev3{ grid-template-columns:1fr; } .ev3-m:empty, .ev3-r:empty{ display:none; } }
 </style>
 </head>
 <body>
@@ -7281,25 +7294,24 @@ function renderMacroSec(){
 }
 const stars = n => '★'.repeat(n || 1) + '<span class="dim">' + '★'.repeat(3 - (n || 1)) + '</span>';
 const biasTag = b => b === 'pos' ? `<em class="tag green">${L('对股市偏利好','equity-positive')}</em>` : b === 'neg' ? `<em class="tag red">${L('对股市偏利空','equity-negative')}</em>` : '';
-function calRowHtml(i){
+function calRowHtml(i, ED){
   const f = fomcInfo();
   const delta = e => { const a = parseFloat(String(e.actual).replace(/[^\d.\-]/g,'')), fc = parseFloat(String(e.forecast).replace(/[^\d.\-]/g,'')); return isFinite(a) && isFinite(fc) ? `<span class="dlt">Δ ${a - fc > 0 ? '+' : ''}${fmt(a - fc, 2)}</span>` : ''; };
+  // title + time on the left, the numbers in the middle, the judgment (bias + how past ones went) on the right
+  const row = (cls, title, sub, mid, judge) => `<div class="ev3 ${cls}"><div class="ev3-l"><div class="ev3-t">${title}</div>${sub ? `<div class="ev3-s">${sub}</div>` : ''}</div><div class="ev3-m">${mid || ''}</div><div class="ev3-r">${judge || ''}</div></div>`;
+  const hist = t => { if(!t) return ''; const lines = t.split('\n'); return lines.slice(0, -1).map(x => `<span>${esc(x)}</span>`).join('') + `<small>${esc(lines[lines.length - 1])}</small>`; };
   if(i.kind === 'macro'){ const e = i.e, done = e.actual != null && e.actual !== '';
-    return `<div class="cm-row ${e.stars >= 3 ? 'hi' : ''}"><span class="cm-time">${esc(e.time || '')}</span><span class="cm-star"></span><span class="cm-ev"><b>${esc(e.event)}</b>${e.period ? ` <span class="muted">${esc(e.period)}</span>` : ''}</span>
-      <span class="cm-num">${L('预期','fcst')} <b>${esc(e.forecast ?? '—')}</b> · ${L('前值','prior')} ${esc(e.prior ?? '—')}${done ? ` · ${L('实际','actual')} <b>${esc(e.actual)}</b> ${delta(e)}` : ''}</span><span>${done ? biasTag(macroBias(e)) : ''}</span></div>`; }
-  if(i.kind === 'fomc') return `<div class="cm-row hi"><span class="cm-time">14:00</span><span class="cm-star"></span><span class="cm-ev"><b>${L('FOMC 利率决议','FOMC decision')}</b>${f && f.dots ? ` <span class="muted">${L('含点阵图','with dot plot')}</span>` : ''}</span><span class="cm-num">${L('14:30 发布会','14:30 press conference')}</span><span></span></div>`;
-  if(i.kind === 'er') return `<div class="cm-row er ${i.held ? 'held' : ''}"><span class="cm-time">${i.hour === 'bmo' ? L('盘前','pre') : i.hour === 'amc' ? L('盘后','post') : ''}</span><span class="cm-star"></span>
-      <span class="cm-ev"><a class="lnk" onclick="openStock('${i.sym}')"><b>${i.sym}</b></a> ${L('财报','ER')} <span class="mn-role ${i.role === 'radar' ? '' : i.role}">${i.role === 'hold' ? L('持仓','Held') : i.role === 'plan' ? L('计划','Plan') : i.role === 'watch' ? L('观察','Watch') : L('雷达','Radar')}</span></span>
-      <span class="cm-num">${i.iv ? L(`隐含波动 ${fmt(i.iv*100,0)}%`, `IV ${fmt(i.iv*100,0)}%`) : ''}${i.mvPct ? ` · ${i.mvSrc === 'hist' ? L('历史平均','hist avg') : '1σ'} ±${fmt(i.mvPct,1)}%` : ''}</span>
-      <span>${i.expo ? `<b class="loss-t" title="${L('这笔仓位可能的单日波动','possible one-day swing of your position')}">±${money(i.expo)}</b>` : ''}</span></div>`;
+    return row(e.stars >= 3 ? 'hi' : '', `<b>${esc(e.event)}</b>${e.period ? ` <span class="muted">${esc(e.period)}</span>` : ''}`, esc(e.time || ''),
+      `${L('预期','fcst')} <b>${esc(e.forecast ?? '—')}</b> · ${L('前值','prior')} ${esc(e.prior ?? '—')}${done ? `<br>${L('实际','actual')} <b>${esc(e.actual)}</b> ${delta(e)}` : ''}`,
+      (done ? biasTag(macroBias(e)) : '') + hist(macroReaction(e.event, ED))); }
+  if(i.kind === 'fomc') return row('hi', `<b>${L('FOMC 利率决议','FOMC decision')}</b>${f && f.dots ? ` <span class="muted">${L('含点阵图','with dot plot')}</span>` : ''}`, L('14:00 · 14:30 发布会','14:00 · press 14:30'), '', hist(macroReaction('FOMC', ED)));
+  if(i.kind === 'er'){
+    const when = i.hour === 'bmo' ? L('盘前','Pre-market') : i.hour === 'amc' ? L('盘后','After close') : '';
+    const role = `<span class="mn-role ${i.role === 'radar' ? '' : i.role}">${i.role === 'hold' ? L('持仓','Held') : i.role === 'plan' ? L('计划','Plan') : i.role === 'watch' ? L('观察','Watch') : L('雷达','Radar')}</span>`;
+    return row(`er ${i.held ? 'held' : ''}`, `<a class="lnk" onclick="openStock('${i.sym}')"><b>${i.sym}</b></a> ${L('财报','ER')} ${role}`, when,
+      `${i.iv ? L(`隐含波动 ${fmt(i.iv*100,0)}%`, `IV ${fmt(i.iv*100,0)}%`) : ''}${i.mvPct ? ` · ${i.mvSrc === 'hist' ? L('历史平均','hist avg') : '1σ'} ±${fmt(i.mvPct,1)}%` : ''}${i.expo ? ` · <b class="loss-t" data-tip="${L('这笔仓位可能的单日波动','possible one-day swing of your position')}">±${money(i.expo)}</b>` : ''}`,
+      hist(earningsReaction(i.sym))); }
   return '';
-}
-// under an event row in the day panel: how past occurrences of this event went (history, not a forecast)
-function calHistHtml(i, ED){
-  const t = i.kind === 'fomc' ? macroReaction('FOMC', ED) : i.kind === 'macro' ? macroReaction(i.e.event, ED) : i.kind === 'er' ? earningsReaction(i.sym) : '';
-  if(!t) return '';
-  const lines = t.split('\n');
-  return `<div class="cm-hist">${lines.slice(0, -1).map(x => `<span>${esc(x)}</span>`).join('')}<small>${esc(lines[lines.length - 1])}</small></div>`;
 }
 function calPick(key){ calSel = calSel === key ? null : key; renderCalendar(); if(calSel) setTimeout(() => { const d = document.getElementById('calDay'); if(d) d.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 30); }
 function renderCalDay(){
@@ -7315,9 +7327,9 @@ function renderCalDay(){
     if(spy != null || my) react = `<div class="cm-react"><b>${L('当天','That day')}</b><span>SPY <b class="${spy >= 0 ? 'gain-t' : 'loss-t'}">${spy != null ? sg(spy) : '—'}</b></span><span>${L('我的组合','My account')} <b class="${my && my.v >= 0 ? 'gain-t' : 'loss-t'}">${my ? money(my.v) : '—'}</b>${my && my.est ? ` <small class="muted">${L('按当前持仓估','est.')}</small>` : ''}</span></div>`; }
   const dd = localDate(d);
   el.innerHTML = `<div class="cal-day"><div class="cd-h"><b>${md(d)} ${L('周' + '日一二三四五六'[dd.getDay()], ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dd.getDay()])}</b>${d === today ? `<span class="muted">${L('今天','today')}</span>` : ''}<a class="cd-x" onclick="calPick('${d}')">✕</a></div>
-    ${rows.map(i => calRowHtml(i) + calHistHtml(i, ED)).join('')}
-    ${exp.map(p => `<div class="cm-row"><span class="cm-time"></span><span class="cm-star"></span><span class="cm-ev"><b>${p.sym}</b> ${L('计划到期','plan expires')} <span class="mn-role plan">${L('计划','Plan')}</span></span><span></span><span></span></div>`).join('')}
-    ${mine.map(ev => `<div class="cm-row"><span class="cm-time"></span><span class="cm-star"></span><span class="cm-ev"><a class="lnk" onclick="openEventModal('${d}','${ev.id}')">${esc(ev.text)}</a>${ev.plan ? ` <span class="muted">— ${esc(ev.plan)}</span>` : ''}</span><span></span><span></span></div>`).join('')}
+    ${rows.map(i => calRowHtml(i, ED)).join('')}
+    ${exp.map(p => `<div class="ev3"><div class="ev3-l"><div class="ev3-t"><b>${p.sym}</b> ${L('计划到期','plan expires')} <span class="mn-role plan">${L('计划','Plan')}</span></div></div><div class="ev3-m"></div><div class="ev3-r"></div></div>`).join('')}
+    ${mine.map(ev => `<div class="ev3"><div class="ev3-l"><div class="ev3-t"><a class="lnk" onclick="openEventModal('${d}','${ev.id}')">${esc(ev.text)}</a></div>${ev.plan ? `<div class="ev3-s">${esc(ev.plan)}</div>` : ''}</div><div class="ev3-m"></div><div class="ev3-r"></div></div>`).join('')}
     ${react}
     </div>`;
   if(!rows.length && !mine.length && !exp.length && !react) el.innerHTML = '';
