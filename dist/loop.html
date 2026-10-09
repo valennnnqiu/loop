@@ -2029,6 +2029,35 @@
   .upload-zone .uz-t{ font-size:16px; font-weight:700; }
   .upload-zone .uz-s{ font-size:13px; color:var(--text-dim); display:flex; align-items:center; gap:7px; }
   .upload-zone .uz-demo{ margin-top:18px; }
+
+  /* ---------- realized P&L columns ---------- */
+  .report-chart{ padding:20px 18px 14px; }
+  .pnl-plot{ position:relative; height:180px; margin:0 4px; }
+  .pnl-cols{ position:absolute; inset:0; display:flex; gap:10px; }
+  .pnl-col{ position:relative; flex:1; border-radius:8px; }
+  .pnl-col.has{ cursor:pointer; } .pnl-col.has:hover, .pnl-col.on{ background:var(--row-hover); }
+  .pnl-bar{ position:absolute; left:50%; transform:translateX(-50%); width:min(56%, 44px); border-radius:5px 5px 0 0; background:var(--gain); opacity:.55; }
+  .pnl-bar.hit{ opacity:1; }
+  .pnl-bar.loss{ background:var(--loss); opacity:1; border-radius:0 0 5px 5px; }
+  .pnl-col.on .pnl-bar{ outline:2px solid var(--text); outline-offset:1px; }
+  .pnl-v{ position:absolute; left:0; right:0; text-shadow:0 0 3px var(--panel),0 0 3px var(--panel),0 0 3px var(--panel); text-align:center; font-family:var(--mono); font-size:11.5px; font-weight:700; color:var(--text-dim); white-space:nowrap; }
+  .pnl-zero{ position:absolute; left:0; right:0; border-top:1px solid var(--line-strong); }
+  .pnl-band{ position:absolute; left:0; right:0; background:var(--gain-dim); border-top:1px dashed var(--gain); border-bottom:1px dashed var(--gain); opacity:.8; }
+  .pnl-line{ position:absolute; left:0; right:0; border-top:1px dashed var(--text-dim); }
+  .pnl-foot{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; }
+  .pnl-sep{ opacity:.5; }
+  .pnl-key{ display:inline-flex; align-items:center; gap:6px; }
+  .pnl-key i{ display:inline-block; width:16px; }
+  .pnl-key.band i{ height:9px; background:var(--gain-dim); border-top:1px dashed var(--gain); border-bottom:1px dashed var(--gain); }
+  .pnl-key.line i{ border-top:1px dashed var(--text-dim); }
+  .pnl-xs{ display:flex; gap:10px; margin:8px 4px 0; }
+  .pnl-x{ flex:1; min-width:0; white-space:nowrap; text-align:center; font-family:var(--mono); font-size:11px; color:var(--text-dim); line-height:1.35; }
+  .pnl-x small{ display:block; font-size:10px; opacity:.8; }
+  .pnl-x.cur{ color:var(--text); font-weight:700; }
+  .pnl-foot{ margin-top:12px; font-size:12px; color:var(--text-dim); }
+  .report-chart .rbar-detail{ margin-top:12px; }
+  @media (max-width:640px){ .pnl-cols, .pnl-xs{ gap:3px; } .pnl-v{ font-size:10px; } .pnl-plot.many .pnl-v{ display:none; } .pnl-plot.many .pnl-col.on .pnl-v{ display:block; } .pnl-xs .pnl-x{ font-size:10px; } .pnl-x small{ display:none; } }
+
 </style>
 </head>
 <body>
@@ -2207,12 +2236,6 @@
         <h2 data-i18n="weeklyChartTitle">每周已实现盈亏</h2>
         <div class="grow report-pager" id="weeklyRange"></div>
       </div>
-      <div class="goal-bar">
-        <label for="weeklyGoalInput" data-i18n="goalLabel">每月目标</label>
-        <button type="button" class="btn-ghost btn-small" id="weeklyGoalInput" onclick="openGoalSetting()"></button>
-        <div class="goal-prog" id="goalProg" hidden><i></i></div>
-        <span class="goal-stat" id="goalStat"></span>
-      </div>
       <div class="report-chart" id="weeklyChart"></div>
     </section>
 
@@ -2220,6 +2243,12 @@
       <div class="sec-head">
         <span class="badge"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="6" width="4" height="15"/><rect x="17" y="9" width="4" height="12"/></svg></span>
         <h2 data-i18n="monthlyChartTitle">每月已实现盈亏</h2>
+      </div>
+      <div class="goal-bar">
+        <label for="weeklyGoalInput" data-i18n="goalLabel">每月目标</label>
+        <button type="button" class="btn-ghost btn-small" id="weeklyGoalInput" onclick="openGoalSetting()"></button>
+        <div class="goal-prog" id="goalProg" hidden><i></i></div>
+        <span class="goal-stat" id="goalStat"></span>
       </div>
       <div class="report-chart" id="monthlyChart"></div>
     </section>
@@ -7432,6 +7461,121 @@ loadDemoData = async function(){
   document.addEventListener('keydown', e => { if(e.key === 'Escape') hide(); });
   window.addEventListener('scroll', hide, true);
 })();
+
+/* ---------- realized P&L: vertical columns with a target band / goal line ---------- */
+let pnlSel = { wk:null, mo:null };
+const ymd = s => { const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(s); };
+function kMoney(v){
+  const a = Math.abs(v); if(a < 0.5) return '0';
+  return (v < 0 ? '−' : '') + '$' + (a >= 1000 ? (a / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : Math.round(a));
+}
+function pnlData(){
+  const { closed } = runFIFO(AT(), 'LIFO');
+  const today = new Date();
+  // weeks: every Mon–Fri week that touches the selected month, up to this week
+  const y = reportMonth.getFullYear(), m = reportMonth.getMonth();
+  const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
+  const mon = d => { const x = new Date(d); x.setDate(x.getDate() - (x.getDay() + 6) % 7); x.setHours(0,0,0,0); return x; };
+  const weeks = [];
+  for(let d = mon(first); d <= last && d <= today; d.setDate(d.getDate() + 7)){
+    const fri = new Date(d); fri.setDate(fri.getDate() + 4);
+    weeks.push({ key: isoWeekKey(d), mon: new Date(d), fri, value: 0, trades: [] });
+  }
+  const moKey = y + '-' + String(m + 1).padStart(2, '0');
+  closed.forEach(c => {
+    if(!String(c.date).startsWith(moKey)) return;
+    const w = weeks.find(w => w.key === isoWeekKey(ymd(c.date))); if(!w) return;
+    w.value += c.pnl; w.trades.push(c);
+  });
+  // months: last 12 calendar months ending this month, oldest → newest
+  const months = [];
+  for(let i = 11; i >= 0; i--){ const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    months.push({ key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'), d, value: 0, trades: [] }); }
+  closed.forEach(c => { const mo = months.find(x => x.key === String(c.date).slice(0, 7)); if(mo){ mo.value += c.pnl; mo.trades.push(c); } });
+  // trim leading empty months so a short history doesn't look like a flat year
+  while(months.length > 3 && !months[0].trades.length) months.shift();
+  return { weeks, months, curWk: isoWeekKey(today), curMo: months.length ? months[months.length - 1].key : null };
+}
+function colChart(id, items, opt){
+  const el = document.getElementById(id); if(!el) return;
+  if(!items.some(x => x.trades.length)){ el.innerHTML = `<div class="empty">${opt.empty}</div>`; return; }
+  const vals = items.map(x => x.value);
+  const refHi = opt.band ? opt.band[1] : opt.line || 0;
+  let hi = Math.max(0, ...vals, refHi), lo = Math.min(0, ...vals);
+  const rg = hi - lo || 1; hi += rg * 0.16; if(lo < 0) lo -= rg * 0.16;
+  const Y = v => ((v - lo) / (hi - lo) * 100).toFixed(2) + '%';
+  const z = Y(0);
+  let ref = '';
+  if(opt.band){ const [a, b] = opt.band; ref = a === b
+      ? `<div class="pnl-line" style="bottom:${Y(a)}"></div>`
+      : `<div class="pnl-band" style="bottom:${Y(a)};height:calc(${Y(b)} - ${Y(a)})"></div>`; }
+  else if(opt.line) ref = `<div class="pnl-line" style="bottom:${Y(opt.line)}"></div>`;
+  const key = opt.refLabel ? `<span class="pnl-key ${opt.band && opt.band[0] !== opt.band[1] ? 'band' : 'line'}"><i></i>${opt.refLabel}</span>` : '';
+  const foot = [key, opt.foot].filter(Boolean).join('<span class="pnl-sep">·</span>');
+  const sel = pnlSel[opt.key];
+  const cols = items.map(x => {
+    const has = x.trades.length, pos = x.value > -0.5;
+    const h = `calc(${Y(Math.abs(x.value) < 0.5 ? 0 : x.value)} - ${z})`;
+    const bar = has ? (pos ? `<i class="pnl-bar gain${opt.hit && opt.hit(x.value) ? ' hit' : ''}" style="bottom:${z};height:${h}"></i>`
+                           : `<i class="pnl-bar loss" style="top:calc(100% - ${z});height:calc(${z} - ${Y(x.value)})"></i>`) : '';
+    const val = has ? `<b class="pnl-v ${Math.abs(x.value) < 0.5 ? '' : pos ? 'gain-t' : 'loss-t'}" style="${pos ? `bottom:calc(${Y(Math.max(x.value,0))} + 4px)` : `top:calc(100% - ${Y(x.value)} + 4px)`}">${kMoney(x.value)}</b>` : '';
+    return `<div class="pnl-col${has ? ' has' : ''}${sel === x.key ? ' on' : ''}${x.key === opt.cur ? ' cur' : ''}" ${has ? `onclick="pnlPick('${opt.key}','${x.key}')"` : ''}
+      title="${has ? `${x.label}: ${fmtSigned(x.value)} · ${x.trades.length} ${L('笔','trades')}` : x.label}">${bar}${val}</div>`;
+  }).join('');
+  const xs = items.map(x => `<div class="pnl-x${x.key === opt.cur ? ' cur' : ''}">${x.label}${x.sub ? `<small>${x.sub}</small>` : ''}</div>`).join('');
+  const pick = items.find(x => x.key === sel && x.trades.length);
+  const detail = pick ? `<div class="rbar-detail show">${pick.trades.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).map(t =>
+      `<div class="rbar-trade"><span>${String(t.date).slice(0,10)}</span><span class="rbar-trade-sym">${t.sym}</span><span>${fmt(t.qty,0)} @ ${fmt(t.price)}</span><span class="${t.pnl >= 0 ? 'gain' : 'loss'}">${fmtSigned(t.pnl)}</span></div>`).join('')}</div>` : '';
+  el.innerHTML = `<div class="pnl-plot${items.length > 6 ? ' many' : ''}">${ref}<div class="pnl-zero" style="bottom:${z}"></div><div class="pnl-cols">${cols}</div></div>
+    <div class="pnl-xs">${xs}</div>${foot ? `<div class="pnl-foot">${foot}</div>` : ''}${detail}`;
+}
+function lossNote(list, one, many){
+  const ls = list.filter(x => x.trades.length && x.value <= -0.5); if(!ls.length) return '';
+  const sum = ls.reduce((s, x) => s + x.value, 0);
+  return `<span class="loss-t">${L(`亏损 ${ls.length} ${one}，共 ${kMoney(sum)}`, `${ls.length} losing ${ls.length > 1 ? many : one}, ${kMoney(sum)} total`)}</span>`;
+}
+// month progress: a losing month says how far it is from the goal instead of a 0% bar
+function goalStatFix(){
+  const stat = document.getElementById('goalStat'), prog = document.getElementById('goalProg');
+  const g = parseGoal(weeklyGoal); if(!stat || !g) return;
+  const { closed } = runFIFO(AT(), 'LIFO');
+  const moKey = reportMonth.getFullYear() + '-' + String(reportMonth.getMonth() + 1).padStart(2, '0');
+  const tr = closed.filter(c => String(c.date).startsWith(moKey)); if(!tr.length) return;
+  const tot = tr.reduce((s, c) => s + c.pnl, 0);
+  if(tot >= 0) return;
+  const mo = reportMonth.toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { month:'short' });
+  if(prog) prog.firstElementChild.style.width = '0%';
+  stat.innerHTML = `${mo} <span class="loss-t">${kMoney(tot)}</span> · ${L(`离目标还差 ${kMoney(g.min - tot)}`, `${kMoney(g.min - tot)} to goal`)}`;
+  stat.style.color = 'var(--text-dim)';
+}
+function pnlPick(k, key){ pnlSel[k] = pnlSel[k] === key ? null : key; renderPnlCharts(); }
+function renderPnlCharts(){
+  const D = pnlData();
+  const md = d => `${d.getMonth() + 1}/${d.getDate()}`;
+  const wg = parseGoal(cfg.weekTarget);
+  const wk = D.weeks.map(w => ({ key: w.key, label: 'W' + +w.key.slice(-2), sub: `${md(w.mon)}–${md(w.fri)}`, value: w.value, trades: w.trades }));
+  const done = wk.filter(w => w.key !== D.curWk || w.trades.length);
+  const hits = wg ? done.filter(w => w.value >= wg.min).length : 0;
+  const rng = g => g.min === g.max ? kMoney(g.min) : `${kMoney(g.min)}–${kMoney(g.max).replace('$', '')}`;
+  colChart('weeklyChart', wk, { key:'wk', cur: D.curWk,
+    band: wg ? [wg.min, wg.max] : null, refLabel: wg ? L('每周目标 ', 'Weekly target ') + rng(wg) : '',
+    hit: wg ? v => v >= wg.min : null,
+    foot: [wg && done.length ? L(`${hits} / ${done.length} 周达标`, `${hits} of ${done.length} weeks on target`) : '', lossNote(done, L('周','week'), L('周','weeks'))].filter(Boolean).join('<span class="pnl-sep">·</span>'),
+    empty: L('这个月还没有平仓交易。', 'No closed trades this month.') });
+  const mg = parseGoal(weeklyGoal);
+  const loc = lang === 'zh' ? 'zh-CN' : 'en-US';
+  const mo = D.months.map((x, i) => ({ key: x.key, label: x.d.toLocaleDateString(loc, { month: 'short' }),
+    sub: (i === 0 || x.d.getMonth() === 0) ? String(x.d.getFullYear()) : '', value: x.value, trades: x.trades }));
+  const doneM = mo.filter(x => x.key !== D.curMo && x.trades.length);
+  const avg = doneM.length ? doneM.reduce((s, x) => s + x.value, 0) / doneM.length : null;
+  colChart('monthlyChart', mo, { key:'mo', cur: D.curMo,
+    line: mg ? mg.min : null, refLabel: mg ? L('每月目标 ', 'Monthly goal ') + rng(mg) : '',
+    hit: mg ? v => v >= mg.min : null,
+    foot: [avg != null ? L(`平均每月 ${kMoney(avg)}`, `Avg ${kMoney(avg)} / month`) + (mg ? L(` · ${doneM.filter(x => x.value >= mg.min).length} / ${doneM.length} 个月达标`, ` · ${doneM.filter(x => x.value >= mg.min).length} of ${doneM.length} months on goal`) : '') : '', lossNote(mo, L('个月','month'), L('个月','months'))].filter(Boolean).join('<span class="pnl-sep">·</span>'),
+    empty: L('有平仓交易后，这里按月显示。', 'Monthly totals appear once you close trades.') });
+}
+const _renderReportL3 = renderReport;
+renderReport = function(){ _renderReportL3(); renderPnlCharts(); goalStatFix(); };
 
 // ---------- startup ----------
 const _loadAll3 = loadAll;

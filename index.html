@@ -2029,6 +2029,35 @@
   .upload-zone .uz-t{ font-size:16px; font-weight:700; }
   .upload-zone .uz-s{ font-size:13px; color:var(--text-dim); display:flex; align-items:center; gap:7px; }
   .upload-zone .uz-demo{ margin-top:18px; }
+
+  /* ---------- realized P&L columns ---------- */
+  .report-chart{ padding:20px 18px 14px; }
+  .pnl-plot{ position:relative; height:180px; margin:0 4px; }
+  .pnl-cols{ position:absolute; inset:0; display:flex; gap:10px; }
+  .pnl-col{ position:relative; flex:1; border-radius:8px; }
+  .pnl-col.has{ cursor:pointer; } .pnl-col.has:hover, .pnl-col.on{ background:var(--row-hover); }
+  .pnl-bar{ position:absolute; left:50%; transform:translateX(-50%); width:min(56%, 44px); border-radius:5px 5px 0 0; background:var(--gain); opacity:.55; }
+  .pnl-bar.hit{ opacity:1; }
+  .pnl-bar.loss{ background:var(--loss); opacity:1; border-radius:0 0 5px 5px; }
+  .pnl-col.on .pnl-bar{ outline:2px solid var(--text); outline-offset:1px; }
+  .pnl-v{ position:absolute; left:0; right:0; text-shadow:0 0 3px var(--panel),0 0 3px var(--panel),0 0 3px var(--panel); text-align:center; font-family:var(--mono); font-size:11.5px; font-weight:700; color:var(--text-dim); white-space:nowrap; }
+  .pnl-zero{ position:absolute; left:0; right:0; border-top:1px solid var(--line-strong); }
+  .pnl-band{ position:absolute; left:0; right:0; background:var(--gain-dim); border-top:1px dashed var(--gain); border-bottom:1px dashed var(--gain); opacity:.8; }
+  .pnl-line{ position:absolute; left:0; right:0; border-top:1px dashed var(--text-dim); }
+  .pnl-foot{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; }
+  .pnl-sep{ opacity:.5; }
+  .pnl-key{ display:inline-flex; align-items:center; gap:6px; }
+  .pnl-key i{ display:inline-block; width:16px; }
+  .pnl-key.band i{ height:9px; background:var(--gain-dim); border-top:1px dashed var(--gain); border-bottom:1px dashed var(--gain); }
+  .pnl-key.line i{ border-top:1px dashed var(--text-dim); }
+  .pnl-xs{ display:flex; gap:10px; margin:8px 4px 0; }
+  .pnl-x{ flex:1; min-width:0; white-space:nowrap; text-align:center; font-family:var(--mono); font-size:11px; color:var(--text-dim); line-height:1.35; }
+  .pnl-x small{ display:block; font-size:10px; opacity:.8; }
+  .pnl-x.cur{ color:var(--text); font-weight:700; }
+  .pnl-foot{ margin-top:12px; font-size:12px; color:var(--text-dim); }
+  .report-chart .rbar-detail{ margin-top:12px; }
+  @media (max-width:640px){ .pnl-cols, .pnl-xs{ gap:3px; } .pnl-v{ font-size:10px; } .pnl-plot.many .pnl-v{ display:none; } .pnl-plot.many .pnl-col.on .pnl-v{ display:block; } .pnl-xs .pnl-x{ font-size:10px; } .pnl-x small{ display:none; } }
+
 </style>
 </head>
 <body>
@@ -2207,12 +2236,6 @@
         <h2 data-i18n="weeklyChartTitle">每周已实现盈亏</h2>
         <div class="grow report-pager" id="weeklyRange"></div>
       </div>
-      <div class="goal-bar">
-        <label for="weeklyGoalInput" data-i18n="goalLabel">每月目标</label>
-        <button type="button" class="btn-ghost btn-small" id="weeklyGoalInput" onclick="openGoalSetting()"></button>
-        <div class="goal-prog" id="goalProg" hidden><i></i></div>
-        <span class="goal-stat" id="goalStat"></span>
-      </div>
       <div class="report-chart" id="weeklyChart"></div>
     </section>
 
@@ -2220,6 +2243,12 @@
       <div class="sec-head">
         <span class="badge"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="6" width="4" height="15"/><rect x="17" y="9" width="4" height="12"/></svg></span>
         <h2 data-i18n="monthlyChartTitle">每月已实现盈亏</h2>
+      </div>
+      <div class="goal-bar">
+        <label for="weeklyGoalInput" data-i18n="goalLabel">每月目标</label>
+        <button type="button" class="btn-ghost btn-small" id="weeklyGoalInput" onclick="openGoalSetting()"></button>
+        <div class="goal-prog" id="goalProg" hidden><i></i></div>
+        <span class="goal-stat" id="goalStat"></span>
       </div>
       <div class="report-chart" id="monthlyChart"></div>
     </section>
