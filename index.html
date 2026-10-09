@@ -2161,6 +2161,18 @@
   .ev3-t{ line-height:22px; }
   .ev3 .mn-role{ vertical-align:middle; padding:2px 8px; }
   .report-chart .rbar-detail{ margin:12px 0 0; padding:10px 2px 0; background:none; border-radius:0; border-top:1px solid var(--line); }
+
+  /* oversold-day card */
+  .dip-sec{ margin-top:16px; }
+  .dp-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 20px; margin-bottom:14px; display:flex; flex-direction:column; gap:8px; }
+  .dp-lead{ font-size:15px; font-weight:600; } .dp-lead b{ font-family:var(--mono); color:var(--loss); }
+  .dp-stat{ font-size:13px; color:var(--text); line-height:1.55; }
+  .dp-notes{ display:flex; flex-direction:column; gap:4px; font-size:12.5px; }
+  .dp-row{ grid-template-columns:84px minmax(0,1fr) 340px; }
+  .dp-row .mm-nums{ grid-template-columns:repeat(3, 1fr); }
+  .dip-sec .sec-head .grow{ display:flex; justify-content:flex-end; }
+  @media (max-width:760px){ .dp-row{ grid-template-columns:70px minmax(0,1fr); } .dp-row .mm-why{ grid-column:1 / -1; } .dp-row .mm-nums{ display:grid; grid-template-columns:repeat(3, 1fr); grid-column:1 / -1; } }
+  @media (min-width:761px){ .dp-row .mm-nums{ display:grid; grid-column:auto; } }
 </style>
 </head>
 <body>
@@ -2287,6 +2299,7 @@
 
   <div id="tab-screener" class="tab-panel">
 
+    <section id="dipSec"></section>
     <section id="momoSec"></section>
     <section id="radarSec"></section>
 
