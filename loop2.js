@@ -793,7 +793,7 @@ function renderToday(){
   const groups = [
     { id:'plan', t:L('计划','Plans'), d:L('价位触发','price-triggered') },
     { id:'risk', t:L('持仓与风险','Positions & risk'), d:L('财报、仓位上限','earnings, limits') },
-    { id:'event', t:L('日程','Schedule'), d:L('今明两天','today & tomorrow') },
+    { id:'event', t:L('事件','Events'), d:L('今明两天','today & tomorrow') },
   ];
   const row = (i) => { const idx = items.indexOf(i);
     const ico = { stop:'🛑', tgt:'🎯', zone:'📍', exp:'⏳', soon:'⏳', er:'📊', lim:'⚖️', slim:'⚖️', mac:'🏛️', ins:'🕴️' }[i.key.split(':')[0]] || '•';
