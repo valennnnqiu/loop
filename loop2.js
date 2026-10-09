@@ -3087,24 +3087,6 @@ function dipTodayHtml(){
   const M = dipLive(); if(!M) return '';
   return `<section class="dip-sec">${dipCardHtml(M)}</section>`;
 }
-// Screener: same card above the momentum board, and the replay of an earlier oversold day
-function renderDip(){
-  const el = document.getElementById('dipSec'); if(!el) return;
-  const M = dipView ? dipModel(dipView) : dipLive();
-  el.innerHTML = M && M.trig ? dipCardHtml(M) : '';
-  const w = document.getElementById('dipWatch'); if(w){ const L2 = dipLive(); w.innerHTML = L2 ? dipCardHtml(L2) : ''; }
-}
-function dipShow(t){ dipView = t || null; if(!document.getElementById('tab-screener').classList.contains('active')) switchTab('screener'); renderDip(); const s = document.getElementById('dipSec'); if(s && s.innerHTML) s.scrollIntoView({ behavior:'smooth', block:'start' }); }
-// quiet link under the momentum board to the last oversold day, so the card can be checked against what really happened
-function dipLastLink(){
-  if(!pack || pack.example || !S('SPY')) return ''; const days = dipDays(); if(!days.length) return '';
-  const lastBar = S('SPY').t[S('SPY').t.length - 1];
-  const d = days.filter(x => x < lastBar).pop(); if(!d) return '';
-  return `<a class="lnk" onclick="dipShow('${d}')">${L(`回看上次超跌日 ${md(d)}`, `Replay last oversold day ${md(d)}`)}</a> · `;
-}
-const _renderMomoDip = renderMomo;
-renderMomo = function(){ _renderMomoDip(); renderDip();
-  const f = document.querySelector('#momoSec .mm-foot'); if(f) f.insertAdjacentHTML('afterbegin', dipLastLink()); };
 
 const _loadDemoData3 = loadDemoData;
 loadDemoData = async function(){
