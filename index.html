@@ -2058,6 +2058,13 @@
   .report-chart .rbar-detail{ margin-top:12px; }
   @media (max-width:640px){ .pnl-cols, .pnl-xs{ gap:3px; } .pnl-v{ font-size:10px; } .pnl-plot.many .pnl-v{ display:none; } .pnl-plot.many .pnl-col.on .pnl-v{ display:block; } .pnl-xs .pnl-x{ font-size:10px; } .pnl-x small{ display:none; } }
 
+
+  /* Review with no data: the drop area stands alone, exactly like Today's (no card around it) */
+  .import-empty{ background:none; border:none; padding:0; border-radius:0; }
+  .import-empty .upload-zone{ margin-bottom:14px; }
+
+  /* once a statement has been read the popup shows only its result */
+  .import-modal .import-card.has-preview .import-drop{ display:none; }
 </style>
 </head>
 <body>

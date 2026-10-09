@@ -2058,6 +2058,13 @@
   .report-chart .rbar-detail{ margin-top:12px; }
   @media (max-width:640px){ .pnl-cols, .pnl-xs{ gap:3px; } .pnl-v{ font-size:10px; } .pnl-plot.many .pnl-v{ display:none; } .pnl-plot.many .pnl-col.on .pnl-v{ display:block; } .pnl-xs .pnl-x{ font-size:10px; } .pnl-x small{ display:none; } }
 
+
+  /* Review with no data: the drop area stands alone, exactly like Today's (no card around it) */
+  .import-empty{ background:none; border:none; padding:0; border-radius:0; }
+  .import-empty .upload-zone{ margin-bottom:14px; }
+
+  /* once a statement has been read the popup shows only its result */
+  .import-modal .import-card.has-preview .import-drop{ display:none; }
 </style>
 </head>
 <body>
@@ -5725,15 +5732,27 @@ function uploadZone(withDemo){
     <div class="uz-s">${L('或点击选择文件','or click to choose a file')} · <span class="f-tip" tabindex="0" data-tip="${esc(how)}" onclick="event.stopPropagation()">i</span> ${L('怎么导出','how to export')}</div>
     ${withDemo ? `<button type="button" class="btn-ghost btn-small uz-demo" onclick="event.stopPropagation(); loadDemoData()">${L('先看看示例数据','Try demo data')}</button>` : ''}</div>`;
 }
-function pickStatement(){ importStatement(); document.getElementById('importFile').click(); }
+function pickStatement(){ document.getElementById('importFile').click(); }
 function dropStatement(e, el){
   e.preventDefault(); el.classList.remove('drag');
   const f = e.dataTransfer.files[0]; if(!f) return;
-  importStatement();
   const r = new FileReader(); r.onload = () => handleCsvText(String(r.result)); r.readAsText(f);
 }
 
 // jump to Review → trades with the statement import open (the sidebar / Today buttons)
+// whichever way a file arrives (inline drop area, the popup's own, pasted text), the result shows in the popup,
+// and once there is a result the popup shows only the result
+const _handleCsvText = handleCsvText;
+handleCsvText = function(text){
+  if(!importHome) importStatement();
+  _handleCsvText(text);
+  const c = document.getElementById('importCard'), p = document.getElementById('importPreview');
+  const has = !!(p && p.style.display !== 'none' && p.innerHTML.trim());
+  if(c) c.classList.toggle('has-preview', has);
+  if(!has && importHome && !document.getElementById('importDrop').getBoundingClientRect().height) closeImportModal();
+};
+const _resetImport = resetImport;
+resetImport = function(){ _resetImport(); const c = document.getElementById('importCard'); if(c) c.classList.remove('has-preview'); };
 let importHome = null;   // where the import card lives on the Review page while it is borrowed by the popup
 function importStatement(){
   const c = document.getElementById('importCard'), body = document.getElementById('importModalBody'), m = document.getElementById('importModal'); if(!c || !body || !m) return;
@@ -5774,7 +5793,7 @@ function renderLoop2(){ renderPlans(); renderRisk(); renderToday(); renderPlanRe
 const _render = render;            render = function(){ _render(); emptyTradesView(); renderLoop2(); };
 // no trades yet: the Trades tab is just the upload area
 function emptyTradesView(){
-  const ie = document.getElementById('importEmpty'); if(ie) ie.innerHTML = uploadZone(false);
+  const ie = document.getElementById('importEmpty'); if(ie) ie.innerHTML = uploadZone(true);
   const empty = trades.length === 0;
   const sec = document.getElementById('ledgerTable') && document.getElementById('ledgerTable').closest('section');
   const wasEmpty = sec && sec.classList.contains('trades-empty');
