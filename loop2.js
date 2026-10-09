@@ -461,7 +461,7 @@ function renderPlans(){
     </div>
     ${planFormOpen && !planEditId ? planFormHtml() : ''}
     ${act.length ? `<div class="plan-list">${act.map(p => planFormOpen && planEditId === p.id ? planFormHtml() : planCardHtml(p, H)).join('')}</div>`
-      : (planFormOpen ? '' : emptyCard(L('还没有交易计划','No trade plans yet'), ecBtn(L('+ 添加','+ Add'), 'openPlanForm()')) + examplePlanHtml())}
+      : (planFormOpen ? '' : emptyCard(L('还没有交易计划','No trade plans yet'), ecBtn(L('+ 添加','+ Add'), 'openPlanForm()', true)) + examplePlanHtml())}
     ${closed.length ? `<details class="fold closed-list"><summary>${L('已结束的计划','Closed plans')} · ${closed.length}</summary><div class="plan-list" style="margin-top:8px;">${closed.map(p => planCardHtml(p, H)).join('')}</div></details>` : ''}
   `;
   if(planFormOpen){
@@ -881,11 +881,12 @@ function pageHelp(key){
 
 // every empty state in the app: one slim card, a single line on the left, the action button(s) on the right
 function emptyCard(title, buttons, lead, dark){
+  if(dark === undefined) dark = !!buttons;      // a card that asks you to do something is black; a plain note stays white
   return `<div class="empty-card${dark ? ' dark' : ''}"><div class="ec-t">${lead ? `<span class="ec-lead">${lead}</span>` : ''}${title}</div><div class="ec-b">${buttons || ''}</div></div>`;
 }
 const ecBtn = (label, js, primary) => `<button type="button" class="${primary ? 'btn-primary' : 'btn-ghost'} btn-small" onclick="${js}">${label}</button>`;
 function openKeySetting(){ openSettings(); setTimeout(() => { const e = document.getElementById('st-td'); if(e) e.focus(); }, 80); }
-const NEED_KEY = () => emptyCard(L('填 Twelve Data key 才能加载行情','Add a Twelve Data key to load prices'), ecBtn(L('填写 key','Add key'), 'openKeySetting()'));
+const NEED_KEY = () => emptyCard(L('填 Twelve Data key 才能加载行情','Add a Twelve Data key to load prices'), ecBtn(L('填写 key','Add key'), 'openKeySetting()', true));
 
 function onboardState(){
   const realTrades = trades.filter(t => !String(t.id).startsWith('demo-'));
@@ -942,7 +943,7 @@ applyStaticI18n = function(){ _applyStaticI18n(); const tip = document.getElemen
 renderTargets = function(){
   const el = document.getElementById('targetsView'); if(!el) return;
   if(!watchlist.length){
-    el.innerHTML = emptyCard(L('还没有价格目标','No price targets yet'), ecBtn(L('+ 添加','+ Add'), 'openAddTarget()')) + exampleTargetHtml();
+    el.innerHTML = emptyCard(L('还没有价格目标','No price targets yet'), ecBtn(L('+ 添加','+ Add'), 'openAddTarget()', true)) + exampleTargetHtml();
     return;
   }
   const act = a => a==='BUY' ? L('买入','Buy') : a==='SELL' ? L('卖出','Sell') : L('关注','Watch');
@@ -2780,7 +2781,7 @@ function withExample(fn){
   pack = _examplePack; clearIndCache();
   try{ return fn(); } finally { pack = null; clearIndCache(); }
 }
-const exampleBanner = () => isExample() ? emptyCard(L('填 Twelve Data key，换成你自己的股票','Add a Twelve Data key to see your own stocks'), ecBtn(L('填写 key','Add key'), 'openKeySetting()'), L('示例','Example')) : '';
+const exampleBanner = () => isExample() ? emptyCard(L('填 Twelve Data key，换成你自己的股票','Add a Twelve Data key to see your own stocks'), ecBtn(L('填写 key','Add key'), 'openKeySetting()', true), L('示例','Example')) : '';
 (() => {
   const wrap = (name, hostId, banner) => {
     const orig = window[name];
