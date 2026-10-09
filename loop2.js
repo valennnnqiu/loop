@@ -2627,7 +2627,7 @@ function calRowHtml(i, ED){
   const f = fomcInfo();
   const delta = e => { const a = parseFloat(String(e.actual).replace(/[^\d.\-]/g,'')), fc = parseFloat(String(e.forecast).replace(/[^\d.\-]/g,'')); return isFinite(a) && isFinite(fc) ? `<span class="dlt">Δ ${a - fc > 0 ? '+' : ''}${fmt(a - fc, 2)}</span>` : ''; };
   // title + time on the left, the numbers in the middle, the judgment (bias + how past ones went) on the right
-  const row = (cls, title, sub, mid, judge) => `<div class="ev3 ${cls}"><div class="ev3-l"><div class="ev3-t">${title}</div>${sub ? `<div class="ev3-s">${sub}</div>` : ''}</div><div class="ev3-m">${mid || ''}</div><div class="ev3-r">${judge || ''}</div></div>`;
+  const row = (cls, title, sub, mid, judge) => `<div class="ev3 ${cls} ${mid ? '' : 'nomid'}"><div class="ev3-l"><div class="ev3-t">${title}</div>${sub ? `<div class="ev3-s">${sub}</div>` : ''}</div><div class="ev3-m">${mid || ''}</div><div class="ev3-r">${judge || ''}</div></div>`;
   const hist = t => { if(!t) return ''; const lines = t.split('\n'); return lines.slice(0, -1).map(x => `<span>${esc(x)}</span>`).join('') + `<small>${esc(lines[lines.length - 1])}</small>`; };
   if(i.kind === 'macro'){ const e = i.e, done = e.actual != null && e.actual !== '';
     return row(e.stars >= 3 ? 'hi' : '', `<b>${esc(e.event)}</b>${e.period ? ` <span class="muted">${esc(e.period)}</span>` : ''}`, esc(e.time || ''),
