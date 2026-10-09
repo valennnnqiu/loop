@@ -2065,6 +2065,15 @@
 
   /* once a statement has been read the popup shows only its result */
   .import-modal .import-card.has-preview .import-drop{ display:none; }
+
+  /* plan preview: how each stage is laid out */
+  .f2-stages{ margin-top:10px; }
+  .f2-stages-t{ font-size:11px; font-weight:600; color:var(--text-dim); margin-bottom:4px; }
+  .f2-stage{ display:grid; grid-template-columns:26px 1fr 14px 1fr 40px; align-items:baseline; gap:6px; font-size:12.5px; padding:3px 0; border-top:1px solid var(--line); }
+  .f2-stage:first-of-type{ border-top:none; }
+  .f2-stage b{ font-family:var(--mono); font-weight:600; }
+  .f2-stage span{ color:var(--text-dim); font-size:11.5px; }
+  .f2-stage em{ font-style:normal; text-align:right; font-size:11.5px; color:var(--text-dim); font-family:var(--mono); }
 </style>
 </head>
 <body>
