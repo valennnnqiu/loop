@@ -1998,6 +1998,16 @@
   .example-wrap .ex-tag{ position:absolute; top:12px; right:14px; z-index:2; background:var(--panel-2); border-radius:999px; padding:2px 9px; font-family:var(--disp); font-size:11px; }
   .example-wrap .pc-head .btn-ghost, .example-wrap .pc-head .icon-btn, .example-wrap .tg-del, .example-wrap .watch-row .btn-ghost{ display:none !important; }
   .example-wrap .watch-list{ margin-bottom:0; }
+
+  /* upload prompts (setup card, no positions, no trades) are black cards: white text, white buttons */
+  .empty-card.dark{ background:var(--text); border-color:var(--text); color:var(--panel); }
+  .empty-card.dark .ec-t{ color:var(--panel); }
+  .empty-card.dark .ec-lead{ color:rgba(255,255,255,.55); }
+  .empty-card.dark .btn-primary{ background:var(--panel); color:var(--text); border:1px solid var(--panel); }
+  .empty-card.dark .btn-ghost{ background:transparent; color:var(--panel); border:1px solid rgba(255,255,255,.35); }
+  .empty-card.dark .icon-btn{ color:rgba(255,255,255,.7); }
+  .empty-card.dark button:not(:disabled):hover, .empty-card.dark button.btn-primary:hover{ background:rgba(255,255,255,.14); color:var(--panel); }
+  .empty-card.dark .btn-primary:hover{ border-color:rgba(255,255,255,.35); }
 </style>
 </head>
 <body>
@@ -2230,7 +2240,7 @@
 
     <div id="sub-trades" class="sub-panel">
 
-    <div class="empty-card import-empty" id="importEmpty"><div class="ec-t" data-i18n="importEmptyT">还没有交易记录</div><div class="ec-b"><button type="button" class="btn-primary btn-small" onclick="importStatement()" data-i18n="sideImport">+ 导入对账单</button></div></div>
+    <div class="empty-card dark import-empty" id="importEmpty"><div class="ec-t" data-i18n="importEmptyT">还没有交易记录</div><div class="ec-b"><button type="button" class="btn-primary btn-small" onclick="importStatement()" data-i18n="sideImport">+ 导入对账单</button></div></div>
 
     <div class="warn" id="demoBox"></div>
     <div class="warn" id="warnBox"></div>

@@ -533,7 +533,7 @@ function renderRisk(){
   if(!top || !sec) return;
   const M = riskModel();
   if(!M.rows.length){
-    top.innerHTML = emptyCard(L('还没有持仓','No positions yet'), ecBtn(L('+ 导入对账单','+ Import statement'), 'importStatement()', true));
+    top.innerHTML = emptyCard(L('还没有持仓','No positions yet'), ecBtn(L('+ 导入对账单','+ Import statement'), 'importStatement()', true), '', true);
     sec.innerHTML = ''; return;
   }
   const big = M.rows[0];
@@ -880,8 +880,8 @@ function pageHelp(key){
 }
 
 // every empty state in the app: one slim card, a single line on the left, the action button(s) on the right
-function emptyCard(title, buttons, lead){
-  return `<div class="empty-card"><div class="ec-t">${lead ? `<span class="ec-lead">${lead}</span>` : ''}${title}</div><div class="ec-b">${buttons || ''}</div></div>`;
+function emptyCard(title, buttons, lead, dark){
+  return `<div class="empty-card${dark ? ' dark' : ''}"><div class="ec-t">${lead ? `<span class="ec-lead">${lead}</span>` : ''}${title}</div><div class="ec-b">${buttons || ''}</div></div>`;
 }
 const ecBtn = (label, js, primary) => `<button type="button" class="${primary ? 'btn-primary' : 'btn-ghost'} btn-small" onclick="${js}">${label}</button>`;
 function openKeySetting(){ openSettings(); setTimeout(() => { const e = document.getElementById('st-td'); if(e) e.focus(); }, 80); }
@@ -911,7 +911,7 @@ function onboardHtml(){
   const btns = (isDemoMode() ? ecBtn(L('清空示例，用自己的数据','Clear demo data'), 'exitDemo()') : (!trades.length ? ecBtn(L('先看看示例数据','Try demo data'), 'loadDemoData()') : ''))
     + (cur ? ecBtn(cur.btn, cur.go, true) : '')
     + (cur ? '' : `<button type="button" class="icon-btn pc-x" aria-label="${L('隐藏','Hide')}" onclick="hideOnboard()">✕</button>`);   // can only be dismissed once every step is done
-  return emptyCard(cur ? cur.t : L('已完成','All set'), btns, lead);
+  return emptyCard(cur ? cur.t : L('已完成','All set'), btns, lead, true);
 }
 function hideOnboard(){ cfg.onboardHidden = true; saveCfg(); renderToday(); }
 
