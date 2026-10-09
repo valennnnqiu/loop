@@ -2910,6 +2910,8 @@ function demoPack(){
     bars[sym] = { t: dates.slice(), o, h, l, c: c.map(x => +x.toFixed(2)), v };
   };
   make('SPY', finals.SPY, 1, 0.002, 0, 7e7); make('QQQ', finals.QQQ, 1.2, 0.003, 0.0002, 4e7); make('SMH', finals.SMH, 1.5, 0.008, 0.0008, 6e6);
+  // a few oversold days in the demo (the last bar is one), so the oversold-day card has something to show
+  { const sb = bars.SPY; [N-1, N-12, N-25, N-38, N-52, N-66, N-80, N-100].forEach(i => { const prev = sb.c[i-1]; sb.c[i] = +(prev * 0.984).toFixed(2); sb.h[i] = prev; sb.l[i] = +(sb.c[i] * 0.999).toFixed(2); }); }
   make('IWM', 238, 1.1, 0.004, 0, 3e7); make('DIA', 452, 0.8, 0.002, 0, 4e6); make('VIX', 16.4, -4, 0.02, 0, 0);
   const syms = [...new Set([...Object.keys(SECTORS), 'NVDA','MSFT','META','AAPL','AMD','SMCI'])];
   syms.forEach(s => { const f = finals[s] || +(20 + rnd() * 600).toFixed(2); const semi = SEMI_SECTORS.includes(SECTORS[s]); make(s, f, semi ? 1.5 : 1.1, semi ? 0.022 : 0.016, (rnd() - 0.35) * 0.003, 2e6 + rnd() * 2e7); });
@@ -3058,7 +3060,7 @@ function dipLive(){
 }
 function dipCardHtml(M, o = {}){
   const T = M.trig;
-  const head = `<div class="sec-head"><span class="badge">🪂</span><h2>${L('超跌日反弹','Oversold-day bounce')}</h2><span class="muted sm" style="margin-left:4px">${md(M.t)}</span>${pageHelp('dip')}<div class="grow">${M.past ? `<button class="btn-ghost btn-small" onclick="dipShow(null)">${L('关闭','Close')}</button>` : o.today ? `<button type="button" class="icon-btn pc-x" aria-label="${L('今天不再显示','Hide for today')}" onclick="dipHide('${M.t}')">✕</button>` : ''}</div></div>`;
+  const head = `<div class="sec-head"><span class="badge">🪂</span><h2>${L('超跌日反弹','Oversold-day bounce')}</h2>${M.past ? `<span class="muted sm" style="margin-left:4px">${md(M.t)}</span>` : ''}${pageHelp('dip')}<div class="grow">${M.past ? `<button class="btn-ghost btn-small" onclick="dipShow(null)">${L('关闭','Close')}</button>` : ''}</div></div>`;
   const lead = `<div class="dp-lead"><b>${T.ix} ${sg(T.r * 100)}</b>${L('，收在全天低位附近 — 算超跌日。', ', closed near the low of the day — an oversold day.')}</div>`;
   const stat = M.hist.length ? `<div class="dp-stat">${L(`过去 ${M.hist.length} 次超跌日：第二天大盘涨了 ${M.upN} 次，自选池平均 ${sg(M.poolAvg * 100)}；最好 ${sg(M.best.pool * 100)}（${md(M.best.d)}），最差 ${sg(M.worst.pool * 100)}（${md(M.worst.d)}）。`,
       `Last ${M.hist.length} oversold days: SPY rose next day ${M.upN} times; your pool averaged ${sg(M.poolAvg * 100)}; best ${sg(M.best.pool * 100)} (${md(M.best.d)}), worst ${sg(M.worst.pool * 100)} (${md(M.worst.d)}).`)}</div>` : '';
@@ -3077,16 +3079,14 @@ function dipCardHtml(M, o = {}){
   const pastSel = M.past ? (() => { const avg = M.pick.filter(r => r.next != null); if(!avg.length) return ''; const a = avg.reduce((p,r) => p + r.next, 0) / avg.length * 100;
     const U = dipUniverse().map(x => dipRet(x, M.t, 1)).filter(v => v != null); const pl = U.length ? U.reduce((p,v) => p + v, 0) / U.length * 100 : null;
     return L(`这 ${avg.length} 只第二天平均 ${sg(a)}${pl != null ? `，整个自选池 ${sg(pl)}` : ''}。`, `These ${avg.length} averaged ${sg(a)} next day${pl != null ? `; the whole pool ${sg(pl)}` : ''}. `); })() : '';
-  return head + `<div class="dp-card">${lead}${stat}${warn}</div>` + list
-    + `<div class="mm-foot">${pastSel}${excl}${L('统计的是过去发生了什么，不是预测；样本不多，优势很薄。', 'This is what happened before, not a forecast — few samples, thin edge.')}</div>`;
+  const foot = (pastSel + excl).replace(/ · $/, '');
+  return head + `<div class="dp-card">${lead}${stat}${warn}</div>` + list + (foot ? `<div class="mm-foot">${foot}</div>` : '');
 }
-// Today: the card itself, on the day it triggers (decide before the close). Hidden for the day with the X.
+// Today: the card itself, on the day it triggers (decide before the close)
 function dipTodayHtml(){
   const M = dipLive(); if(!M) return '';
-  const k = 'dip:' + M.t; if(todayState.dismiss[k] && todayState.dismiss[k] > todayISO()) return '';
-  return `<section class="dip-sec">${dipCardHtml(M, { today:true })}</section>`;
+  return `<section class="dip-sec">${dipCardHtml(M)}</section>`;
 }
-function dipHide(t){ todayState.dismiss['dip:' + t] = addDays(todayISO(), 1); saveToday(); renderToday(); }
 // Screener: same card above the momentum board, and the replay of an earlier oversold day
 function renderDip(){
   const el = document.getElementById('dipSec'); if(!el) return;
