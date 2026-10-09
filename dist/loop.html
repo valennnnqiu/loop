@@ -7783,8 +7783,7 @@ function colChart(id, items, opt){
     const bar = has ? (pos ? `<i class="pnl-bar gain${opt.hit && opt.hit(x.value) ? ' hit' : ''}" style="bottom:${z};height:${h}"></i>`
                            : `<i class="pnl-bar loss" style="top:calc(100% - ${z});height:calc(${z} - ${Y(x.value)})"></i>`) : '';
     const val = has ? `<b class="pnl-v ${Math.abs(x.value) < 0.5 ? '' : pos ? 'gain-t' : 'loss-t'}" style="${pos ? `bottom:calc(${Y(Math.max(x.value,0))} + 4px)` : `top:calc(100% - ${Y(x.value)} + 4px)`}">${kMoney(x.value)}</b>` : '';
-    return `<div class="pnl-col${has ? ' has' : ''}${sel === x.key ? ' on' : ''}${x.key === opt.cur ? ' cur' : ''}" ${has ? `onclick="pnlPick('${opt.key}','${x.key}')"` : ''}
-      title="${has ? `${x.label}: ${fmtSigned(x.value)} · ${x.trades.length} ${L('笔','trades')}` : x.label}">${bar}${val}</div>`;
+    return `<div class="pnl-col${has ? ' has' : ''}${sel === x.key ? ' on' : ''}${x.key === opt.cur ? ' cur' : ''}" ${has ? `onclick="pnlPick('${opt.key}','${x.key}')"` : ''}>${bar}${val}</div>`;
   }).join('');
   const xs = items.map(x => `<div class="pnl-x${x.key === opt.cur ? ' cur' : ''}">${x.label}${x.sub ? `<small>${x.sub}</small>` : ''}</div>`).join('');
   const pick = items.find(x => x.key === sel && x.trades.length);
