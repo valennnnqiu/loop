@@ -316,6 +316,7 @@ function planCardHtml(p, H){
       <div class="pc-stat"><div class="k">${p.closedAt ? L('结束于','Closed') : L('有效期','Valid to')}</div><div class="v">${md(p.closedAt || p.expiry)}</div></div>
     </div>
     <div class="tr-steps">${steps}</div>
+    ${p.closedAt ? '' : levHtml(p.sym, planLevOpts(p, c))}
     ${warns.length ? `<div class="pc-alert">${warns.map(w => `<div class="${w.c}">${w.t}</div>`).join('')}</div>` : ''}
     ${p.note ? `<div class="pc-note">${esc(p.note)}</div>` : ''}
   </div>`;
@@ -546,6 +547,59 @@ function riskModel(){
   return { H, rows, secW, beta, trigTotal, noStop, betaMissing: rows.filter(r => !r.betaSet && r.betaAuto == null).map(r => r.sym) };
 }
 
+// ---------- 2x leverage check (conditions the user sets in Settings; LOOP only reports whether they are met) ----------
+const LEV_DEF = { on:true, ma50:true, stop:true, stopPct:8, single:true, er:true, erDays:7, loss:true, lossPct:6, sector:true };
+const levCfg = () => Object.assign({}, LEV_DEF, cfg.lev || {});
+// o: { qty, price, stop } override the held position (used by plan cards for the planned size)
+function levCheck(sym, o = {}){
+  const C = levCfg(); if(!C.on) return null;
+  const M = riskModel(), I = typeof ind === 'function' ? ind(sym) : null;
+  const row = M.rows.find(r => r.sym === sym);
+  const price = o.price != null ? o.price : row ? row.last : (I ? I.last : null);
+  const qty = o.qty != null ? o.qty : row ? row.qty : 0;
+  const stop = o.stop != null ? o.stop : row ? row.stop : null;
+  const total = o.total != null ? o.total : M.H.total;
+  const out = [];
+  if(C.ma50) out.push(!I || I.vsMa50 == null ? { ok:false, t:L('没有 50 日线数据','no MA50 data') } : { ok: I.vsMa50 >= 0, t: I.vsMa50 >= 0 ? L('在 50 日线上方','above MA50') : L('跌破 50 日线','below MA50') });
+  if(C.stop){
+    const d = stop != null && price > 0 ? (1 - stop / price) * 100 : null, lim = num(C.stopPct) ?? 8;
+    out.push(d == null ? { ok:false, t:L('还没设止损','no stop set') } : { ok: d > 0 && d <= lim, t: d > 0 && d <= lim ? L(`止损在 ${fmt(d,1)}% 以内`, `stop ${fmt(d,1)}% away`) : L(`止损距离 ${fmt(d,1)}%，超过 ${lim}%`, `stop ${fmt(d,1)}% away, over ${lim}%`) });
+  }
+  const w = total > 0 && price > 0 ? qty * price / total * 100 : null;
+  if(C.single) out.push(w == null ? { ok:true, t:'' } : { ok: w <= cfg.maxSingle, t: w <= cfg.maxSingle ? L(`占 ${pct(w,0)}，没超单票上限`, `${pct(w,0)} of account, within the limit`) : L(`占 ${pct(w,0)}，超过单票上限 ${cfg.maxSingle}%`, `${pct(w,0)} of account, over the ${cfg.maxSingle}% limit`) });
+  if(C.er){
+    const e = nextEarnings(sym), dd = e ? daysBetween(todayISO(), e) : null, lim = num(C.erDays) ?? 7;
+    out.push(dd != null && dd <= lim ? { ok:false, t:L(`${dd} 天后财报`, `earnings in ${dd}d`) } : { ok:true, t:L(`${lim} 天内没有财报`, `no earnings in ${lim}d`) });
+  }
+  if(C.loss){
+    const lim = num(C.lossPct) ?? 6;
+    const others = M.rows.filter(r => r.sym !== sym).reduce((a, r) => a + (r.trig || 0), 0);
+    const mine = stop != null && qty > 0 && price > 0 ? Math.min(0, (stop - price) * qty) : 0;
+    const l = total > 0 ? -(others + mine) / total * 100 : null;
+    out.push(l == null ? { ok:true, t:'' } : { ok: l <= lim, t: l <= lim ? L(`全部打到止损亏 ${fmt(l,1)}%`, `all stops hit: −${fmt(l,1)}% of account`) : L(`全部打到止损亏 ${fmt(l,1)}%，超过 ${lim}%`, `all stops hit: −${fmt(l,1)}%, over ${lim}%`) });
+  }
+  if(C.sector){
+    const sec = sectorOf(sym), sw = total > 0 ? M.rows.filter(r => r.sector === sec && r.sym !== sym).reduce((a, r) => a + r.mv, 0) / total * 100 + (w || 0) : null;
+    out.push(sw == null ? { ok:true, t:'' } : { ok: sw <= cfg.maxSector, t: sw <= cfg.maxSector ? L(`板块占 ${pct(sw,0)}，没超上限`, `sector ${pct(sw,0)}, within the limit`) : L(`板块占 ${pct(sw,0)}，超过上限 ${cfg.maxSector}%`, `sector ${pct(sw,0)}, over the ${cfg.maxSector}% limit`) });
+  }
+  return out.length ? out : null;
+}
+// the plan card checks the position the plan would leave you with (same sizing as its own warnings)
+function planLevOpts(p, c){
+  const H = holdingsNow(), held = c.heldNow || 0;
+  const remaining = c.mode !== 'risk' && c.targetShares != null ? Math.max(0, c.targetShares - held) : Math.max(0, (c.shares || 0) - (c.bought || 0));
+  const px = c.mid || c.price, add = remaining * px;
+  return { price: c.price != null ? c.price : px, qty: held + remaining, stop: num(p.stop), total: H.total + Math.max(0, add - H.cashUSD) };
+}
+function levHtml(sym, o){
+  const r = levCheck(sym, o); if(!r) return '';
+  const bad = r.filter(x => !x.ok), n = r.length;
+  const tip = r.map(x => `${x.ok ? '✓' : '✗'} ${x.t}`).filter(x => x.length > 2).join('\n');
+  return `<div class="lev ${bad.length ? 'no' : 'ok'}" data-tip="${esc(tip)}"><b>2×</b>${bad.length
+    ? `<span>${L('现在不满足', 'Not yet')} · ${n - bad.length}/${n}</span><em>${esc(bad.map(x => x.t).join(' · '))}</em>`
+    : `<span>${L('你设的条件都满足', 'All your conditions are met')} · ${n}/${n}</span>`}</div>`;
+}
+
 function setRiskField(kind, sym, value){
   const v = String(value || '').trim();
   if(v === '') delete cfg[kind][sym]; else cfg[kind][sym] = kind === 'sectors' ? v : value;
@@ -611,6 +665,7 @@ function renderRisk(){
               <span class="${over?'loss-t':'muted'}">${over ? L(`超过 ${cfg.maxSingle}% 上限`, `over the ${cfg.maxSingle}% limit`) : L(`上限 ${cfg.maxSingle}%`, `limit ${cfg.maxSingle}%`)}</span></div>
             <div class="rk2-line">${L('止损价','Stop')} <span class="rk2-in">$<input type="number" step="any" class="rk-edit ${r.stop == null ? 'need' : ''}" placeholder="${r.stopFromPlan ? fmt(r.stop) : L('设置','set')}" value="${num(cfg.stops[r.sym]) ?? ''}" onchange="setRiskField('stops','${r.sym}',this.value)" title="${r.stopFromPlan ? L('来自你的计划，可以改','from your plan — editable') : ''}"></span>
               ${dist != null ? `<span class="muted">${L(`比现价低 ${fmt(dist,1)}%`, `${fmt(dist,1)}% below price`)}${r.stopFromPlan ? L(' · 来自计划',' · from plan') : ''}</span>` : `<span class="muted">${L('还没设，设了才知道最多亏多少','not set yet')}</span>`}</div>
+            ${levHtml(r.sym)}
           </div>
           <div class="rk2-erc">${r.er ? `<span>${L('财报','Earnings')}</span><b class="${erD <= 7 ? 'soon' : ''}">${md(r.er)}</b>` : ''}</div>
           <div class="rk2-loss">${r.trig != null ? `<span>${L('跌到止损价会亏','loss at stop')}</span><b>${money(r.trig)}</b>` : `<span>${L('最多会亏','max loss')}</span><b class="muted">?</b>`}</div>
@@ -852,6 +907,15 @@ function openSettings(){
       </div>
       <div class="f2-sec"><div class="f2-sec-t">${L('目标','Goal')}</div>
         ${fld({ id:'st-week', label:L('每周盈利目标','Weekly profit target'), prefix:'$', tip:L('只算已实现盈亏。可以填一个数，也可以填区间，如 2000-3000。','Realized P&L only. One number or a range like 2000-3000.'), attrs:`type="text" placeholder="${eg('2000-3000')}" value="${esc(cfg.weekTarget)}"` })}
+        <div class="f2-sec-t lv-t">${L('2 倍杠杆检查','2× leverage check')}<span class="f-tip" tabindex="0" data-tip="${esc(L('LOOP 只告诉你：你自己勾选的条件满没满足。不替你判断该不该上杠杆。','LOOP only reports whether the conditions you tick are met. It does not tell you whether to use leverage.'))}">i</span></div>
+        <div class="lv-set">${(() => { const C = levCfg(); const row = (id, label, extra) => `<label class="lv-opt"><input type="checkbox" id="lv-${id}" ${C[id] ? 'checked' : ''}><span>${label}</span>${extra || ''}</label>`; const nin = (id, u) => `<span class="lv-n"><input type="number" step="any" id="lv-${id}" value="${C[id]}"><i>${u}</i></span>`;
+          return `<label class="lv-opt lv-main"><input type="checkbox" id="lv-on" ${C.on ? 'checked' : ''}><span>${L('在计划和持仓里显示','Show on plans and positions')}</span></label>`
+            + row('ma50', L('价格在 50 日线上方','Price above MA50'))
+            + row('stop', L('已设止损，且距离不超过','Stop set, no further than'), nin('stopPct', '%'))
+            + row('single', L('没超过单票上限','Within the single-stock limit'))
+            + row('er', L('没有财报，未来','No earnings in the next'), nin('erDays', L('天','d')))
+            + row('loss', L('全部打到止损，亏不超过账户','All stops hit lose at most'), nin('lossPct', '%'))
+            + row('sector', L('没超过板块上限','Within the sector limit')); })()}</div>
       </div>
       <div class="f2-sec"><div class="f2-sec-t">${L('数据','Data')}</div>
         ${fld({ id:'st-fh', label:'Finnhub API key', opt:true, tip:L('finnhub.io 免费注册后拿到。用来自动拉股价和财报日期。只存在这个浏览器里。','Free at finnhub.io. Used for live prices and earnings dates. Stored only in this browser.'),
@@ -887,6 +951,8 @@ async function saveSettings(){
   cfg.defaultStyle = document.getElementById('st-style').value || 'even';
   cfg.maxSingle = num(document.getElementById('st-single').value) ?? 40;
   cfg.maxSector = num(document.getElementById('st-sector').value) ?? 60;
+  const lvv = id => document.getElementById('lv-' + id);
+  cfg.lev = { on:lvv('on').checked }; ['ma50','stop','single','er','loss','sector'].forEach(k => { cfg.lev[k] = lvv(k).checked; }); ['stopPct','erDays','lossPct'].forEach(k => { cfg.lev[k] = num(lvv(k).value) ?? LEV_DEF[k]; });
   const wk = document.getElementById('st-week').value.trim();
   if(wk !== (cfg.weekTarget || '')){ weeklyGoal = scaleGoal(wk, 4); saveGoal(); }   // the monthly goal on Review follows the weekly one: 4 weeks
   cfg.weekTarget = wk;
