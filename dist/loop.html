@@ -4846,7 +4846,8 @@ function rulerHtml(p, c, showNow){
   const price = showNow ? c.price : null;
   // buy markers show only what you hold right now: the open lots of this stock (same last-in-first-out as Positions).
   // A lot that came from one of this plan's in-plan buys is solid; any other lot is hollow. No position, no markers.
-  const lots = p.sym && !p.example ? (((runFIFO(AT(), 'LIFO').openLots || {})[p.sym]) || []).filter(l => l.qty > 1e-7) : [];
+  // the form's preview is a sketch of the plan, not a record: no buy markers there
+  const lots = p.sym && !p.example && p.id !== '_preview' ? (((runFIFO(AT(), 'LIFO').openLots || {})[p.sym]) || []).filter(l => l.qty > 1e-7) : [];
   const planFill = {}; c.fills.forEach(f => { planFill[f.t.id] = f; });
   const held = lots.map(l => { const f = planFill[l.sourceId]; return { t:{ id:l.sourceId, qty:l.qty, price:l.unitCost, date:l.date }, inPlan: !!(f && f.inPlan), offFill: !!(f && !f.inPlan) }; });
   const fills = held.filter(h => h.inPlan);
@@ -7188,6 +7189,7 @@ renderCalendar = function(){
   const newsDays = newsByDay();
   const macro = (pack && pack.macro) || [];
   const H = holdingsNow();
+  const ED = pack ? eventDays() : [];
   let html = '';
   for(let i = 0; i < 42; i++){
     const d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
@@ -7198,12 +7200,12 @@ renderCalendar = function(){
     events = events.filter(ev => !(ev.source === 'auto-macro' && /FOMC/.test(ev.text)));
     events.sort((a,b) => (a.source||'').startsWith('auto') === (b.source||'').startsWith('auto') ? 0 : (a.source||'').startsWith('auto') ? -1 : 1);
     const chips = [];
-    if(MACRO_FOMC.includes(key)) chips.push(`<div class="cal-event macro" title="${L('FOMC 利率决议 14:00 ET','FOMC decision 2pm ET')}">FOMC</div>`);
-    macro.filter(e => e.date === key).sort((a,b) => (b.stars||0) - (a.stars||0)).forEach(e => chips.push(`<div class="cal-event macro" title="${esc(`${e.time || ''} ${e.event} · ${L('预期','fcst')} ${e.forecast ?? '—'} · ${L('前值','prior')} ${e.prior ?? '—'}${e.actual != null ? ' · ' + L('实际','actual') + ' ' + e.actual : ''}`)}">${esc(e.event)}</div>`));
+    if(MACRO_FOMC.includes(key)) chips.push(`<div class="cal-event macro" title="${esc(L('FOMC 利率决议 14:00 ET','FOMC decision 2pm ET') + (macroReaction('FOMC', ED) ? '\n' + macroReaction('FOMC', ED) : ''))}">FOMC</div>`);
+    macro.filter(e => e.date === key).sort((a,b) => (b.stars||0) - (a.stars||0)).forEach(e => chips.push(`<div class="cal-event macro" title="${esc(`${e.time || ''} ${e.event} · ${L('预期','fcst')} ${e.forecast ?? '—'} · ${L('前值','prior')} ${e.prior ?? '—'}${e.actual != null ? ' · ' + L('实际','actual') + ' ' + e.actual : ''}${macroReaction(e.event, ED) ? '\n' + macroReaction(e.event, ED) : ''}`)}">${esc(e.event)}</div>`));
     events.forEach(ev => {
       const sym = String(ev.text || '').toUpperCase().split(/\s/)[0];
       const label = ev.category === 'earnings' ? `${sym} ${L('财报','ER')}${/pre/.test(ev.text) ? L(' · 盘前',' pre') : /post/.test(ev.text) ? L(' · 盘后',' post') : ''}` : esc(ev.text);
-      chips.push(`<div class="cal-event ${ev.category} ${ev.plan ? 'has-plan' : ''}" onclick="event.stopPropagation(); openEventModal('${key}','${ev.id}')" title="${esc(ev.text + (ev.plan ? ' — ' + ev.plan : ''))}">${label}</div>`);
+      chips.push(`<div class="cal-event ${ev.category} ${ev.plan ? 'has-plan' : ''}" onclick="event.stopPropagation(); openEventModal('${key}','${ev.id}')" title="${esc(ev.text + (ev.plan ? ' — ' + ev.plan : '') + (ev.category === 'earnings' && earningsReaction(sym) ? '\n' + earningsReaction(sym) : ''))}">${label}</div>`);
     });
     (newsDays[key] || []).forEach(({it, idx}) => chips.push(`<div class="cal-event news" onclick="event.stopPropagation(); openNews(${idx})" title="${escHtml(it.headline)}">${escHtml(it.headline)}</div>`));
     const extra = chips.length > 4 ? chips.length - 3 : 0;
@@ -7247,6 +7249,28 @@ function eventDays(){
   traded.forEach(s => { const er = fh.er[s] && fh.er[s].d; if(!er) return; er.filter(e => e.date >= first && e.date <= last && e.act != null).forEach(e => { const q = qtyAt(s, e.date); if(q > 0) ev.push({ d: e.hour === 'amc' ? (spy.t[spy.t.indexOf(e.date) + 1] || e.date) : e.date, k:L('持仓财报','My earnings'), sym:s }); }); });
   return ev.map(x => ({ ...x, spy: dayReturn('SPY', x.d), my: myDayPnl(x.d) })).filter(x => x.spy != null);
 }
+// what usually happened on past occurrences of an event, from the price data you already have — history, not a forecast
+function macroReaction(name, ED){
+  const key = /FOMC/i.test(name) ? 'FOMC' : /CPI/i.test(name) ? 'CPI' : /payroll|非农/i.test(name) ? L('非农','Payrolls') : /PCE/i.test(name) ? 'PCE' : null;
+  if(!key) return '';
+  const rows = (ED || []).filter(x => x.k === key); if(!rows.length) return '';
+  const n = rows.length, avg = rows.reduce((t, x) => t + x.spy, 0) / n, down = rows.filter(x => x.spy < 0).length;
+  const my = rows.filter(x => x.my).map(x => x.my.v);
+  return [L(`过去 ${n} 次：当天 SPY 平均 ${sg(avg)}，${down} 次下跌`, `Past ${n}: SPY ${sg(avg)} on average that day, ${down} down`),
+    my.length ? L(`你的账户平均 ${money(my.reduce((t, v) => t + v, 0) / my.length)}`, `Your account avg ${money(my.reduce((t, v) => t + v, 0) / my.length)}`) : '',
+    L('历史统计，不是预测', 'History, not a forecast')].filter(Boolean).join('\n');
+}
+function earningsReaction(sym){
+  const er = fh.er[sym] && fh.er[sym].d, b = S(sym); if(!er || !b) return '';
+  const past = er.filter(e => e.act != null && e.date < todayISO()).sort((a, c) => a.date < c.date ? 1 : -1).slice(0, 6);
+  const moves = past.map(e => { const day = e.hour === 'amc' ? (b.t[b.t.indexOf(e.date) + 1] || null) : e.date; return day ? dayReturn(sym, day) : null; }).filter(v => v != null);
+  if(!moves.length) return '';
+  const avg = moves.reduce((t, v) => t + v, 0) / moves.length, down = moves.filter(v => v < 0).length;
+  const beats = past.filter(e => e.est != null && e.act > e.est).length;
+  return [L(`最近 ${moves.length} 次财报：平均 ${sg(avg)}，${down} 次下跌，超预期 ${beats}/${past.length}`, `Last ${moves.length} earnings: ${sg(avg)} avg move, ${down} down, beat ${beats} of ${past.length}`),
+    L('历史统计，不是预测', 'History, not a forecast')].join('\n');
+}
+
 function renderEventReview(){
   const el = document.getElementById('eventReview'); if(!el) return;
   const ab = pack ? abnormalTrades() : [];
