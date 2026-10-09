@@ -2074,6 +2074,13 @@
   .f2-stage b{ font-family:var(--mono); font-weight:600; }
   .f2-stage span{ color:var(--text-dim); font-size:11.5px; }
   .f2-stage em{ font-style:normal; text-align:right; font-size:11.5px; color:var(--text-dim); font-family:var(--mono); }
+
+  /* settings: the two limits and the usual way of adding share one row */
+  @media (min-width:700px){
+    #settingsModal .set2{ grid-template-columns:1.55fr 1fr; }
+    #settingsModal .set2 .f2-row2{ grid-template-columns:1fr 1fr 1.25fr; }
+    #settingsModal .set2 .f2-row2 .f-label{ white-space:nowrap; }
+  }
 </style>
 </head>
 <body>

@@ -2074,6 +2074,13 @@
   .f2-stage b{ font-family:var(--mono); font-weight:600; }
   .f2-stage span{ color:var(--text-dim); font-size:11.5px; }
   .f2-stage em{ font-style:normal; text-align:right; font-size:11.5px; color:var(--text-dim); font-family:var(--mono); }
+
+  /* settings: the two limits and the usual way of adding share one row */
+  @media (min-width:700px){
+    #settingsModal .set2{ grid-template-columns:1.55fr 1fr; }
+    #settingsModal .set2 .f2-row2{ grid-template-columns:1fr 1fr 1.25fr; }
+    #settingsModal .set2 .f2-row2 .f-label{ white-space:nowrap; }
+  }
 </style>
 </head>
 <body>
@@ -5431,9 +5438,9 @@ function openSettings(){
         <div class="f2-row2">
           ${fld({ id:'st-single', label:L('单票上限','Single-stock limit'), req:true, unit:'%', tip:L('一只股票最多占总资产（含现金）的百分比，超过了才提醒。','Max share of the account (incl. cash) one stock may take. You are only warned above it.'), attrs:`type="number" step="any" value="${cfg.maxSingle}"` })}
           ${fld({ id:'st-sector', label:L('板块上限','Sector limit'), req:true, unit:'%', tip:L('同一个细分板块（如存储、光通信）最多占多少。','Max share for one sub-sector (e.g. memory, optical).'), attrs:`type="number" step="any" value="${cfg.maxSector}"` })}
+          ${fld({ label:L('加仓习惯','Usual add style'), tip:L('新计划默认用这个，每个计划里还能单独改。平均分：每批一样多。左侧：越跌越买，越低买得越多。右侧：涨了再加，先买最多，之后越来越少（金字塔）。','New plans start with this; each plan can still change it. Even: equal slices. Left-side: buy as it falls, bigger at lower prices. Right-side: add as it rises, biggest first then smaller (a pyramid).'),
+            body:`<input type="hidden" id="st-style" value="${cfg.defaultStyle || 'even'}"><div class="seg">${[['even', L('平均','Even')], ['left', L('左侧','Left')], ['right', L('右侧','Right')]].map(([k2, t]) => `<button type="button" class="${k2 === (cfg.defaultStyle || 'even') ? 'on' : ''}" onclick="document.getElementById('st-style').value='${k2}'; this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); this.classList.add('on');">${t}</button>`).join('')}</div>` })}
         </div>
-        ${fld({ label:L('平时的加仓方式','How you usually add'), tip:L('新计划默认用这个，每个计划里还能单独改。平均分：每批一样多。左侧：越跌越买，越低买得越多。右侧：涨了再加，先买最多，之后越来越少（金字塔）。','New plans start with this; each plan can still change it. Even: equal slices. Left-side: buy as it falls, bigger at lower prices. Right-side: add as it rises, biggest first then smaller (a pyramid).'),
-            body:`<input type="hidden" id="st-style" value="${cfg.defaultStyle || 'even'}"><div class="seg">${[['even', L('平均分','Even')], ['left', L('左侧 · 越跌越买','Left-side')], ['right', L('右侧 · 涨了再加','Right-side')]].map(([k2, t]) => `<button type="button" class="${k2 === (cfg.defaultStyle || 'even') ? 'on' : ''}" onclick="document.getElementById('st-style').value='${k2}'; this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); this.classList.add('on');">${t}</button>`).join('')}</div>` })}
       </div>
       <div class="f2-sec"><div class="f2-sec-t">${L('目标','Goal')}</div>
         ${fld({ id:'st-week', label:L('每周盈利目标','Weekly profit target'), prefix:'$', tip:L('只算已实现盈亏。可以填一个数，也可以填区间，如 2000-3000。','Realized P&L only. One number or a range like 2000-3000.'), attrs:`type="text" placeholder="${eg('2000-3000')}" value="${esc(cfg.weekTarget)}"` })}
