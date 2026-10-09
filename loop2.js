@@ -909,6 +909,7 @@ function onboardHtml(){
   const fh = st.find(s => s.optional);
   const idx = cur ? req.indexOf(cur) : req.length - 1;
   // same card as every other empty state: "1/3 · title" on the left; demo exit, the step's button and ✕ on the right
+  if(cur === req[0] && !trades.length && !isDemoMode()) return uploadZone(true);   // nothing yet: the big drop area instead of a banner
   const lead = `${idx + 1}/${req.length}`;
   const btns = (isDemoMode() ? ecBtn(L('清空示例，用自己的数据','Clear demo data'), 'exitDemo()') : (!trades.length ? ecBtn(L('先看看示例数据','Try demo data'), 'loadDemoData()') : ''))
     + (cur ? ecBtn(cur.btn, cur.go, true) : '')
@@ -1123,6 +1124,24 @@ function toggleNav(){
   document.addEventListener('focusin', e => { const g = grp(); if(g && g.contains(e.target)) show(); });
   document.addEventListener('keydown', e => { if(e.key === 'Escape'){ const f = fly(); if(f) f.classList.remove('show'); } });
 })();
+// the big drop area used when there is no data at all (Today, Review): same look as the popup's drop zone;
+// clicking or dropping opens the popup and hands it the file, so the parsing and preview stay in one place
+function uploadZone(withDemo){
+  const how = L('IBKR → Performance & Reports → Statements → Activity，格式选 CSV，时间范围选你要的区间。同一笔成交按「代码 + 时间 + 数量 + 价格」去重，重复导入不会算两次。', 'IBKR → Performance & Reports → Statements → Activity, format CSV, pick the date range you want. Fills are de-duplicated by symbol + time + qty + price, so re-importing is safe.');
+  return `<div class="upload-zone" onclick="pickStatement()" ondragover="event.preventDefault(); this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropStatement(event, this)">
+    <svg class="i uz-ico" viewBox="0 0 24 24"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+    <div class="uz-t">${L('拖入 IBKR 对账单（CSV）','Drop your IBKR statement (CSV)')}</div>
+    <div class="uz-s">${L('或点击选择文件','or click to choose a file')} · <span class="f-tip" tabindex="0" data-tip="${esc(how)}" onclick="event.stopPropagation()">i</span> ${L('怎么导出','how to export')}</div>
+    ${withDemo ? `<button type="button" class="btn-ghost btn-small uz-demo" onclick="event.stopPropagation(); loadDemoData()">${L('先看看示例数据','Try demo data')}</button>` : ''}</div>`;
+}
+function pickStatement(){ importStatement(); document.getElementById('importFile').click(); }
+function dropStatement(e, el){
+  e.preventDefault(); el.classList.remove('drag');
+  const f = e.dataTransfer.files[0]; if(!f) return;
+  importStatement();
+  const r = new FileReader(); r.onload = () => handleCsvText(String(r.result)); r.readAsText(f);
+}
+
 // jump to Review → trades with the statement import open (the sidebar / Today buttons)
 let importHome = null;   // where the import card lives on the Review page while it is borrowed by the popup
 function importStatement(){
@@ -1164,6 +1183,7 @@ function renderLoop2(){ renderPlans(); renderRisk(); renderToday(); renderPlanRe
 const _render = render;            render = function(){ _render(); emptyTradesView(); renderLoop2(); };
 // no trades yet: the Trades tab is just the upload area
 function emptyTradesView(){
+  const ie = document.getElementById('importEmpty'); if(ie) ie.innerHTML = uploadZone(false);
   const empty = trades.length === 0;
   const sec = document.getElementById('ledgerTable') && document.getElementById('ledgerTable').closest('section');
   const wasEmpty = sec && sec.classList.contains('trades-empty');

@@ -1986,7 +1986,7 @@
   /* every empty state: one slim card — a line on the left, button(s) on the right */
   .empty-card{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 20px; margin-bottom:14px; }
   .import-empty{ display:none; }
-  .review-empty .import-empty{ display:flex; }
+  .review-empty .import-empty{ display:block; }
   .empty-card .ec-t{ font-size:14px; font-weight:600; display:flex; align-items:baseline; gap:10px; }
   .empty-card .ec-lead{ font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text-dim); }
   .empty-card .ec-b{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -2020,6 +2020,15 @@
     background-repeat:no-repeat; background-size:14px 14px; background-position:right 12px center;
     padding-right:34px;
   }
+
+  /* the big drop area (Today / Review with no data at all) */
+  .upload-zone{ display:flex; flex-direction:column; align-items:center; gap:6px; border:1.5px dashed var(--line-strong); border-radius:var(--radius); background:var(--panel); padding:52px 16px 44px; text-align:center; cursor:pointer; }
+  .upload-zone:hover{ background:var(--hover); }
+  .upload-zone.drag{ border-color:var(--gold); background:var(--gold-dim); }
+  .upload-zone .uz-ico{ width:30px; height:30px; margin-bottom:8px; color:var(--gold); }
+  .upload-zone .uz-t{ font-size:16px; font-weight:700; }
+  .upload-zone .uz-s{ font-size:13px; color:var(--text-dim); display:flex; align-items:center; gap:7px; }
+  .upload-zone .uz-demo{ margin-top:18px; }
 </style>
 </head>
 <body>
@@ -2252,7 +2261,7 @@
 
     <div id="sub-trades" class="sub-panel">
 
-    <div class="empty-card dark import-empty" id="importEmpty"><div class="ec-t" data-i18n="importEmptyT">还没有交易记录</div><div class="ec-b"><button type="button" class="btn-primary btn-small" onclick="importStatement()" data-i18n="sideImport">+ 导入对账单</button></div></div>
+    <div class="import-empty" id="importEmpty"></div>
 
     <div class="warn" id="demoBox"></div>
     <div class="warn" id="warnBox"></div>
