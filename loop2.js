@@ -2543,11 +2543,18 @@ function calRowHtml(i){
     return `<div class="cm-row ${e.stars >= 3 ? 'hi' : ''}"><span class="cm-time">${esc(e.time || '')}</span><span class="cm-star"></span><span class="cm-ev"><b>${esc(e.event)}</b>${e.period ? ` <span class="muted">${esc(e.period)}</span>` : ''}</span>
       <span class="cm-num">${L('预期','fcst')} <b>${esc(e.forecast ?? '—')}</b> · ${L('前值','prior')} ${esc(e.prior ?? '—')}${done ? ` · ${L('实际','actual')} <b>${esc(e.actual)}</b> ${delta(e)}` : ''}</span><span>${done ? biasTag(macroBias(e)) : ''}</span></div>`; }
   if(i.kind === 'fomc') return `<div class="cm-row hi"><span class="cm-time">14:00</span><span class="cm-star"></span><span class="cm-ev"><b>${L('FOMC 利率决议','FOMC decision')}</b>${f && f.dots ? ` <span class="muted">${L('含点阵图','with dot plot')}</span>` : ''}</span><span class="cm-num">${L('14:30 发布会','14:30 press conference')}</span><span></span></div>`;
-  if(i.kind === 'er') return `<div class="cm-row er ${i.held ? 'held' : ''}"><span class="cm-time">${i.hour === 'bmo' ? L('盘前','pre') : i.hour === 'amc' ? L('盘后','post') : ''}</span><span class="cm-star"><span class="mn-role ${i.role === 'radar' ? '' : i.role}">${i.role === 'hold' ? L('持仓','held') : i.role === 'plan' ? L('计划','plan') : i.role === 'watch' ? L('观察','watch') : L('雷达','radar')}</span></span>
-      <span class="cm-ev"><a class="lnk" onclick="openStock('${i.sym}')"><b>${i.sym}</b></a> ${L('财报','earnings')}</span>
+  if(i.kind === 'er') return `<div class="cm-row er ${i.held ? 'held' : ''}"><span class="cm-time">${i.hour === 'bmo' ? L('盘前','pre') : i.hour === 'amc' ? L('盘后','post') : ''}</span><span class="cm-star"><span class="mn-role ${i.role === 'radar' ? '' : i.role}">${i.role === 'hold' ? L('持仓','Held') : i.role === 'plan' ? L('计划','Plan') : i.role === 'watch' ? L('观察','Watch') : L('雷达','Radar')}</span></span>
+      <span class="cm-ev"><a class="lnk" onclick="openStock('${i.sym}')"><b>${i.sym}</b></a> ${L('财报','ER')}</span>
       <span class="cm-num">${i.iv ? L(`隐含波动 ${fmt(i.iv*100,0)}%`, `IV ${fmt(i.iv*100,0)}%`) : ''}${i.mvPct ? ` · ${i.mvSrc === 'hist' ? L('历史平均','hist avg') : '1σ'} ±${fmt(i.mvPct,1)}%` : ''}</span>
       <span>${i.expo ? `<b class="loss-t" title="${L('这笔仓位可能的单日波动','possible one-day swing of your position')}">±${money(i.expo)}</b>` : ''}</span></div>`;
   return '';
+}
+// under an event row in the day panel: how past occurrences of this event went (history, not a forecast)
+function calHistHtml(i, ED){
+  const t = i.kind === 'fomc' ? macroReaction('FOMC', ED) : i.kind === 'macro' ? macroReaction(i.e.event, ED) : i.kind === 'er' ? earningsReaction(i.sym) : '';
+  if(!t) return '';
+  const lines = t.split('\n');
+  return `<div class="cm-hist">${lines.slice(0, -1).map(x => `<span>${esc(x)}</span>`).join('')}<small>${esc(lines[lines.length - 1])}</small></div>`;
 }
 function calPick(key){ calSel = calSel === key ? null : key; renderCalendar(); if(calSel) setTimeout(() => { const d = document.getElementById('calDay'); if(d) d.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 30); }
 function renderCalDay(){
@@ -2555,14 +2562,15 @@ function renderCalDay(){
   if(!calSel){ el.innerHTML = ''; return; }
   const d = calSel, today = todayISO();
   const rows = calItems(d, d);
+  const ED = pack ? eventDays() : [];
   const mine = (calendarEvents[d] || []).filter(ev => !(ev.source || '').startsWith('auto'));
   const exp = activePlans().filter(p => d10(p.expiry) === d);
   let react = '';
   if(d < today){ const spy = dayReturn('SPY', d), my = myDayPnl(d);
     if(spy != null || my) react = `<div class="cm-react"><b>${L('当天','That day')}</b><span>SPY <b class="${spy >= 0 ? 'gain-t' : 'loss-t'}">${spy != null ? sg(spy) : '—'}</b></span><span>${L('我的组合','My account')} <b class="${my && my.v >= 0 ? 'gain-t' : 'loss-t'}">${my ? money(my.v) : '—'}</b>${my && my.est ? ` <small class="muted">${L('按当前持仓估','est.')}</small>` : ''}</span></div>`; }
   const dd = localDate(d);
-  el.innerHTML = `<div class="cal-day"><div class="cd-h"><b>${md(d)} ${L('周' + '日一二三四五六'[dd.getDay()], ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dd.getDay()])}</b>${d === today ? `<span class="muted">${L('今天','today')}</span>` : ''}<a class="lnk" onclick="openEventModal('${d}')">${L('+ 加事件','+ event')}</a><a class="cd-x" onclick="calPick('${d}')">✕</a></div>
-    ${rows.map(calRowHtml).join('')}
+  el.innerHTML = `<div class="cal-day"><div class="cd-h"><b>${md(d)} ${L('周' + '日一二三四五六'[dd.getDay()], ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dd.getDay()])}</b>${d === today ? `<span class="muted">${L('今天','today')}</span>` : ''}<a class="cd-x" onclick="calPick('${d}')">✕</a></div>
+    ${rows.map(i => calRowHtml(i) + calHistHtml(i, ED)).join('')}
     ${exp.map(p => `<div class="cm-row"><span class="cm-time"></span><span class="cm-star"><span class="mn-role plan">${L('计划','plan')}</span></span><span class="cm-ev"><b>${p.sym}</b> ${L('计划到期','plan expires')}</span><span></span><span></span></div>`).join('')}
     ${mine.map(ev => `<div class="cm-row"><span class="cm-time"></span><span class="cm-star"></span><span class="cm-ev"><a class="lnk" onclick="openEventModal('${d}','${ev.id}')">${esc(ev.text)}</a>${ev.plan ? ` <span class="muted">— ${esc(ev.plan)}</span>` : ''}</span><span></span><span></span></div>`).join('')}
     ${react}
@@ -2578,7 +2586,6 @@ renderCalendar = function(){
   const newsDays = newsByDay();
   const macro = (pack && pack.macro) || [];
   const H = holdingsNow();
-  const ED = pack ? eventDays() : [];
   let html = '';
   for(let i = 0; i < 42; i++){
     const d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
@@ -2589,14 +2596,14 @@ renderCalendar = function(){
     events = events.filter(ev => !(ev.source === 'auto-macro' && /FOMC/.test(ev.text)));
     events.sort((a,b) => (a.source||'').startsWith('auto') === (b.source||'').startsWith('auto') ? 0 : (a.source||'').startsWith('auto') ? -1 : 1);
     const chips = [];
-    if(MACRO_FOMC.includes(key)) chips.push(`<div class="cal-event macro" title="${esc(L('FOMC 利率决议 14:00 ET','FOMC decision 2pm ET') + (macroReaction('FOMC', ED) ? '\n' + macroReaction('FOMC', ED) : ''))}">FOMC</div>`);
-    macro.filter(e => e.date === key).sort((a,b) => (b.stars||0) - (a.stars||0)).forEach(e => chips.push(`<div class="cal-event macro" title="${esc(`${e.time || ''} ${e.event} · ${L('预期','fcst')} ${e.forecast ?? '—'} · ${L('前值','prior')} ${e.prior ?? '—'}${e.actual != null ? ' · ' + L('实际','actual') + ' ' + e.actual : ''}${macroReaction(e.event, ED) ? '\n' + macroReaction(e.event, ED) : ''}`)}">${esc(e.event)}</div>`));
+    if(MACRO_FOMC.includes(key)) chips.push(`<div class="cal-event macro">FOMC</div>`);
+    macro.filter(e => e.date === key).sort((a,b) => (b.stars||0) - (a.stars||0)).forEach(e => chips.push(`<div class="cal-event macro">${esc(e.event)}</div>`));
     events.forEach(ev => {
       const sym = String(ev.text || '').toUpperCase().split(/\s/)[0];
       const label = ev.category === 'earnings' ? `${sym} ${L('财报','ER')}${/pre/.test(ev.text) ? L(' · 盘前',' pre') : /post/.test(ev.text) ? L(' · 盘后',' post') : ''}` : esc(ev.text);
-      chips.push(`<div class="cal-event ${ev.category} ${ev.plan ? 'has-plan' : ''}" onclick="event.stopPropagation(); openEventModal('${key}','${ev.id}')" title="${esc(ev.text + (ev.plan ? ' — ' + ev.plan : '') + (ev.category === 'earnings' && earningsReaction(sym) ? '\n' + earningsReaction(sym) : ''))}">${label}</div>`);
+      chips.push(`<div class="cal-event ${ev.category} ${ev.plan ? 'has-plan' : ''}" onclick="event.stopPropagation(); openEventModal('${key}','${ev.id}')">${label}</div>`);
     });
-    (newsDays[key] || []).forEach(({it, idx}) => chips.push(`<div class="cal-event news" onclick="event.stopPropagation(); openNews(${idx})" title="${escHtml(it.headline)}">${escHtml(it.headline)}</div>`));
+    (newsDays[key] || []).forEach(({it, idx}) => chips.push(`<div class="cal-event news" onclick="event.stopPropagation(); openNews(${idx})">${escHtml(it.headline)}</div>`));
     const extra = chips.length > 4 ? chips.length - 3 : 0;
     html += `<div class="cal-cell ${isWeekend ? 'weekend' : ''} ${isDim ? 'dim' : ''} ${calSel === key ? 'sel' : ''}" onclick="calPick('${key}')">
       <div class="cal-date ${key === todayKey ? 'today' : ''}">${d.getDate()}</div>
