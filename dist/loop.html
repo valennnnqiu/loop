@@ -5506,13 +5506,14 @@ function onboardHtml(){
   const cur = req.find(s => !s.done);
   const fh = st.find(s => s.optional);
   const idx = cur ? req.indexOf(cur) : req.length - 1;
-  // same card as every other empty state: "1/3 · title" on the left; demo exit, the step's button and ✕ on the right
-  if(cur === req[0] && !trades.length && !isDemoMode()) return uploadZone(true);   // nothing yet: the big drop area instead of a banner
+  // a black progress banner, "1/3 · title", with no action buttons (the page itself carries the action);
+  // demo mode keeps its one way out, and the ✕ only appears once every step is done
   const lead = `${idx + 1}/${req.length}`;
-  const btns = (isDemoMode() ? ecBtn(L('清空示例，用自己的数据','Clear demo data'), 'exitDemo()') : (!trades.length ? ecBtn(L('先看看示例数据','Try demo data'), 'loadDemoData()') : ''))
-    + (cur ? ecBtn(cur.btn, cur.go, true) : '')
-    + (cur ? '' : `<button type="button" class="icon-btn pc-x" aria-label="${L('隐藏','Hide')}" onclick="hideOnboard()">✕</button>`);   // can only be dismissed once every step is done
-  return emptyCard(cur ? cur.t : L('已完成','All set'), btns, lead, true);
+  const btns = (isDemoMode() ? ecBtn(L('清空示例，用自己的数据','Clear demo data'), 'exitDemo()') : '')
+    + (cur ? '' : `<button type="button" class="icon-btn pc-x" aria-label="${L('隐藏','Hide')}" onclick="hideOnboard()">✕</button>`);
+  const banner = emptyCard(cur ? cur.t : L('已完成','All set'), btns, lead, true);
+  // nothing at all yet: the big drop area goes right under the banner
+  return cur === req[0] && !trades.length && !isDemoMode() ? banner + uploadZone(true) : banner;
 }
 function hideOnboard(){ cfg.onboardHidden = true; saveCfg(); renderToday(); }
 
