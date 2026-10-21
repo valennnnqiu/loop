@@ -51,6 +51,13 @@
     return pnlByTradeId;
   }
 
+  // cost per share the broker booked for a sale it matched to a specific lot (code SL), or null
+  function specificLotCost(t) {
+    if (t.side !== 'SELL' || t.buyAvgOverride != null || t.reported == null || !/(^|;)\s*SL\s*(;|$)/.test(String(t.code || ''))) return null;
+    const c = (t.qty * t.price - (t.comm || 0) - t.reported) / t.qty;
+    return isFinite(c) && c > 0 ? c : null;
+  }
+
   // Lot-matched method (FIFO or LIFO). Returns:
   //   closed:   array of { ...trade, matched:[{qty,unitCost,date,estimated,wasShort}], pnl, isCover }
   //             in reverse-chronological order
@@ -82,6 +89,25 @@
           lot.qty -= closeQty;
           remaining += closeQty;
           if (lot.qty < 0.0000001) q.splice(idx, 1);
+        }
+      }
+
+      // IBKR marks a sale you matched to a specific lot with code SL. The statement does not name the lot,
+      // but the broker's realized P/L pins its cost: cost/share = (proceeds - commission - realized) / qty.
+      // Close the open lot that has that cost first, so LOOP shows the lot you actually sold.
+      if (t.side === 'SELL' && !t.targetLotId && remaining < 0 && specificLotCost(t) != null) {
+        const want = specificLotCost(t);
+        while (remaining < 0) {
+          let best = -1, bestD = Infinity;
+          q.forEach((l, i) => { const d = Math.abs(l.unitCost - want); if (l.qty > 0 && d < bestD) { best = i; bestD = d; } });
+          if (best === -1 || bestD > Math.max(0.05, want * 0.005)) break;
+          const lot = q[best];
+          const closeQty = Math.min(lot.qty, -remaining);
+          realizedPnl += (t.price - lot.unitCost) * closeQty - (t.comm || 0) * (closeQty / t.qty);
+          matched.push({ qty: closeQty, unitCost: lot.unitCost, date: lot.date, estimated: lot.estimated, wasShort: false, specific: true });
+          lot.qty -= closeQty;
+          remaining += closeQty;
+          if (lot.qty < 0.0000001) q.splice(best, 1);
         }
       }
 

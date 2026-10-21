@@ -197,3 +197,29 @@ test('mergeLot: blank price keeps the old average; reducing keeps it too; closin
   assert.deepStrictEqual(mergeLot(10, 50, -15, 70), { qty: -5, avg: 70 });
   assert.deepStrictEqual(mergeLot(-10, 50, -10, 60), { qty: -20, avg: 55 });   // adding to a short
 });
+
+test('a sale IBKR marked SL (specific lot) closes the lot its realized P/L implies, not the newest', () => {
+  const buys = [
+    tr({ sym: 'X', side: 'BUY', qty: 100, price: 200.5, date: '2026-10-14T08:30:01' }),
+    tr({ sym: 'X', side: 'BUY', qty: 30, price: 169.23, date: '2026-10-15T09:44:29' }),
+    tr({ sym: 'X', side: 'BUY', qty: 20, price: 175.5, date: '2026-10-16T10:07:01' }),
+  ];
+  // broker: sold 30 @ 171.02, comm 0.462, realized 52.8816 -> cost 169.2419/share = the 169.23 lot
+  const sell = tr({ sym: 'X', side: 'SELL', qty: 30, price: 171.02, comm: 0.462, date: '2026-10-19T09:39:39', code: 'C;SL', reported: 52.8816 });
+  const { closed, openLots } = runFIFO([...buys, sell], 'LIFO');
+  assert.equal(closed.length, 1);
+  assert.equal(closed[0].matched.length, 1);
+  approx(closed[0].matched[0].unitCost, 169.23, 'matched lot cost');
+  approx(closed[0].pnl, (171.02 - 169.23) * 30 - 0.462, 'realized');
+  assert.deepEqual(openLots.X.map(l => [l.qty, l.unitCost]), [[100, 200.5], [20, 175.5]]);
+});
+
+test('without the SL code the same sale stays LIFO', () => {
+  const buys = [
+    tr({ sym: 'X', side: 'BUY', qty: 30, price: 169.23, date: '2026-10-15T09:44:29' }),
+    tr({ sym: 'X', side: 'BUY', qty: 20, price: 175.5, date: '2026-10-16T10:07:01' }),
+  ];
+  const sell = tr({ sym: 'X', side: 'SELL', qty: 30, price: 171.02, comm: 0.462, date: '2026-10-19T09:39:39', code: 'C', reported: 52.8816 });
+  const { closed } = runFIFO([...buys, sell], 'LIFO');
+  assert.equal(closed[0].matched.length, 2);   // 20 @ 175.5 first, then 10 @ 169.23
+});
