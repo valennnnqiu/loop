@@ -7640,7 +7640,7 @@ function demoPack(){
   const N = 250, dates = []; let d = localDate(todayISO()); d.setDate(d.getDate() - 1);
   while(dates.length < N){ if(d.getDay() !== 0 && d.getDay() !== 6) dates.unshift(dateKey(d)); d.setDate(d.getDate() - 1); }
   const mkt = dates.map(() => 0.0005 + 0.009 * gauss());
-  const finals = { NVDA:188.5, MSFT:452, META:721, AAPL:228, AMD:171, SMCI:49.3, SPY:668, QQQ:590, SMH:301 };
+  const finals = { NVDA:188.5, MSFT:452, META:721, AAPL:228, AMD:171, SMCI:49.3, SPY:668, QQQ:590, SMH:301, COHR:225.19 };
   const bars = {};
   const make = (sym, final, beta, vol, drift, base) => {
     const c = new Array(N); c[N-1] = final;
