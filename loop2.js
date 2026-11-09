@@ -140,7 +140,7 @@ function splitQty(total, W){ let left = total; return W.map((w, i) => { const q 
 const STYLE_NAME = () => ({ even:L('平均分','Even'), left:L('左侧 · 越跌越买','Left-side'), right:L('右侧 · 涨了再加','Right-side') });
 
 function planCalc(p, H){
-  const price = p.example ? p.examplePrice : getPrice(p.sym);
+  const price = p.example ? p.examplePrice : (getPrice(p.sym) ?? (typeof lastPx === 'function' ? lastPx(p.sym) : null));   // no live quote: fall back to the last close in the bars
   const n = Math.max(1, p.tranches || 1);
   const style = p.style || 'even';
   const trWt = trWeights(n, style);
@@ -467,6 +467,7 @@ function toggleFillTag(tradeId, wasIn){ fillTags[tradeId] = wasIn ? 'out' : 'in'
 function renderPlans(){
   const el = document.getElementById('plansSection'); if(!el) return;
   const H = holdingsNow();
+  if(liveOn() && !live.bad && !(pack && pack.demo)) ensureBars(activePlans().map(p => p.sym), { relaxed:true });
   const act = activePlans().slice().sort((a,b) => {
     const order = { stopHit:0, targetHit:1, inZone:2, exec:3, expired:4, below:5, waiting:6, noprice:7 };
     return (order[planCalc(a,H).state] ?? 9) - (order[planCalc(b,H).state] ?? 9);
@@ -767,7 +768,7 @@ function marketHtml(){
   };
   return `<div class="mk-strip">${MARKET.map(cell).join('')}</div>`;
 }
-function ensureMarket(){ if(liveOn() && !live.bad && !(pack && pack.demo)) ensureBars(MARKET.map(m => m[0]), { relaxed:true }); }
+function ensureMarket(){ if(liveOn() && !live.bad && !(pack && pack.demo)) ensureBars(MARKET.map(m => m[0]).concat(activePlans().map(p => p.sym)), { relaxed:true }); }
 
 function renderToday(){
   const el = document.getElementById('todayView'); if(!el) return;
