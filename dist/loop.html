@@ -2178,6 +2178,8 @@
   .dp-dots i.d{ background:var(--loss); opacity:.8; }
   .dp-ratio{ margin-left:10px; font-family:var(--mono); font-size:12.5px; color:var(--gain); font-weight:600; }
   .lot-badge{ width:auto; padding:0 6px; border-radius:999px; }
+  /* every row gets the same column widths, so the pills and number blocks line up from row to row */
+  @media (min-width:761px){ .mm-row:not(.dp-row){ grid-template-columns:84px minmax(0,1fr) 84px 124px 100px; } .mm-row:not(.dp-row) .mm-act{ justify-self:start; } }
 </style>
 </head>
 <body>
