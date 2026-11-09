@@ -2916,13 +2916,13 @@ function demoPack(){
   const syms = [...new Set([...Object.keys(SECTORS), 'NVDA','MSFT','META','AAPL','AMD','SMCI'])];
   syms.forEach(s => { const f = finals[s] || +(20 + rnd() * 600).toFixed(2); const semi = SEMI_SECTORS.includes(SECTORS[s]); make(s, f, semi ? 1.5 : 1.1, semi ? 0.022 : 0.016, (rnd() - 0.35) * 0.003, 2e6 + rnd() * 2e7); });
   // give the demo leaders a clean uptrend into the last weeks
-  ['NVDA','CRDO','MU'].forEach((s, k) => { const b = bars[s]; for(let i = N - 30; i < N; i++){ const f = 1 + (i - (N - 30)) * (0.004 + k * 0.001); b.c[i] = +(b.c[N - 30] * f * (1 + 0.006 * gauss())).toFixed(2); b.o[i] = +(b.c[i-1] * (1 + 0.003 * gauss())).toFixed(2); b.h[i] = +(Math.max(b.o[i], b.c[i]) * 1.008).toFixed(2); b.l[i] = +(Math.min(b.o[i], b.c[i]) * 0.992).toFixed(2); } const sc = (finals[s] || b.c[N-1]) / b.c[N-1]; ['o','h','l','c'].forEach(k2 => b[k2] = b[k2].map(x => +(x * sc).toFixed(2))); });
+  ['NVDA','CRDO','MU','COHR'].forEach((s, k) => { const b = bars[s]; for(let i = N - 30; i < N; i++){ const f = 1 + (i - (N - 30)) * (0.004 + k * 0.001); b.c[i] = +(b.c[N - 30] * f * (1 + 0.006 * gauss())).toFixed(2); b.o[i] = +(b.c[i-1] * (1 + 0.003 * gauss())).toFixed(2); b.h[i] = +(Math.max(b.o[i], b.c[i]) * 1.008).toFixed(2); b.l[i] = +(Math.min(b.o[i], b.c[i]) * 0.992).toFixed(2); } const sc = (finals[s] || b.c[N-1]) / b.c[N-1]; ['o','h','l','c'].forEach(k2 => b[k2] = b[k2].map(x => +(x * sc).toFixed(2))); });
   const strikes = (p, step) => { const out = []; for(let k = Math.round(p * 0.9 / step) * step; k <= p * 1.1; k += step){ const dist = (k - p) / p; out.push([k, Math.round((k % (step*2) ? 600 : 1500) * (1 + Math.max(0, dist) * 30) * (0.5 + rnd())), Math.round((k % (step*2) ? 700 : 1800) * (1 + Math.max(0, -dist) * 30) * (0.5 + rnd())), 0, 0, Math.round((rnd() - 0.4) * 500), Math.round((rnd() - 0.4) * 500)]); } return out; };
   const today = todayISO();
   const nextFri = (() => { const x = localDate(today); x.setDate(x.getDate() + ((5 - x.getDay() + 7) % 7 || 7) + 7); return dateKey(x); })();
   const asOf = dates[N-1];
   return { v:1, demo:true, generatedAt: new Date().toISOString(), asOf, source:'demo',
-    watchlists: { '短线': ['NVDA','AMD','META','SMCI','CRDO','MU','ALAB','VRT'] },
+    watchlists: { '短线': ['NVDA','AMD','META','SMCI','CRDO','MU','COHR','ALAB','VRT'] },
     bars,
     snap: { NVDA:{ iv:0.48, hv:0.41, callVol:520000, putVol:310000, callAvg:300000, putAvg:210000 }, META:{ iv:0.36, callVol:90000, putVol:70000, callAvg:80000, putAvg:60000 }, SMCI:{ iv:0.82, callVol:210000, putVol:60000, callAvg:70000, putAvg:30000 }, MSFT:{ iv:0.27 } },
     options: { NVDA:{ exp: nextFri, at: asOf, strikes: strikes(finals.NVDA, 5) }, META:{ exp: nextFri, at: asOf, strikes: strikes(finals.META, 10) } },
