@@ -5622,7 +5622,6 @@ function renderPlanReview(){
   const disc = buys.length ? nIn / buys.length * 100 : 0;
   el.innerHTML = head + `<div class="rv-card2">
       <div class="rv-head">${headline}</div>
-      <div class="rv-sub">${sub}</div>
       <div class="rv-cols">
         <div>${bar(L('计划内','In plan'), agg.in)}${bar(L('计划外','Off plan'), agg.out)}</div>
         <div class="rv-disc"><span>${L('按计划买入的比例','Buys made per plan')}</span><b>${buys.length ? fmt(disc,0)+'%' : '—'}</b><div class="mini"><i style="width:${disc}%; background:var(--gain)"></i></div><em>${nIn} / ${buys.length} ${L('笔','buys')} · ${L(`从 ${since} 起`, `since ${since}`)}</em></div>
