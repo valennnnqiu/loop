@@ -1488,10 +1488,6 @@ function liveRender(){
 function liveStatusHtml(){
   if(!liveOn()) return '';
   if(live.bad) return `<div class="live-status bad">${L('Twelve Data 报错：','Twelve Data: ')}${esc(live.bad)} <a class="lnk" onclick="openSettings()">${L('检查 key','check the key')}</a></div>`;
-  if(live.queue.length || live.running){
-    const w = live.waitUntil ? Math.max(1, Math.ceil((live.waitUntil - Date.now()) / 1000)) : 0;
-    return `<div class="live-status">${L('正在联网获取 K 线','Loading live bars')} ${live.done}/${live.total}${w ? ' · ' + L(`限速，${w} 秒后继续`, `rate limit, resuming in ${w}s`) : ''}</div>`;
-  }
   return '';
 }
 function saveTdKey(v){
@@ -2297,7 +2293,7 @@ function renderMomo(){
   el.innerHTML = head(sel)
     + (held.length ? `<div class="mm-cap">${L('我持有的','Held')}</div><div class="mm-list">${held.map(heldRow).join('')}</div>` : '')
     + (strongC.length ? `<div class="mm-cap">${L('可以买的','Candidates')}</div><div class="mm-list">${strongC.map(candRow).join('')}</div>` : '')
-    + `<div class="mm-foot">${weakC.length ? L('条件太少、先不碰：','Not enough evidence: ') + weakC.map(m => `<a class="lnk" onclick="openStock('${m.sym}')">${m.sym}</a>`).join('、') + ' · ' : ''}${L('按 7 个条件打分，不是预测。','Scored on 7 conditions — not a forecast.')}</div>`;
+    + (weakC.length ? `<div class="mm-foot">${L('条件太少、先不碰：','Not enough evidence: ')}${weakC.map(m => `<a class="lnk" onclick="openStock('${m.sym}')">${m.sym}</a>`).join('、')}</div>` : '');
 }
 
 // ---------- presets ----------
